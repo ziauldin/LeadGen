@@ -134,6 +134,67 @@ The FastAPI backend is **not** deployed by Vercel. Host it separately (Railway, 
 | `npm ci` / no `package-lock.json` | Ensure `apps/web` is committed as normal files (not a git submodule). |
 | App loads but API calls fail | Set `NEXT_PUBLIC_API_URL` in Vercel env vars and redeploy. The backend must be running separately. |
 
+## Deploy backend to Railway
+
+The FastAPI app lives in `services/api`. Railway must build **that folder**, not the monorepo root.
+
+### 1. Create the service
+
+1. [railway.com/new](https://railway.com/new) → deploy from GitHub → select **LeadGen**.
+2. **Settings → Source → Root Directory** → set to `services/api` → **Save**.
+3. If config is not detected, set **Config file** to `/services/api/railway.toml`.
+
+The repo includes `railway.toml`, `railpack.json`, and a `Procfile` with:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+(Railpack’s default FastAPI command expects `main:app`; this project uses `app.main:app`.)
+
+### 2. Add PostgreSQL (recommended)
+
+SQLite on Railway is ephemeral — data is lost on redeploy. Add a **PostgreSQL** plugin and set:
+
+```env
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+```
+
+Railway’s URL uses `postgresql://`; SQLAlchemy accepts it via the installed driver.
+
+### 3. Required environment variables
+
+| Variable | Example / notes |
+|----------|-----------------|
+| `SECRET_KEY` | Long random string |
+| `SECRET_ENCRYPTION_KEY` | Fernet key (`python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`) |
+| `ENVIRONMENT` | `production` |
+| `CORS_ORIGINS` | Your Vercel URL, e.g. `https://lead-gen-qngz.vercel.app` |
+| `API_PUBLIC_URL` | Public Railway URL, e.g. `https://your-api.up.railway.app` |
+| `DATABASE_URL` | From PostgreSQL plugin (recommended) |
+
+Optional: add **Redis** for Celery workers; the API runs without Redis, but `/health/ready` will report Redis as down.
+
+### 4. Seed demo data (optional)
+
+After the first deploy, open the Railway shell for the API service:
+
+```bash
+python scripts/seed.py
+```
+
+### 5. Point Vercel at the API
+
+In Vercel, set `NEXT_PUBLIC_API_URL` to your Railway public URL and redeploy the frontend.
+
+### Railway troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `No start command detected` | Root Directory is still the repo root. Set it to `services/api`. |
+| Build succeeds, API 502/503 | Check deploy logs; ensure `SECRET_ENCRYPTION_KEY` is set. |
+| Frontend CORS errors | Add your Vercel domain to `CORS_ORIGINS` on Railway. |
+
 ### 4. Demo login
 
 After `python scripts/seed.py` (use `python scripts/seed.py --reset` to refresh demo data):
