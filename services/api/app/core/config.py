@@ -9,10 +9,10 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 def _find_env_file() -> Path | None:
     """Load .env from repo root or services/api directory."""
     here = Path(__file__).resolve()
-    candidates = [
-        here.parents[4] / ".env",  # repo root (LeadsGen/.env)
-        here.parents[2] / ".env",  # services/api/.env
-    ]
+    candidates: list[Path] = [here.parents[2] / ".env"]  # services/api/.env
+    # Monorepo local dev only — Railway deploys services/api alone (no parents[4]).
+    if len(here.parents) > 4:
+        candidates.insert(0, here.parents[4] / ".env")
     for path in candidates:
         if path.is_file():
             return path
