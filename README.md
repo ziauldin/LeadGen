@@ -85,6 +85,18 @@ Or: `.\scripts\dev-web.ps1` from repo root.
 
 App: [http://localhost:3000](http://localhost:3000)
 
+## Deploy frontend to Vercel
+
+This repo includes `vercel.json` for the Next.js app in `apps/web`.
+
+1. Import the GitHub repo at [vercel.com/new](https://vercel.com/new).
+2. **Recommended:** set **Root Directory** to `apps/web` (Project Settings → General).
+3. Add environment variable:
+   - `NEXT_PUBLIC_API_URL` — your deployed FastAPI backend URL (e.g. `https://api.example.com`)
+4. Deploy.
+
+The FastAPI backend is **not** deployed by Vercel. Host it separately (Railway, Render, Fly.io, etc.) and point `NEXT_PUBLIC_API_URL` at that URL. Ensure the API allows your Vercel domain in `CORS_ORIGINS`.
+
 ### 4. Demo login
 
 After `python scripts/seed.py` (use `python scripts/seed.py --reset` to refresh demo data):
