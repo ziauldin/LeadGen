@@ -162,20 +162,36 @@ DATABASE_URL=${{Postgres.DATABASE_URL}}
 
 Railway’s URL uses `postgresql://`; SQLAlchemy accepts it via the installed driver.
 
-### 3. Required environment variables
+### 3. Required environment variables (backend)
 
-| Variable | Example / notes |
-|----------|-----------------|
+| Variable | Your production value |
+|----------|----------------------|
 | `SECRET_KEY` | Long random string |
-| `SECRET_ENCRYPTION_KEY` | Fernet key (`python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`) |
+| `SECRET_ENCRYPTION_KEY` | Fernet key |
 | `ENVIRONMENT` | `production` |
-| `CORS_ORIGINS` | Your Vercel URL, e.g. `https://lead-gen-qngz.vercel.app` |
-| `API_PUBLIC_URL` | Public Railway URL, e.g. `https://your-api.up.railway.app` |
-| `DATABASE_URL` | From PostgreSQL plugin (recommended) |
+| `CORS_ORIGINS` | `https://leadgen-production-31e7.up.railway.app` |
+| `API_PUBLIC_URL` | `https://humorous-creativity-production-b121.up.railway.app` |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (recommended) |
 
 Optional: add **Redis** for Celery workers; the API runs without Redis, but `/health/ready` will report Redis as down.
 
-### 4. Seed demo data (optional)
+### 4. Pre-deploy command (backend)
+
+Set in **Settings → Deploy → Pre-Deploy Command**, or use `services/api/railway.toml`:
+
+```bash
+alembic upgrade head
+```
+
+This runs database migrations before each deploy. Do **not** put `python scripts/seed.py` here — run seed once manually in the Railway shell after the first deploy.
+
+**Start command** (Railway sets `PORT`, usually `8080` internally — do not hardcode the port in public URLs):
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+### 5. Seed demo data (optional)
 
 After the first deploy, open the Railway shell for the API service:
 
@@ -183,17 +199,47 @@ After the first deploy, open the Railway shell for the API service:
 python scripts/seed.py
 ```
 
-### 5. Point Vercel at the API
+## Deploy frontend to Railway
 
-In Vercel, set `NEXT_PUBLIC_API_URL` to your Railway public URL and redeploy the frontend.
+The Next.js app lives in `apps/web`.
+
+1. Create a **second** Railway service from the same GitHub repo.
+2. **Settings → Source → Root Directory** → `apps/web`
+3. Config file (if needed): `/apps/web/railway.toml`
+
+### Environment variables (frontend)
+
+`NEXT_PUBLIC_*` variables are baked in at **build time** — set them before deploying, then redeploy after any change.
+
+| Variable | Your production value |
+|----------|----------------------|
+| `NEXT_PUBLIC_API_URL` | `https://humorous-creativity-production-b121.up.railway.app` |
+
+### Pre-deploy command (frontend)
+
+**Leave empty** — no pre-deploy step is required. Migrations and build are handled separately:
+
+| Phase | Command |
+|-------|---------|
+| Build | `npm ci && npm run build` |
+| Pre-deploy | *(none)* |
+| Start | `npm run start` (listens on `$PORT` / `8080`) |
+
+### Verify
+
+| Check | URL |
+|-------|-----|
+| API health | `https://humorous-creativity-production-b121.up.railway.app/health` |
+| Frontend | `https://leadgen-production-31e7.up.railway.app` |
 
 ### Railway troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| `No start command detected` | Root Directory is still the repo root. Set it to `services/api`. |
+| `No start command detected` | Root Directory is still the repo root. Set it to `services/api` or `apps/web`. |
 | Build succeeds, API 502/503 | Check deploy logs; ensure `SECRET_ENCRYPTION_KEY` is set. |
-| Frontend CORS errors | Add your Vercel domain to `CORS_ORIGINS` on Railway. |
+| Frontend CORS errors | Add `https://leadgen-production-31e7.up.railway.app` to backend `CORS_ORIGINS`. |
+| Frontend calls wrong API | Set `NEXT_PUBLIC_API_URL` on the **frontend** service and **redeploy** (rebuild). |
 
 ### 4. Demo login
 

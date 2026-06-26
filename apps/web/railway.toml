@@ -1,0 +1,14 @@
+# Railway service config for the Next.js frontend.
+# Settings → Source → Root Directory: apps/web
+# Config file path (if needed): /apps/web/railway.toml
+
+[build]
+builder = "RAILPACK"
+buildCommand = "npm ci && npm run build"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
