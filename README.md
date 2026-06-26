@@ -87,28 +87,41 @@ App: [http://localhost:3000](http://localhost:3000)
 
 ## Deploy frontend to Vercel
 
-The Next.js app lives in `apps/web`.
+The Next.js app lives in `apps/web`. The repo includes a root `vercel.json` that points Vercel at that app when the project root is the repository (default on import).
+
+### Fix a live site that returns `404: NOT_FOUND` on every route
+
+This usually means the build ran in `apps/web` but Vercel is serving from the wrong folder (stale **Output Directory** or **Framework Preset: Other**).
+
+1. Open **Project Settings → Build and Deployment**.
+2. Set **Root Directory** to the repository root (leave empty / `.`) **or** to `apps/web` — pick **one** path below and stick to it.
+3. **Turn off every Override** under Framework Settings (Install, Build, Output, Development). Remove any `cd apps/web && …` commands.
+4. Set **Framework Preset** to **Next.js** (not Other).
+5. **Deployments → … → Redeploy** and uncheck **Use existing Build Cache**.
+
+**If Root Directory is the repo root (empty / `.`):**
+
+- Vercel uses the root `vercel.json` (`@vercel/next` on `apps/web/package.json`).
+- Do not set Output Directory manually.
+
+**If Root Directory is `apps/web`:**
+
+- Vercel uses `apps/web/package.json` and `apps/web/vercel.json`.
+- Output Directory must stay the default **`.next`** (not `apps/web/.next`).
 
 ### Option A — Deploy button (recommended)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fziauldin%2FLeadGen&project-name=leadsgen-web&root-directory=apps%2Fweb&env=NEXT_PUBLIC_API_URL&envDescription=URL%20of%20your%20deployed%20FastAPI%20backend)
 
-This pre-fills **Root Directory** as `apps/web` (required for monorepos).
+This pre-fills **Root Directory** as `apps/web`.
 
 ### Option B — Manual import
 
 1. Import [github.com/ziauldin/LeadGen](https://github.com/ziauldin/LeadGen) at [vercel.com/new](https://vercel.com/new).
-2. **Required:** set **Root Directory** to `apps/web`:
-   - Project **Settings** → **Build and Deployment** → **Root Directory** → **Edit** → `apps/web` → **Save**
-3. **Reset build overrides** (important if you deployed before fixing the monorepo):
-   - **Settings** → **Build and Deployment** → **Framework Settings**
-   - Framework Preset: **Next.js**
-   - Turn **Override** **off** for Install Command, Build Command, Output Directory, and Development Command
-   - Install should default to `npm ci`, build to `npm run build`, output to `.next`
-   - Remove any `cd apps/web && …` prefixes — they break once Root Directory is already `apps/web`
-4. Add environment variable:
+2. Leave **Root Directory** empty (repo root) **or** set it to `apps/web` — see the two paths above.
+3. Add environment variable:
    - `NEXT_PUBLIC_API_URL` — your deployed FastAPI backend URL (e.g. `https://api.example.com`)
-5. **Deployments** → open the latest deployment → confirm status is **Ready** (not Error or Canceled), then open the **Visit** link.
+4. Deploy, then confirm **Deployments** shows **Ready** before opening **Visit**.
 
 The FastAPI backend is **not** deployed by Vercel. Host it separately (Railway, Render, Fly.io, etc.) and point `NEXT_PUBLIC_API_URL` at that URL. Ensure the API allows your Vercel domain in `CORS_ORIGINS`.
 
@@ -116,8 +129,8 @@ The FastAPI backend is **not** deployed by Vercel. Host it separately (Railway, 
 
 | Symptom | Fix |
 |---------|-----|
-| `404: NOT_FOUND` (Vercel plain error page, not the app) | No successful deployment on that URL. Check **Deployments** for a green **Ready** build. Set Root Directory to `apps/web`, reset build overrides (step 3 above), redeploy. |
-| `No Next.js version detected` | Root Directory is still the repo root. Set it to `apps/web` and redeploy. |
+| `404: NOT_FOUND` on `/`, `/login`, etc. | Wrong output path or Framework = Other. Follow **Fix a live site** above; redeploy without cache. |
+| `No Next.js version detected` | Root Directory must match where `package.json` with `next` lives (`apps/web`), or use repo root with root `vercel.json`. |
 | `npm ci` / no `package-lock.json` | Ensure `apps/web` is committed as normal files (not a git submodule). |
 | App loads but API calls fail | Set `NEXT_PUBLIC_API_URL` in Vercel env vars and redeploy. The backend must be running separately. |
 
