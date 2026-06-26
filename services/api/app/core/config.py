@@ -6,6 +6,16 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
+def normalize_cors_origin(origin: str) -> str:
+    """Normalize a CORS origin (scheme, no trailing slash)."""
+    normalized = origin.strip()
+    if not normalized:
+        return normalized
+    if not normalized.startswith(("http://", "https://")):
+        normalized = f"https://{normalized}"
+    return normalized.rstrip("/")
+
+
 def _find_env_file() -> Path | None:
     """Load .env from repo root or services/api directory."""
     here = Path(__file__).resolve()
@@ -46,6 +56,7 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 1440
 
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
+    cors_origin_regex: str | None = None
 
     search_provider: str = "mock"
     email_provider: str = "mock"
@@ -78,8 +89,18 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors_origins(cls, value: str | list[str]) -> list[str]:
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+            raw = [origin.strip() for origin in value.split(",") if origin.strip()]
+        else:
+            raw = value
+        return [normalize_cors_origin(origin) for origin in raw if origin.strip()]
+
+    def resolved_cors_origin_regex(self) -> str | None:
+        if self.cors_origin_regex:
+            return self.cors_origin_regex
+        if self.environment == "production":
+            # Railway + Vercel frontends without listing every hostname in CORS_ORIGINS.
+            return r"https://[\w-]+\.(up\.railway\.app|vercel\.app)"
+        return None
 
 
 @lru_cache

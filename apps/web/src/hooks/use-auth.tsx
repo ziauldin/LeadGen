@@ -89,6 +89,10 @@ export function getAuthErrorMessage(error: unknown) {
     const detail = error.detail as { detail?: string } | string | undefined;
     if (typeof detail === "string") return detail;
     if (detail && typeof detail.detail === "string") return detail.detail;
+    if (error.status === 409) return "An account with this email already exists.";
+  }
+  if (error instanceof TypeError) {
+    return "Cannot reach the API. Check NEXT_PUBLIC_API_URL and backend CORS settings.";
   }
   return "Something went wrong. Please try again.";
 }
