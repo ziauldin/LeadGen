@@ -87,15 +87,25 @@ App: [http://localhost:3000](http://localhost:3000)
 
 ## Deploy frontend to Vercel
 
-This repo includes `vercel.json` for the Next.js app in `apps/web`.
+The Next.js app lives in `apps/web` with its own `vercel.json`.
 
 1. Import the GitHub repo at [vercel.com/new](https://vercel.com/new).
-2. **Recommended:** set **Root Directory** to `apps/web` (Project Settings → General).
+2. **Required:** set **Root Directory** to `apps/web`:
+   - Project **Settings** → **General** → **Root Directory** → **Edit** → enter `apps/web` → **Save**
 3. Add environment variable:
    - `NEXT_PUBLIC_API_URL` — your deployed FastAPI backend URL (e.g. `https://api.example.com`)
-4. Deploy.
+4. Redeploy.
+
+Vercel will auto-detect Next.js from `apps/web/package.json` and run `npm ci` / `npm run build` there.
 
 The FastAPI backend is **not** deployed by Vercel. Host it separately (Railway, Render, Fly.io, etc.) and point `NEXT_PUBLIC_API_URL` at that URL. Ensure the API allows your Vercel domain in `CORS_ORIGINS`.
+
+### Vercel troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| `No Next.js version detected` | Root Directory is still the repo root. Set it to `apps/web` (step 2 above) and redeploy. |
+| `npm ci` / no `package-lock.json` | Ensure `apps/web` is committed as normal files (not a git submodule). |
 
 ### 4. Demo login
 
