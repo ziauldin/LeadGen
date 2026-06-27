@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LeadsGen Pro - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#c3c0ff",
+                      "primary": "#3525cd",
+                      "on-tertiary-container": "#ffd4a4",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "inverse-primary": "#c3c0ff",
+                      "on-surface-variant": "#464555",
+                      "primary-container": "#4f46e5",
+                      "surface-tint": "#4d44e3",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#006c49",
+                      "surface-dim": "#cbdbf5",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#dce9ff",
+                      "primary-fixed": "#e2dfff",
+                      "surface-container": "#e5eeff",
+                      "background": "#f8f9ff",
+                      "outline": "#777587",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed": "#ffddb8",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#dad7ff",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed": "#002113",
+                      "secondary-container": "#6cf8bb",
+                      "on-surface": "#0b1c30",
+                      "surface-variant": "#d3e4fe",
+                      "outline-variant": "#c7c4d8",
+                      "surface": "#f8f9ff",
+                      "on-primary-fixed": "#0f0069",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "surface-bright": "#f8f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed": "#2a1700",
+                      "surface-container-low": "#eff4ff",
+                      "tertiary": "#684000",
+                      "inverse-surface": "#213145",
+                      "tertiary-container": "#885500",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-secondary-container": "#00714d",
+                      "on-background": "#0b1c30",
+                      "on-secondary-fixed-variant": "#005236",
+                      "secondary-fixed-dim": "#4edea3",
+                      "surface-container-highest": "#d3e4fe"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "margin-desktop": "32px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "sidebar-width": "260px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.015em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen w-[260px] py-margin-desktop bg-surface border-r border-outline-variant fixed left-0 top-0 z-20">
+<div class="px-gutter mb-8">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 rounded bg-primary-container text-on-primary-container flex items-center justify-center font-bold">
+                    L
+                </div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">LeadsGen Pro</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Enterprise Plan</p>
+</div>
+</div>
+<button class="w-full mt-6 bg-primary text-on-primary rounded-lg py-2 px-4 font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Campaign
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">category</span>
+<span class="font-label-md text-label-md">Niches</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">search</span>
+<span class="font-label-md text-label-md">Search</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">person_search</span>
+<span class="font-label-md text-label-md">Leads</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">business</span>
+<span class="font-label-md text-label-md">Companies</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">mail_lock</span>
+<span class="font-label-md text-label-md">Email Studio</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-label-md text-label-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">forum</span>
+<span class="font-label-md text-label-md">Replies</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg bg-primary-container text-on-primary-container font-semibold transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined fill">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+<div class="mt-auto space-y-1 pt-4 border-t border-outline-variant mx-4">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-md text-label-md">Documentation</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 md:ml-[260px] flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-desktop h-16 w-full bg-surface-container-lowest border-b border-outline-variant shadow-sm z-10 sticky top-0">
+<div class="flex items-center gap-6">
+<div class="md:hidden flex items-center">
+<button class="text-on-surface-variant hover:text-on-surface transition-all">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+<div class="hidden md:flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-full font-body-md text-body-md text-on-surface focus:ring-2 focus:ring-primary w-64 transition-all" placeholder="Search..." type="text"/>
+</div>
+</div>
+</div>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="h-full flex items-center text-on-surface-variant hover:text-primary transition-all font-label-md text-label-md" href="#">Analytics</a>
+<a class="h-full flex items-center text-on-surface-variant hover:text-primary transition-all font-label-md text-label-md" href="#">Reports</a>
+<a class="h-full flex items-center text-on-surface-variant hover:text-primary transition-all font-label-md text-label-md" href="#">Audit Log</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-all p-1">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all p-1">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all p-1">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+<button class="hidden sm:block px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">Export</button>
+<button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors">Upgrade</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a corporate executive against a neutral light grey background, high resolution, sharp focus, modern corporate styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkxO6uJH1MqYHdrHxDXPFUGVrHKOeNM6Jc-CX5sMvaRgbL1a7HWBMTtKWJ7JOw5am8cLFxkxGevBFbtzn6NG64eIDtAs6Z6qEatltGq-i5-wa69FCXQEUV2O1fNKEDvxLt0cLWWocbzIPCMvP-4vGWiUsuw1A5l5YMZxFG5y4X2FS-raYSb4_U8UbXvF8fOJd6d-5ou8BFUOswGTExLFx6D3CGwdWMSvgfZws0qs11mdSN1XqR6TKTZQYqIaizCZ-LMzp6c1wltfI"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto">
+<div class="max-w-container-max mx-auto space-y-8">
+<!-- Page Header -->
+<div>
+<h2 class="font-display text-display text-on-surface mb-2">Settings</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Manage your account preferences and system configurations.</p>
+</div>
+<!-- Tabs -->
+<div class="border-b border-outline-variant flex gap-8">
+<button class="pb-3 text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors border-b-2 border-transparent">Sender Profile</button>
+<button class="pb-3 text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors border-b-2 border-transparent">Provider Credentials</button>
+<button class="pb-3 text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors border-b-2 border-transparent">Suppression List</button>
+<button class="pb-3 text-primary font-label-md text-label-md border-b-2 border-primary font-semibold">Compliance</button>
+</div>
+<!-- Compliance Content -->
+<div class="space-y-6">
+<div>
+<h3 class="font-headline-lg text-headline-lg text-on-surface mb-1">Enforced Policies</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">These compliance rules are enforced at the organizational level to ensure secure and legal outreach. They cannot be disabled without administrative override.</p>
+</div>
+<!-- Bento Grid for Policies -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Policy Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[64px]">lock</span>
+</div>
+<div class="flex items-start gap-4 relative z-10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">block</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-md text-headline-md text-on-surface">No LinkedIn automation</h4>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-label-sm">Active</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Prevents the system from executing automated connection requests or messages on LinkedIn, adhering to their terms of service.</p>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">System Enforced</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Policy Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[64px]">lock</span>
+</div>
+<div class="flex items-start gap-4 relative z-10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">rule</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-md text-headline-md text-on-surface">No send without approval</h4>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-label-sm">Active</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Requires manual managerial approval for any campaign exceeding 500 recipients before execution.</p>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">System Enforced</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Policy Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[64px]">lock</span>
+</div>
+<div class="flex items-start gap-4 relative z-10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">unsubscribe</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-md text-headline-md text-on-surface">Opt-out required in every email</h4>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-label-sm">Active</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Automatically appends a compliant unsubscribe link to the footer of all outbound communications.</p>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">System Enforced</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Policy Card 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[64px]">lock</span>
+</div>
+<div class="flex items-start gap-4 relative z-10">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h4 class="font-headline-md text-headline-md text-on-surface">Audit logs created for sends</h4>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label-sm text-label-sm">Active</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Maintains an immutable record of all dispatch events, recipient interactions, and system metadata for 7 years.</p>
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">System Enforced</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

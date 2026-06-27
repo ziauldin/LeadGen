@@ -6,19 +6,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Mail,
+  RefreshCw,
+  Search,
+  Settings,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { providerSettingsApi } from "@/lib/api/endpoints";
 import type { ProviderCredential, ProviderName, ProviderType } from "@/lib/api/types";
@@ -30,7 +28,7 @@ type ProviderDefinition = {
 };
 
 const SEARCH_PROVIDERS: ProviderDefinition[] = [
-  { provider_name: "mock", label: "Mock", description: "Local test results — no API key required." },
+  { provider_name: "mock", label: "Mock Search", description: "Local test results — no API key required." },
   {
     provider_name: "google_cse",
     label: "Google CSE",
@@ -41,8 +39,8 @@ const SEARCH_PROVIDERS: ProviderDefinition[] = [
 ];
 
 const EMAIL_PROVIDERS: ProviderDefinition[] = [
-  { provider_name: "mock", label: "Mock", description: "Simulated sends for local testing." },
-  { provider_name: "smtp", label: "SMTP", description: "Direct SMTP delivery." },
+  { provider_name: "mock", label: "Mock Sender", description: "Simulated sends for local testing." },
+  { provider_name: "smtp", label: "SMTP Server", description: "Direct SMTP delivery." },
   { provider_name: "resend", label: "Resend", description: "Resend transactional email API." },
   { provider_name: "sendgrid", label: "SendGrid", description: "SendGrid email API." },
   { provider_name: "mailgun", label: "Mailgun", description: "Mailgun email API." },
@@ -52,20 +50,57 @@ const configureSchema = z.record(z.string(), z.union([z.string(), z.boolean()]))
 
 type ConfigureValues = z.infer<typeof configureSchema>;
 
-function statusBadge(credential: ProviderCredential | undefined) {
+function ProviderStatusBadge({ credential }: { credential: ProviderCredential | undefined }) {
   if (!credential) {
-    return <Badge variant="outline">Not configured</Badge>;
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+        style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
+      >
+        Not configured
+      </span>
+    );
   }
   if (credential.is_active) {
-    return <Badge>Active</Badge>;
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+        style={{ background: "var(--secondary-fixed)", color: "var(--on-secondary-fixed)" }}
+      >
+        <CheckCircle2 className="w-3 h-3" />
+        Active
+      </span>
+    );
   }
   if (credential.status === "error") {
-    return <Badge variant="destructive">Error</Badge>;
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+        style={{ background: "var(--error-container)", color: "var(--on-error-container)" }}
+      >
+        <XCircle className="w-3 h-3" />
+        Error
+      </span>
+    );
   }
   if (credential.status === "configured") {
-    return <Badge variant="secondary">Configured</Badge>;
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+        style={{ background: "var(--primary-fixed)", color: "var(--on-primary-fixed)" }}
+      >
+        Configured
+      </span>
+    );
   }
-  return <Badge variant="outline">Not configured</Badge>;
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+      style={{ background: "var(--surface-container)", color: "var(--on-surface-variant)" }}
+    >
+      Not configured
+    </span>
+  );
 }
 
 function SecretInput({
@@ -81,19 +116,65 @@ function SecretInput({
 }) {
   const [visible, setVisible] = useState(false);
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">{label}</label>
-      <div className="flex gap-2">
-        <Input
+    <div>
+      <label className="block text-[12px] font-semibold mb-1" style={{ color: "var(--on-surface)" }}>
+        {label}
+      </label>
+      <div className="relative">
+        <input
           type={visible ? "text" : "password"}
           placeholder={placeholder}
           autoComplete="off"
           {...register(name)}
+          className="w-full pl-3 pr-10 py-2 border rounded text-[13px] outline-none"
+          style={{
+            borderColor: "var(--outline-variant)",
+            color: "var(--on-surface)",
+            background: "var(--surface-container-lowest)",
+          }}
         />
-        <Button type="button" variant="outline" onClick={() => setVisible((v) => !v)}>
-          {visible ? "Hide" : "Show"}
-        </Button>
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+          style={{ color: "var(--on-surface-variant)" }}
+        >
+          {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
       </div>
+    </div>
+  );
+}
+
+function TextInput({
+  label,
+  placeholder,
+  register,
+  name,
+  type = "text",
+}: {
+  label: string;
+  placeholder?: string;
+  register: ReturnType<typeof useForm<ConfigureValues>>["register"];
+  name: string;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="block text-[12px] font-semibold mb-1" style={{ color: "var(--on-surface)" }}>
+        {label}
+      </label>
+      <input
+        type={type}
+        placeholder={placeholder}
+        {...register(name)}
+        className="w-full px-3 py-2 border rounded text-[13px] outline-none"
+        style={{
+          borderColor: "var(--outline-variant)",
+          color: "var(--on-surface)",
+          background: "var(--surface-container-lowest)",
+        }}
+      />
     </div>
   );
 }
@@ -111,7 +192,7 @@ function ProviderFields({
 
   if (providerName === "google_cse") {
     return (
-      <>
+      <div className="space-y-4">
         <SecretInput label="API key" placeholder={secretPlaceholder} register={register} name="api_key" />
         <SecretInput
           label="Search engine ID"
@@ -119,21 +200,20 @@ function ProviderFields({
           register={register}
           name="search_engine_id"
         />
-      </>
+      </div>
     );
   }
   if (providerName === "bing") {
     return (
-      <>
+      <div className="space-y-4">
         <SecretInput label="API key" placeholder={secretPlaceholder} register={register} name="api_key" />
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Endpoint</label>
-          <Input
-            placeholder="https://api.bing.microsoft.com/v7.0/search"
-            {...register("endpoint")}
-          />
-        </div>
-      </>
+        <TextInput
+          label="Endpoint"
+          placeholder="https://api.bing.microsoft.com/v7.0/search"
+          register={register}
+          name="endpoint"
+        />
+      </div>
     );
   }
   if (providerName === "serpapi") {
@@ -141,160 +221,64 @@ function ProviderFields({
   }
   if (providerName === "smtp") {
     return (
-      <>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Host</label>
-          <Input {...register("host")} />
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="sm:col-span-2">
+            <TextInput label="Host" placeholder="smtp.mailtrap.io" register={register} name="host" />
+          </div>
+          <div>
+            <TextInput label="Port" placeholder="587" register={register} name="port" type="number" />
+          </div>
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Port</label>
-          <Input type="number" {...register("port")} />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Username</label>
-          <Input {...register("username")} />
-        </div>
+        <TextInput label="Username" placeholder="username" register={register} name="username" />
         <SecretInput label="Password" placeholder={secretPlaceholder} register={register} name="password" />
-        <div className="space-y-2">
-          <label className="text-sm font-medium">From email</label>
-          <Input {...register("from_email")} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextInput label="From email" placeholder="sender@yourdomain.com" register={register} name="from_email" />
+          <TextInput label="From name" placeholder="Jane Doe" register={register} name="from_name" />
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">From name</label>
-          <Input {...register("from_name")} />
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" {...register("use_tls")} className="rounded border" />
-          Use TLS
+        <label className="flex items-center gap-2 text-[13px] cursor-pointer">
+          <input type="checkbox" {...register("use_tls")} className="rounded" />
+          <span style={{ color: "var(--on-surface)" }}>Use TLS / StartTLS</span>
         </label>
-      </>
+      </div>
     );
   }
   if (providerName === "resend" || providerName === "sendgrid") {
     return (
-      <>
+      <div className="space-y-4">
         <SecretInput label="API key" placeholder={secretPlaceholder} register={register} name="api_key" />
-        <div className="space-y-2">
-          <label className="text-sm font-medium">From email</label>
-          <Input {...register("from_email")} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextInput label="From email" placeholder="sender@yourdomain.com" register={register} name="from_email" />
+          <TextInput label="From name" placeholder="Jane Doe" register={register} name="from_name" />
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">From name</label>
-          <Input {...register("from_name")} />
-        </div>
-      </>
+      </div>
     );
   }
   if (providerName === "mailgun") {
     return (
-      <>
+      <div className="space-y-4">
         <SecretInput label="API key" placeholder={secretPlaceholder} register={register} name="api_key" />
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Domain</label>
-          <Input {...register("domain")} />
+        <TextInput label="Domain" placeholder="mg.yourdomain.com" register={register} name="domain" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextInput label="From email" placeholder="sender@yourdomain.com" register={register} name="from_email" />
+          <TextInput label="From name" placeholder="Jane Doe" register={register} name="from_name" />
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">From email</label>
-          <Input {...register("from_email")} />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">From name</label>
-          <Input {...register("from_name")} />
-        </div>
-      </>
+      </div>
     );
   }
-  return <p className="text-sm text-muted-foreground">No credentials required for mock provider.</p>;
-}
-
-function ProviderCard({
-  definition,
-  providerType,
-  credential,
-  onConfigure,
-  onTest,
-  onActivate,
-  onDelete,
-  busyId,
-}: {
-  definition: ProviderDefinition;
-  providerType: ProviderType;
-  credential?: ProviderCredential;
-  onConfigure: () => void;
-  onTest: (id: number) => void;
-  onActivate: (id: number) => void;
-  onDelete: (id: number) => void;
-  busyId: number | null;
-}) {
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">{definition.label}</CardTitle>
-            <p className="text-muted-foreground mt-1 text-sm">{definition.description}</p>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            {statusBadge(credential)}
-            {credential?.is_active ? <Badge variant="secondary">In use</Badge> : null}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        {credential?.masked_summary ? (
-          <p className="text-muted-foreground">{credential.masked_summary}</p>
-        ) : (
-          <p className="text-muted-foreground">No saved configuration yet.</p>
-        )}
-        {credential?.last_tested_at ? (
-          <p className="text-muted-foreground text-xs">
-            Last tested: {new Date(credential.last_tested_at).toLocaleString()} —{" "}
-            {credential.last_test_status}
-            {credential.last_test_message ? `: ${credential.last_test_message}` : ""}
-          </p>
-        ) : null}
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={onConfigure}>
-            Configure
-          </Button>
-          {credential ? (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={busyId === credential.id}
-                onClick={() => onTest(credential.id)}
-              >
-                Test connection
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={credential.is_active || busyId === credential.id}
-                onClick={() => onActivate(credential.id)}
-              >
-                Set active
-              </Button>
-              {definition.provider_name !== "mock" ? (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={busyId === credential.id}
-                  onClick={() => onDelete(credential.id)}
-                >
-                  Delete
-                </Button>
-              ) : null}
-            </>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+    <div
+      className="p-3 rounded text-[13px]"
+      style={{ background: "var(--surface-container-low)", color: "var(--on-surface-variant)" }}
+    >
+      No authentication key is required for mock simulated providers.
+    </div>
   );
 }
 
 export function ProviderSettingsPanel() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<"search" | "email">("search");
   const [configureTarget, setConfigureTarget] = useState<{
     providerType: ProviderType;
     definition: ProviderDefinition;
@@ -345,11 +329,11 @@ export function ProviderSettingsPanel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["provider-settings"] });
-      toast.success("Provider settings saved");
+      toast.success("Provider credentials updated");
       setConfigureTarget(null);
       reset({});
     },
-    onError: (error: Error) => toast.error(error.message || "Could not save provider settings"),
+    onError: (error: Error) => toast.error(error.message || "Failed to save configuration"),
   });
 
   const testMutation = useMutation({
@@ -370,9 +354,9 @@ export function ProviderSettingsPanel() {
     onSettled: () => setBusyId(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["provider-settings"] });
-      toast.success("Provider activated");
+      toast.success("Provider set active successfully");
     },
-    onError: (error: Error) => toast.error(error.message || "Could not activate provider"),
+    onError: (error: Error) => toast.error(error.message || "Could not set provider active"),
   });
 
   const deleteMutation = useMutation({
@@ -384,7 +368,7 @@ export function ProviderSettingsPanel() {
       toast.success("Provider credentials deleted");
       setDeleteTarget(null);
     },
-    onError: () => toast.error("Could not delete provider credentials"),
+    onError: () => toast.error("Could not delete credentials"),
   });
 
   const openConfigure = (
@@ -400,99 +384,252 @@ export function ProviderSettingsPanel() {
     <div className="grid gap-4 md:grid-cols-2">
       {definitions.map((definition) => {
         const credential = credentialsByKey.get(`${providerType}:${definition.provider_name}`);
+        const isActive = credential?.is_active ?? false;
+        const Icon = providerType === "search" ? Search : Mail;
+
         return (
-          <ProviderCard
+          <div
             key={definition.provider_name}
-            definition={definition}
-            providerType={providerType}
-            credential={credential}
-            busyId={busyId}
-            onConfigure={() => openConfigure(providerType, definition, credential)}
-            onTest={(id) => testMutation.mutate(id)}
-            onActivate={(id) => activateMutation.mutate(id)}
-            onDelete={(id) => {
-              const target = data?.items.find((item) => item.id === id);
-              if (target) setDeleteTarget(target);
+            className="bg-white border rounded-lg p-5 shadow-sm flex flex-col justify-between"
+            style={{
+              borderColor: isActive ? "var(--primary)" : "var(--outline-variant)",
+              boxShadow: isActive ? "0px 4px 6px -1px rgba(53,37,205,0.08)" : "none",
             }}
-          />
+          >
+            <div>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: "var(--surface-container-low)" }}
+                  >
+                    <Icon className="w-4.5 h-4.5" style={{ color: "var(--primary)" }} />
+                  </div>
+                  <h4 className="text-[14px] font-semibold" style={{ color: "var(--on-surface)" }}>
+                    {definition.label}
+                  </h4>
+                </div>
+                <ProviderStatusBadge credential={credential} />
+              </div>
+
+              <p className="text-[13px] mb-4" style={{ color: "var(--on-surface-variant)" }}>
+                {definition.description}
+              </p>
+
+              {credential?.masked_summary && (
+                <div
+                  className="mb-4 px-2.5 py-1.5 rounded font-mono text-[11px]"
+                  style={{ background: "var(--surface-container-low)", color: "var(--on-surface)" }}
+                >
+                  {credential.masked_summary}
+                </div>
+              )}
+
+              {credential?.last_tested_at && (
+                <p className="text-[11px] mb-4" style={{ color: "var(--on-surface-variant)" }}>
+                  Last test: {new Date(credential.last_tested_at).toLocaleDateString()} —{" "}
+                  <span
+                    style={{
+                      color:
+                        credential.last_test_status === "success"
+                          ? "var(--secondary)"
+                          : "var(--error)",
+                    }}
+                  >
+                    {credential.last_test_status}
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div
+              className="flex items-center justify-between pt-4 border-t"
+              style={{ borderColor: "var(--outline-variant)" }}
+            >
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => openConfigure(providerType, definition, credential)}
+                  className="px-3 py-1.5 border rounded text-[12px] font-semibold transition-colors bg-white"
+                  style={{ borderColor: "var(--outline-variant)", color: "var(--on-surface)" }}
+                >
+                  Configure
+                </button>
+                {credential && (
+                  <button
+                    onClick={() => testMutation.mutate(credential.id)}
+                    disabled={busyId === credential.id || testMutation.isPending}
+                    className="px-3 py-1.5 border rounded text-[12px] font-semibold transition-colors bg-white disabled:opacity-50"
+                    style={{ borderColor: "var(--outline-variant)", color: "var(--on-surface)" }}
+                  >
+                    {busyId === credential.id ? "Testing…" : "Test API"}
+                  </button>
+                )}
+              </div>
+
+              {credential && !isActive && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => activateMutation.mutate(credential.id)}
+                    disabled={busyId === credential.id}
+                    className="px-3 py-1.5 rounded text-[12px] font-semibold text-white transition-colors disabled:opacity-50"
+                    style={{ background: "var(--primary)" }}
+                  >
+                    Activate
+                  </button>
+                  {definition.provider_name !== "mock" && (
+                    <button
+                      onClick={() => setDeleteTarget(credential)}
+                      disabled={busyId === credential.id}
+                      className="p-1.5 rounded text-[13px] hover:text-red-500 transition-colors"
+                      style={{ color: "var(--on-surface-variant)" }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         );
       })}
     </div>
   );
 
   return (
-    <Card className="lg:col-span-2">
-      <CardHeader>
-        <CardTitle>Provider configuration</CardTitle>
-        <p className="text-muted-foreground text-sm">
-          Configure search and email providers. API keys are encrypted and stored securely on the
-          backend. Full secrets are never shown after saving.
-        </p>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? <p className="text-muted-foreground text-sm">Loading providers…</p> : null}
-        <Tabs defaultValue="search">
-          <TabsList>
-            <TabsTrigger value="search">Search providers</TabsTrigger>
-            <TabsTrigger value="email">Email providers</TabsTrigger>
-          </TabsList>
-          <TabsContent value="search" className="mt-4">
-            {renderGrid("search", SEARCH_PROVIDERS)}
-          </TabsContent>
-          <TabsContent value="email" className="mt-4">
-            {renderGrid("email", EMAIL_PROVIDERS)}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-
-      <Dialog
-        open={configureTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setConfigureTarget(null);
-        }}
+    <div className="flex flex-col gap-6 lg:col-span-2">
+      <div
+        className="bg-white border rounded-lg p-6 shadow-sm"
+        style={{ borderColor: "var(--outline-variant)" }}
       >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Configure {configureTarget?.definition.label}</DialogTitle>
-            <DialogDescription>
-              Credentials are encrypted on the server. Leave secret fields blank when updating to
-              keep the existing value.
-            </DialogDescription>
-          </DialogHeader>
-          {configureTarget ? (
+        <div className="flex items-center gap-2.5 mb-2">
+          <Settings className="w-5 h-5 text-indigo-600" />
+          <h3 className="text-[16px] font-semibold" style={{ color: "var(--on-surface)" }}>
+            Provider Credentials
+          </h3>
+        </div>
+        <p className="text-[13px] mb-6" style={{ color: "var(--on-surface-variant)" }}>
+          Manage search querying and email outreach servers. Credentials are AES-encrypted at rest and
+          never revealed in plain-text after creation.
+        </p>
+
+        {/* Tab switcher */}
+        <div
+          className="flex items-center gap-2 p-1 rounded-lg w-fit mb-6"
+          style={{ background: "var(--surface-container-low)" }}
+        >
+          <button
+            onClick={() => setActiveTab("search")}
+            className="px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all"
+            style={{
+              background: activeTab === "search" ? "var(--surface-container-lowest)" : "transparent",
+              color: activeTab === "search" ? "var(--primary)" : "var(--on-surface-variant)",
+              boxShadow: activeTab === "search" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+            }}
+          >
+            Search APIs
+          </button>
+          <button
+            onClick={() => setActiveTab("email")}
+            className="px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all"
+            style={{
+              background: activeTab === "email" ? "var(--surface-container-lowest)" : "transparent",
+              color: activeTab === "email" ? "var(--primary)" : "var(--on-surface-variant)",
+              boxShadow: activeTab === "email" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+            }}
+          >
+            Email Gateways
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <RefreshCw className="w-5 h-5 animate-spin mx-auto text-indigo-600" />
+          </div>
+        ) : activeTab === "search" ? (
+          renderGrid("search", SEARCH_PROVIDERS)
+        ) : (
+          renderGrid("email", EMAIL_PROVIDERS)
+        )}
+      </div>
+
+      {/* Configuration Dialog */}
+      {configureTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="bg-white border rounded-xl w-full max-w-[500px] shadow-lg overflow-hidden flex flex-col"
+            style={{ borderColor: "var(--outline-variant)" }}
+          >
+            <div
+              className="px-6 py-4 border-b flex items-center justify-between"
+              style={{ borderColor: "var(--outline-variant)" }}
+            >
+              <div>
+                <h3 className="text-[16px] font-bold" style={{ color: "var(--on-surface)" }}>
+                  Configure {configureTarget.definition.label}
+                </h3>
+                <p className="text-[12px] mt-0.5" style={{ color: "var(--on-surface-variant)" }}>
+                  Encryption and secure key storage active.
+                </p>
+              </div>
+              <button
+                onClick={() => setConfigureTarget(null)}
+                className="text-slate-400 hover:text-slate-600 font-semibold text-[18px]"
+              >
+                ×
+              </button>
+            </div>
+
             <form
               onSubmit={handleSubmit((values) => saveMutation.mutate(values))}
-              className="space-y-4"
+              className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]"
             >
               <ProviderFields
                 providerName={configureTarget.definition.provider_name}
                 register={register}
                 isEditing={Boolean(configureTarget.credential)}
               />
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting || saveMutation.isPending}>
-                  Save configuration
-                </Button>
-              </DialogFooter>
-            </form>
-          ) : null}
-        </DialogContent>
-      </Dialog>
 
+              <div
+                className="flex items-center justify-end gap-3 pt-4 border-t mt-2"
+                style={{ borderColor: "var(--outline-variant)" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setConfigureTarget(null)}
+                  className="px-4 py-2 border rounded text-[13px] font-semibold bg-white"
+                  style={{ borderColor: "var(--outline-variant)", color: "var(--on-surface)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || saveMutation.isPending}
+                  className="px-5 py-2 rounded text-[13px] font-semibold text-white transition-opacity disabled:opacity-60"
+                  style={{ background: "var(--primary)" }}
+                >
+                  Save Configuration
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm */}
       <ConfirmDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
         title="Delete provider credentials?"
-        description={`Remove saved credentials for ${deleteTarget?.display_name}? This cannot be undone.`}
-        confirmLabel="Delete"
+        description={`Are you sure you want to permanently delete saved credentials for ${deleteTarget?.display_name}? This cannot be undone.`}
+        confirmLabel="Delete Credentials"
         destructive
         loading={deleteMutation.isPending}
         onConfirm={() => {
           if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
         }}
       />
-    </Card>
+    </div>
   );
 }

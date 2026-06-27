@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LeadsGen Pro - Replies</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary": "#3525cd",
+                        "on-tertiary-container": "#ffd4a4",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "inverse-primary": "#c3c0ff",
+                        "on-surface-variant": "#464555",
+                        "primary-container": "#4f46e5",
+                        "surface-tint": "#4d44e3",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#006c49",
+                        "surface-dim": "#cbdbf5",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed": "#e2dfff",
+                        "surface-container": "#e5eeff",
+                        "background": "#f8f9ff",
+                        "outline": "#777587",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb8",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#dad7ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#002113",
+                        "secondary-container": "#6cf8bb",
+                        "on-surface": "#0b1c30",
+                        "surface-variant": "#d3e4fe",
+                        "outline-variant": "#c7c4d8",
+                        "surface": "#f8f9ff",
+                        "on-primary-fixed": "#0f0069",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-bright": "#f8f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-container-low": "#eff4ff",
+                        "tertiary": "#684000",
+                        "inverse-surface": "#213145",
+                        "tertiary-container": "#885500",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-secondary-container": "#00714d",
+                        "on-background": "#0b1c30",
+                        "on-secondary-fixed-variant": "#005236",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-desktop": "32px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "sidebar-width": "260px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+    </style>
+</head>
+<body class="flex min-h-screen bg-background">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen w-[260px] fixed left-0 bg-surface border-r border-outline-variant py-margin-desktop shadow-[1px_0_3px_rgba(0,0,0,0.05)] z-20">
+<!-- Brand -->
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-lg">LG</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">LeadsGen Pro</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Enterprise Plan</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-6 mb-8">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-surface-tint transition-colors duration-150 shadow-sm active:scale-95">
+<span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                New Campaign
+            </button>
+</div>
+<!-- Main Nav Tabs -->
+<div class="flex-1 overflow-y-auto px-4 space-y-1 font-body-md text-body-md">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">dashboard</span>Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">category</span>Niches
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">search</span>Search
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">person_search</span>Leads
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">business</span>Companies
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">mail_lock</span>Email Studio
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">campaign</span>Campaigns
+            </a>
+<!-- Active Tab: Replies -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary-container text-on-primary-container font-semibold cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined fill text-on-primary-container">forum</span>Replies
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline">settings</span>Settings
+            </a>
+</div>
+<!-- Footer Tabs -->
+<div class="px-4 mt-auto pt-4 border-t border-outline-variant space-y-1 font-body-md text-body-md">
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline" style="font-size: 20px;">help</span>Support
+            </a>
+<a class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-outline" style="font-size: 20px;">description</span>Documentation
+            </a>
+<div class="mt-4 px-4 flex items-center gap-3 pt-2">
+<img alt="User Avatar" class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Professional headshot of a business executive in a high-end corporate office setting. Bright, modern lighting. Sharp focus, high resolution, portraying a confident, analytical leader in a B2B intelligence environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMiULHtvy0nPzs-ODmRPBzHLFEDvazHIJ1i1afsxi12K5E6zYnSqoVx0Z1mVqZfu_-Dn4R2L4PuuRzZ2AjEVummdBdCTgi2SrNFoxpWw9ZopDg1jf2BjPAMiIfKTFn8UiFr4AMF4nOnfZqBGgOndolUhRljTrezHdxOwSm-Tl0XlxhkHoELy8L07kDqWTi4yd_fSZKI_c97Nk146CVU6KsZXZ5ff0hDuc5vpPMuEsEZTiY5ByeLO6r2H7InXF3Wnx1BqxRCeUD4wo"/>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-medium text-on-surface truncate">Alex Mercer</p>
+<p class="text-xs text-on-surface-variant truncate">alex@leadsgen.pro</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col md:ml-[260px] min-h-screen">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-10 flex justify-between items-center px-margin-desktop h-16 w-full bg-surface-container-lowest border-b border-outline-variant shadow-sm transition-shadow">
+<!-- Left: Mobile Menu & Nav Links -->
+<div class="flex items-center gap-6">
+<button class="md:hidden text-on-surface-variant p-2 -ml-2 hover:bg-surface-container rounded-md">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="hidden md:flex items-center gap-6 font-label-md text-label-md">
+<a class="text-on-surface-variant hover:text-primary transition-colors py-5 border-b-2 border-transparent hover:border-primary-fixed-dim" href="#">Analytics</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors py-5 border-b-2 border-transparent hover:border-primary-fixed-dim" href="#">Reports</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors py-5 border-b-2 border-transparent hover:border-primary-fixed-dim" href="#">Audit Log</a>
+</div>
+</div>
+<!-- Right: Actions -->
+<div class="flex items-center gap-4">
+<!-- Icon Actions -->
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors hidden sm:block">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-2 hover:bg-surface-container rounded-full transition-colors hidden sm:block">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+</div>
+<div class="w-px h-6 bg-outline-variant mx-1 hidden sm:block"></div>
+<!-- Primary/Secondary Actions -->
+<div class="flex items-center gap-3">
+<button class="hidden sm:block font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors px-3 py-1.5 rounded border border-outline-variant bg-surface-container-lowest hover:bg-surface-container">Export</button>
+<button class="font-label-md text-label-md bg-primary text-on-primary px-4 py-1.5 rounded shadow-sm hover:bg-surface-tint transition-colors">Upgrade</button>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop overflow-x-hidden">
+<!-- Page Header -->
+<div class="mb-8 max-w-container-max mx-auto flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-lg md:font-display text-headline-lg md:text-display text-on-surface">Replies</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1 max-w-2xl">Review replies, classify intent, and add notes.</p>
+</div>
+<!-- Quick Filters -->
+<div class="flex flex-wrap items-center gap-2 font-label-md text-label-md">
+<span class="text-on-surface-variant mr-2">Filter by:</span>
+<button class="px-3 py-1.5 rounded-full border border-primary text-primary bg-primary-fixed-dim/20 hover:bg-primary-fixed-dim/40 transition-colors flex items-center gap-1">
+                        All <span class="bg-primary text-on-primary text-[10px] rounded px-1.5 ml-1">12</span>
+</button>
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">Unclassified</button>
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors">Positive</button>
+</div>
+</div>
+<!-- Data Table Card -->
+<div class="max-w-container-max mx-auto bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<!-- Toolbar -->
+<div class="p-4 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface/50">
+<div class="relative w-full sm:w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow" placeholder="Search replies..." type="text"/>
+</div>
+<div class="flex items-center gap-2 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined" style="font-size: 18px;">filter_list</span> Filter
+                        </button>
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined" style="font-size: 18px;">view_column</span> Columns
+                        </button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse whitespace-nowrap min-w-[900px]">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+<th class="px-6 py-3 font-semibold w-12 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+</th>
+<th class="px-6 py-3 font-semibold cursor-pointer hover:text-on-surface group">From <span class="material-symbols-outlined text-[14px] align-middle opacity-0 group-hover:opacity-100 transition-opacity">arrow_downward</span></th>
+<th class="px-6 py-3 font-semibold">Lead</th>
+<th class="px-6 py-3 font-semibold">Campaign</th>
+<th class="px-6 py-3 font-semibold w-1/3">Snippet</th>
+<th class="px-6 py-3 font-semibold">Classification</th>
+<th class="px-6 py-3 font-semibold cursor-pointer hover:text-on-surface group">Received At <span class="material-symbols-outlined text-[14px] align-middle">arrow_downward</span></th>
+<th class="px-6 py-3 font-semibold w-12 text-center">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant/50">
+<!-- Row 1: Positive -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group cursor-pointer" onclick="openDetailPanel()">
+<td class="px-6 py-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" onclick="event.stopPropagation()" type="checkbox"/>
+</td>
+<td class="px-6 py-4 font-medium">sarah.jenkins@techflow.io</td>
+<td class="px-6 py-4">Sarah Jenkins<br/><span class="text-xs text-on-surface-variant font-normal">VP of Engineering, TechFlow</span></td>
+<td class="px-6 py-4">Q3 Enterprise Outreach</td>
+<td class="px-6 py-4 truncate max-w-[200px] text-on-surface-variant">Thanks for reaching out. We are actually evaluating solutions for this next month...</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#d1fae5] text-[#065f46] border border-[#a7f3d0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#059669]"></span> Positive
+                                    </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">10 mins ago</td>
+<td class="px-6 py-4 text-center">
+<button aria-label="Open detail" class="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1" onclick="event.stopPropagation(); openDetailPanel();">
+<span class="material-symbols-outlined">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Objection -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group cursor-pointer" onclick="openDetailPanel()">
+<td class="px-6 py-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" onclick="event.stopPropagation()" type="checkbox"/>
+</td>
+<td class="px-6 py-4 font-medium">m.chen@globex.corp</td>
+<td class="px-6 py-4">Michael Chen<br/><span class="text-xs text-on-surface-variant font-normal">Director of Sales, Globex</span></td>
+<td class="px-6 py-4">Cold Outbound - APAC</td>
+<td class="px-6 py-4 truncate max-w-[200px] text-on-surface-variant">Please remove me from this mailing list immediately.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#ffe4e6] text-[#9f1239] border border-[#fecdd3]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#e11d48]"></span> Objection
+                                    </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">2 hours ago</td>
+<td class="px-6 py-4 text-center">
+<button aria-label="Open detail" class="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1" onclick="event.stopPropagation(); openDetailPanel();">
+<span class="material-symbols-outlined">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Neutral -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group cursor-pointer" onclick="openDetailPanel()">
+<td class="px-6 py-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" onclick="event.stopPropagation()" type="checkbox"/>
+</td>
+<td class="px-6 py-4 font-medium">info@acme-design.com</td>
+<td class="px-6 py-4">Acme Design Info<br/><span class="text-xs text-on-surface-variant font-normal">General Inbox</span></td>
+<td class="px-6 py-4">Agency Partnership V2</td>
+<td class="px-6 py-4 truncate max-w-[200px] text-on-surface-variant">I have forwarded your email to the appropriate department for review.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#fef3c7] text-[#92400e] border border-[#fde68a]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#d97706]"></span> Neutral
+                                    </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm">Yesterday, 14:30</td>
+<td class="px-6 py-4 text-center">
+<button aria-label="Open detail" class="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1" onclick="event.stopPropagation(); openDetailPanel();">
+<span class="material-symbols-outlined">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Unclassified -->
+<tr class="hover:bg-surface-container-low/50 transition-colors group cursor-pointer bg-surface-container-low/20" onclick="openDetailPanel()">
+<td class="px-6 py-4 text-center">
+<input class="rounded border-outline-variant text-primary focus:ring-primary" onclick="event.stopPropagation()" type="checkbox"/>
+</td>
+<td class="px-6 py-4 font-medium text-on-surface font-semibold">d.rogers@stark.ind</td>
+<td class="px-6 py-4 font-semibold">David Rogers<br/><span class="text-xs text-on-surface-variant font-normal">Procurement, Stark Ind.</span></td>
+<td class="px-6 py-4">Q3 Enterprise Outreach</td>
+<td class="px-6 py-4 truncate max-w-[200px] text-on-surface-variant font-medium">What is the pricing model for 50+ seats?</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-surface-container-highest text-on-surface-variant border border-outline-variant border-dashed">
+                                        Unclassified
+                                    </span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant text-sm font-semibold">Yesterday, 09:15</td>
+<td class="px-6 py-4 text-center">
+<button aria-label="Open detail" class="text-primary hover:text-primary-container transition-colors opacity-0 group-hover:opacity-100 p-1" onclick="event.stopPropagation(); openDetailPanel();">
+<span class="material-symbols-outlined">open_in_new</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between bg-surface/50">
+<span class="font-body-md text-body-md text-on-surface-variant">Showing 1 to 4 of 12 replies</span>
+<div class="flex gap-1">
+<button class="p-1 rounded text-outline-variant cursor-not-allowed" disabled=""><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="p-1 rounded text-on-surface hover:bg-surface-container"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+</div>
+<div class="h-16"></div> <!-- Bottom padding -->
+</main>
+</div>
+<!-- Overlay Panel (Detail View) - Hidden by default -->
+<div class="fixed inset-0 bg-on-surface/20 backdrop-blur-sm z-40 hidden transition-opacity opacity-0" id="detailPanelOverlay" onclick="closeDetailPanel()"></div>
+<div class="fixed top-0 right-0 h-full w-full sm:w-[480px] bg-surface-container-lowest shadow-[-10px_0_15px_-3px_rgba(0,0,0,0.1)] z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col border-l border-outline-variant" id="detailPanel">
+<!-- Panel Header -->
+<div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface">
+<h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Reply Details</h3>
+<div class="flex gap-2">
+<button aria-label="Mark unread" class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded-md transition-colors">
+<span class="material-symbols-outlined" style="font-size: 20px;">mark_email_unread</span>
+</button>
+<button aria-label="Close panel" class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded-md transition-colors" onclick="closeDetailPanel()">
+<span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+</button>
+</div>
+</div>
+<!-- Panel Content -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Context Card -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-4">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-label-md text-label-md font-semibold text-on-surface">Sarah Jenkins</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">sarah.jenkins@techflow.io</p>
+</div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#d1fae5] text-[#065f46] border border-[#a7f3d0]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#059669]"></span> Positive
+                    </span>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-3 border-t border-outline-variant/50 font-body-md text-body-md text-sm">
+<div>
+<span class="text-on-surface-variant block mb-0.5 text-xs">Campaign</span>
+<a class="text-primary hover:underline font-medium" href="#">Q3 Enterprise Outreach</a>
+</div>
+<div>
+<span class="text-on-surface-variant block mb-0.5 text-xs">Received</span>
+<span class="text-on-surface font-medium">Oct 24, 10:45 AM</span>
+</div>
+</div>
+</div>
+<!-- The Email -->
+<div class="space-y-4">
+<h5 class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Message</h5>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 font-body-md text-body-md text-on-surface leading-relaxed shadow-sm">
+<p class="mb-4">Hi Alex,</p>
+<p class="mb-4">Thanks for reaching out. We are actually evaluating solutions for this next month. The current platform we use is lacking in robust reporting capabilities.</p>
+<p class="mb-4">Do you have time for a quick 15-minute call next Tuesday to discuss your offering?</p>
+<p>Best,<br/>Sarah Jenkins<br/>VP Engineering, TechFlow</p>
+</div>
+</div>
+<!-- Actions / Classification Form -->
+<div class="space-y-4 pt-4 border-t border-outline-variant">
+<h5 class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Update Classification</h5>
+<div class="flex gap-2">
+<button class="flex-1 py-2 px-3 rounded border-2 border-[#10b981] bg-[#ecfdf5] text-[#047857] font-label-md text-label-md font-semibold flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span> Positive
+                    </button>
+<button class="flex-1 py-2 px-3 rounded border border-outline-variant bg-surface hover:bg-surface-container-low text-on-surface-variant font-label-md text-label-md flex items-center justify-center gap-2 transition-colors">
+                        Neutral
+                    </button>
+<button class="flex-1 py-2 px-3 rounded border border-outline-variant bg-surface hover:bg-surface-container-low text-on-surface-variant font-label-md text-label-md flex items-center justify-center gap-2 transition-colors">
+                        Objection
+                    </button>
+</div>
+</div>
+<div class="space-y-2 pt-2">
+<label class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Internal Notes</label>
+<textarea class="w-full rounded-lg border-outline-variant bg-surface-container-lowest focus:border-primary focus:ring-1 focus:ring-primary p-3 font-body-md text-body-md" placeholder="Add a note about this lead..." rows="3"></textarea>
+</div>
+</div>
+<!-- Panel Footer -->
+<div class="px-6 py-4 border-t border-outline-variant bg-surface-container-lowest flex justify-end gap-3">
+<button class="font-label-md text-label-md px-4 py-2 rounded border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors" onclick="closeDetailPanel()">Cancel</button>
+<button class="font-label-md text-label-md px-4 py-2 rounded bg-primary text-on-primary hover:bg-surface-tint transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 18px;">save</span> Save &amp; Next
+             </button>
+</div>
+</div>
+<script>
+        function openDetailPanel() {
+            const panel = document.getElementById('detailPanel');
+            const overlay = document.getElementById('detailPanelOverlay');
+            
+            overlay.classList.remove('hidden');
+            // small delay to allow display:block to apply before changing opacity
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+            }, 10);
+            
+            panel.classList.remove('translate-x-full');
+        }
+
+        function closeDetailPanel() {
+            const panel = document.getElementById('detailPanel');
+            const overlay = document.getElementById('detailPanelOverlay');
+            
+            panel.classList.add('translate-x-full');
+            overlay.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300); // match transition duration
+        }
+    </script>
+</body></html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Companies - LeadsGen Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#c3c0ff",
+                      "primary": "#3525cd",
+                      "on-tertiary-container": "#ffd4a4",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "inverse-primary": "#c3c0ff",
+                      "on-surface-variant": "#464555",
+                      "primary-container": "#4f46e5",
+                      "surface-tint": "#4d44e3",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#006c49",
+                      "surface-dim": "#cbdbf5",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#dce9ff",
+                      "primary-fixed": "#e2dfff",
+                      "surface-container": "#e5eeff",
+                      "background": "#f8f9ff",
+                      "outline": "#777587",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed": "#ffddb8",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#dad7ff",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed": "#002113",
+                      "secondary-container": "#6cf8bb",
+                      "on-surface": "#0b1c30",
+                      "surface-variant": "#d3e4fe",
+                      "outline-variant": "#c7c4d8",
+                      "surface": "#f8f9ff",
+                      "on-primary-fixed": "#0f0069",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "surface-bright": "#f8f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed": "#2a1700",
+                      "surface-container-low": "#eff4ff",
+                      "tertiary": "#684000",
+                      "inverse-surface": "#213145",
+                      "tertiary-container": "#885500",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-secondary-container": "#00714d",
+                      "on-background": "#0b1c30",
+                      "on-secondary-fixed-variant": "#005236",
+                      "secondary-fixed-dim": "#4edea3",
+                      "surface-container-highest": "#d3e4fe"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "margin-desktop": "32px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "sidebar-width": "260px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "label-md": ["Inter"],
+                      "display": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-lg-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "label-md": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                      "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex font-body-md text-body-md">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen w-[260px] bg-surface border-r border-outline-variant fixed left-0 top-0 py-margin-desktop z-20">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold">L</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">LeadsGen Pro</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Enterprise Plan</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-surface-tint transition-colors duration-150 cursor-pointer active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Campaign
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">category</span>Niches
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">search</span>Search
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">person_search</span>Leads
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary-container text-on-primary-container font-semibold rounded-lg mx-2 transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">business</span>Companies
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">mail_lock</span>Email Studio
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">campaign</span>Campaigns
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">forum</span>Replies
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>Settings
+            </a>
+</div>
+<div class="px-2 pt-4 border-t border-outline-variant mt-auto space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>Support
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 font-label-md text-label-md mx-2" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>Documentation
+            </a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 md:ml-[260px] flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="h-16 bg-surface-container-lowest border-b border-outline-variant shadow-sm flex justify-between items-center px-margin-desktop w-full sticky top-0 z-10">
+<div class="flex items-center gap-6">
+<!-- Mobile Menu Button (visible only on md:hidden) -->
+<button class="md:hidden text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="relative w-64 hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="w-full pl-9 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-md font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search across LeadsGen..." type="text"/>
+</div>
+<nav class="hidden lg:flex items-center gap-4">
+<a class="text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" href="#">Analytics</a>
+<a class="text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" href="#">Reports</a>
+<a class="text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" href="#">Audit Log</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:text-primary transition-all p-1 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all p-1 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all p-1 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-2">
+<button class="font-label-md text-label-md px-3 py-1.5 rounded-md border border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface-variant transition-colors">Export</button>
+<button class="font-label-md text-label-md px-3 py-1.5 rounded-md bg-primary text-on-primary hover:bg-surface-tint transition-colors">Upgrade</button>
+</div>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant object-cover ml-2" data-alt="A small, high-quality, professional corporate headshot of an individual, well-lit, neutral background, suitable for a user profile avatar in a B2B application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCC6zrjgclMNP6qpeekVbqC-R5xe-WlnoJDlHpk0GRfP-tHYrsLmVM5M9tWKswGoHqIbYy-5_h_fsFiC4HmWNomvvJWSHgqV-zUKzxlFrCkHTtIt3oYp647Lc_8BD9RTeuBcId3ofQVh3giTqCB1XoPFWFalQiqtRzCHNJn1kMV5nbX_kUOLJ-h0HGbrvHqKXJ0r-MZw3nkv9UhGy279CkvZchKm381ciTRaqiTZfwc4LUR3lcnVBw0CIhdpehdHh5z93OMKPbQjJ4"/>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop bg-surface max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-gutter gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Companies</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage and track target accounts for enrichment.</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md py-2 px-4 rounded-lg flex items-center gap-2 hover:bg-surface-tint transition-colors duration-150 shadow-sm whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">add_business</span>
+                    Add Company
+                </button>
+</div>
+<!-- Main Content Area: Data Table Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Table Toolbar/Filters -->
+<div class="p-4 border-b border-outline-variant flex flex-wrap items-center justify-between gap-4 bg-surface-bright">
+<div class="flex items-center gap-2">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+<input class="w-full pl-9 pr-4 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-md font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Filter companies..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-outline-variant rounded-md text-on-surface-variant hover:bg-surface-container font-label-md text-label-md transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                            Filters
+                        </button>
+</div>
+<div class="flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant">
+<span>Showing 1-5 of 1,204</span>
+<div class="flex">
+<button class="p-1 hover:bg-surface-container rounded-md"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="p-1 hover:bg-surface-container rounded-md"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+<th class="px-6 py-3 font-semibold">Company Name</th>
+<th class="px-6 py-3 font-semibold">Domain</th>
+<th class="px-6 py-3 font-semibold">Industry</th>
+<th class="px-6 py-3 font-semibold">Country</th>
+<th class="px-6 py-3 font-semibold">Size</th>
+<th class="px-6 py-3 font-semibold">Enrichment Status</th>
+<th class="px-6 py-3 font-semibold text-center">Robots.txt</th>
+<th class="px-6 py-3 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<!-- Row 1 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded border border-outline-variant bg-surface-container flex items-center justify-center text-primary font-bold font-label-md">N</div>
+<span class="font-medium">Northstar CRM</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">northstarcrm.com</td>
+<td class="px-6 py-4">SaaS</td>
+<td class="px-6 py-4">USA</td>
+<td class="px-6 py-4">250-500</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                        Completed
+                                    </span>
+</td>
+<td class="px-6 py-4 text-center">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary mx-auto" title="Checked"></div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1 opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded border border-outline-variant bg-surface-container flex items-center justify-center text-primary font-bold font-label-md">A</div>
+<span class="font-medium">Apex Logistics</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">apexlogistics.io</td>
+<td class="px-6 py-4">Supply Chain</td>
+<td class="px-6 py-4">UK</td>
+<td class="px-6 py-4">1k-5k</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+                                        In Progress
+                                    </span>
+</td>
+<td class="px-6 py-4 text-center">
+<div class="w-2.5 h-2.5 rounded-full bg-secondary mx-auto" title="Checked"></div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1 opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded border border-outline-variant bg-surface-container flex items-center justify-center text-primary font-bold font-label-md">Q</div>
+<span class="font-medium">Quantum Data</span>
+</div>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">quantumdata.ai</td>
+<td class="px-6 py-4">Technology</td>
+<td class="px-6 py-4">Canada</td>
+<td class="px-6 py-4">50-100</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                                        Pending
+                                    </span>
+</td>
+<td class="px-6 py-4 text-center">
+<div class="w-2.5 h-2.5 rounded-full bg-outline-variant mx-auto" title="Unchecked"></div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-outline hover:text-primary transition-colors p-1 opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[18px]">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</body></html>

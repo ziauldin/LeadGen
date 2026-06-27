@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LeadsGen Pro - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#c3c0ff",
+                      "primary": "#3525cd",
+                      "on-tertiary-container": "#ffd4a4",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "inverse-primary": "#c3c0ff",
+                      "on-surface-variant": "#464555",
+                      "primary-container": "#4f46e5",
+                      "surface-tint": "#4d44e3",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#006c49",
+                      "surface-dim": "#cbdbf5",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#dce9ff",
+                      "primary-fixed": "#e2dfff",
+                      "surface-container": "#e5eeff",
+                      "background": "#f8f9ff",
+                      "outline": "#777587",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed": "#ffddb8",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#dad7ff",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed": "#002113",
+                      "secondary-container": "#6cf8bb",
+                      "on-surface": "#0b1c30",
+                      "surface-variant": "#d3e4fe",
+                      "outline-variant": "#c7c4d8",
+                      "surface": "#f8f9ff",
+                      "on-primary-fixed": "#0f0069",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "surface-bright": "#f8f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed": "#2a1700",
+                      "surface-container-low": "#eff4ff",
+                      "tertiary": "#684000",
+                      "inverse-surface": "#213145",
+                      "tertiary-container": "#885500",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-secondary-container": "#00714d",
+                      "on-background": "#0b1c30",
+                      "on-secondary-fixed-variant": "#005236",
+                      "secondary-fixed-dim": "#4edea3",
+                      "surface-container-highest": "#d3e4fe"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "margin-desktop": "32px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "sidebar-width": "260px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.015em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex w-full h-screen overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-full py-margin-desktop bg-surface dark:bg-inverse-surface border-r border-outline-variant dark:border-outline fixed left-0 h-screen w-[260px] z-20">
+<div class="px-margin-desktop mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">LeadsGen Pro</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Enterprise Plan</p>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors duration-150 cursor-pointer active:scale-95 shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">add</span>
+                New Campaign
+            </button>
+</div>
+<ul class="flex flex-col gap-1 flex-grow overflow-y-auto px-2">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary-container text-on-primary-container font-semibold rounded-lg mx-2 font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">category</span>
+                    Niches
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">search</span>
+                    Search
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person_search</span>
+                    Leads
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">business</span>
+                    Companies
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">mail_lock</span>
+                    Email Studio
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">campaign</span>
+                    Campaigns
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">forum</span>
+                    Replies
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+<div class="mt-auto px-2 pt-4 border-t border-outline-variant">
+<ul class="flex flex-col gap-1">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help</span>
+                        Support
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 font-body-md text-body-md rounded-lg transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">description</span>
+                        Documentation
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-grow flex flex-col md:ml-[260px] w-full min-h-screen overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-desktop h-16 w-full bg-surface-container-lowest dark:bg-surface-dim border-b border-outline-variant dark:border-outline shadow-sm z-10 sticky top-0">
+<div class="flex items-center gap-6">
+<!-- Search on Left -->
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-outline" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="pl-10 pr-4 py-2 border border-outline-variant rounded-full bg-surface font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none w-64 text-on-surface" placeholder="Search..." type="text"/>
+</div>
+</div>
+<!-- Navigation Links (Center/Left) -->
+<nav class="hidden lg:flex gap-6 mx-6">
+<a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1 flex items-center gap-4 transition-all" href="#">Analytics</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-4 hover:text-primary transition-all" href="#">Reports</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-4 hover:text-primary transition-all" href="#">Audit Log</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all rounded-full hover:bg-surface-container-high"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all rounded-full hover:bg-surface-container-high"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-all rounded-full hover:bg-surface-container-high"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help_outline</span></button>
+</div>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+<button class="font-label-md text-label-md border border-outline-variant bg-surface text-on-surface px-4 py-1.5 rounded-lg hover:bg-surface-container-high transition-colors">Export</button>
+<button class="font-label-md text-label-md bg-primary text-on-primary px-4 py-1.5 rounded-lg hover:bg-primary-container transition-colors shadow-sm">Upgrade</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant ml-2">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A small generic user profile avatar showing a professional looking person in a well-lit studio environment against a solid neutral background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxuGouLMkTggeluHxD7bL55xFgnjoaTYIqEb9PhC5YRJ-MV_uy5hGSNEin1aISPptsou4W2f5gadz0CrINkcrZsZABuY-Fx-xIKgUEWs_deU7N09rFwQCSVMbyeCYBA15da4UykzFGYjOBS4Nqq_Tbf2D3dHUlEkMzHvHsCExIMXfODQMIlWo29tRux1hj-Js7cZWdd3bZENsUjBmw_0LlpESKSCPu2mozMcWrnty5JbMR9ymjDY5x9EzQgN4Rn6bIP3GwlBrhaqo"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-grow p-margin-mobile md:p-margin-desktop overflow-y-auto bg-background">
+<div class="max-w-container-max mx-auto space-y-gutter">
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="font-display text-display text-on-surface mb-2">Dashboard</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Track lead generation, enrichment, outreach readiness, and campaign performance.</p>
+</div>
+<!-- KPI Grid -->
+<div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Total Leads</p>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold">14,289</p>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<div class="flex justify-between items-start">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Qualified Leads</p>
+<span class="w-2 h-2 rounded-full bg-[#10b981] mt-1"></span>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold">8,452</p>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Ready for Outreach</p>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold">5,102</p>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Emails Approved</p>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold">4,890</p>
+</div>
+<!-- KPI 5 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Emails Sent Today</p>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold">1,240</p>
+</div>
+<!-- KPI 6 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Positive Replies</p>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold text-primary">145</p>
+</div>
+<!-- KPI 7 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<div class="flex justify-between items-start">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Opt-outs</p>
+<span class="w-2 h-2 rounded-full bg-[#f43f5e] mt-1"></span>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold">23</p>
+</div>
+<!-- KPI 8 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm col-span-2 lg:col-span-1 xl:col-span-1 flex flex-col justify-between h-24">
+<p class="font-label-md text-label-md text-on-surface-variant truncate">Suppressed</p>
+<p class="font-headline-md text-headline-md text-on-surface font-semibold text-outline">892</p>
+</div>
+</div>
+<!-- Main Content Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- 2x2 Chart Grid -->
+<div class="col-span-1 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Chart 1: Pipeline Funnel -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col h-80">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Lead Status Pipeline</h3>
+<button class="p-1 text-on-surface-variant hover:bg-surface-container-high rounded"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">more_horiz</span></button>
+</div>
+<div class="flex-grow flex items-center justify-center relative bg-surface-container-low rounded-lg overflow-hidden border border-outline-variant/50">
+<span class="material-symbols-outlined text-outline-variant text-4xl mb-2 absolute" style="font-variation-settings: 'FILL' 0;">filter_alt</span>
+<div class="w-full h-full flex flex-col justify-center items-center opacity-30">
+<div class="w-3/4 h-8 bg-primary rounded-t-sm mb-1"></div>
+<div class="w-2/3 h-8 bg-primary/80 mb-1"></div>
+<div class="w-1/2 h-8 bg-primary/60 mb-1"></div>
+<div class="w-1/3 h-8 bg-primary/40 rounded-b-sm"></div>
+</div>
+<p class="absolute bottom-4 font-label-md text-label-md text-on-surface-variant">Visualization Placeholder</p>
+</div>
+</div>
+<!-- Chart 2: Campaign Performance -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col h-80">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Campaign Performance</h3>
+<button class="p-1 text-on-surface-variant hover:bg-surface-container-high rounded"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">more_horiz</span></button>
+</div>
+<div class="flex-grow flex items-center justify-center relative bg-surface-container-low rounded-lg overflow-hidden border border-outline-variant/50">
+<span class="material-symbols-outlined text-outline-variant text-4xl mb-2 absolute" style="font-variation-settings: 'FILL' 0;">show_chart</span>
+<div class="w-full h-full flex items-end justify-between px-4 pb-4 opacity-30">
+<div class="w-4 h-12 bg-primary"></div>
+<div class="w-4 h-24 bg-primary"></div>
+<div class="w-4 h-16 bg-primary"></div>
+<div class="w-4 h-32 bg-primary"></div>
+<div class="w-4 h-20 bg-primary"></div>
+<div class="w-4 h-40 bg-primary"></div>
+</div>
+<p class="absolute bottom-4 font-label-md text-label-md text-on-surface-variant">Visualization Placeholder</p>
+</div>
+</div>
+<!-- Chart 3: Reply Classification -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col h-80">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Reply Classification</h3>
+<button class="p-1 text-on-surface-variant hover:bg-surface-container-high rounded"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">more_horiz</span></button>
+</div>
+<div class="flex-grow flex items-center justify-center relative bg-surface-container-low rounded-lg overflow-hidden border border-outline-variant/50">
+<span class="material-symbols-outlined text-outline-variant text-4xl mb-2 absolute" style="font-variation-settings: 'FILL' 0;">pie_chart</span>
+<div class="w-32 h-32 rounded-full border-8 border-primary/40 opacity-50"></div>
+<p class="absolute bottom-4 font-label-md text-label-md text-on-surface-variant">Visualization Placeholder</p>
+</div>
+</div>
+<!-- Chart 4: Lead Score -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col h-80">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Lead Score Distribution</h3>
+<button class="p-1 text-on-surface-variant hover:bg-surface-container-high rounded"><span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 0;">more_horiz</span></button>
+</div>
+<div class="flex-grow flex items-center justify-center relative bg-surface-container-low rounded-lg overflow-hidden border border-outline-variant/50">
+<span class="material-symbols-outlined text-outline-variant text-4xl mb-2 absolute" style="font-variation-settings: 'FILL' 0;">bar_chart</span>
+<div class="w-full h-full flex items-end justify-around px-4 pb-4 opacity-30">
+<div class="w-8 h-10 bg-primary rounded-t-sm"></div>
+<div class="w-8 h-20 bg-primary rounded-t-sm"></div>
+<div class="w-8 h-40 bg-primary rounded-t-sm"></div>
+<div class="w-8 h-16 bg-primary rounded-t-sm"></div>
+</div>
+<p class="absolute bottom-4 font-label-md text-label-md text-on-surface-variant">Visualization Placeholder</p>
+</div>
+</div>
+</div>
+<!-- Operational Widgets (Right Sidebar) -->
+<div class="col-span-1 lg:col-span-4 flex flex-col gap-gutter">
+<!-- Compliance Alerts -->
+<div class="bg-surface-container-lowest border border-[#fbbf24] rounded-xl shadow-sm overflow-hidden">
+<div class="bg-[#fef3c7] px-4 py-3 border-b border-[#fcd34d] flex items-center gap-2">
+<span class="material-symbols-outlined text-[#d97706]" style="font-variation-settings: 'FILL' 1;">warning</span>
+<h4 class="font-label-md text-label-md font-semibold text-[#92400e]">Compliance Alerts</h4>
+</div>
+<div class="p-4 space-y-3 bg-[#fffbeb]">
+<div class="flex justify-between items-start pb-3 border-b border-[#fde68a] last:border-0 last:pb-0">
+<div>
+<p class="font-label-md text-label-md text-[#92400e] font-medium">Domain Reputation Drop</p>
+<p class="font-body-md text-body-md text-[#b45309]">example.com is nearing bounce limit.</p>
+</div>
+<button class="text-[#d97706] hover:text-[#b45309] font-label-sm text-label-sm uppercase tracking-wider">Review</button>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-md text-label-md text-[#92400e] font-medium">GDPR Consent Missing</p>
+<p class="font-body-md text-body-md text-[#b45309]">42 leads imported without audit trail.</p>
+</div>
+<button class="text-[#d97706] hover:text-[#b45309] font-label-sm text-label-sm uppercase tracking-wider">Review</button>
+</div>
+</div>
+</div>
+<!-- Tasks Needing Approval -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="px-4 py-3 border-b border-outline-variant flex items-center justify-between">
+<h4 class="font-label-md text-label-md font-semibold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">rule</span>
+                                    Manual Review Required
+                                </h4>
+<span class="bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm px-2 py-0.5 rounded-full">3</span>
+</div>
+<div class="p-0 divide-y divide-outline-variant/50">
+<div class="p-4 hover:bg-surface-container-low transition-colors flex justify-between items-center group cursor-pointer">
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Campaign "Q3 Enterprise"</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-0.5">Approve 250 verified emails</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+</div>
+<div class="p-4 hover:bg-surface-container-low transition-colors flex justify-between items-center group cursor-pointer">
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Draft: Follow-up Sequence</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-0.5">Copy review requested</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+</div>
+<div class="p-4 hover:bg-surface-container-low transition-colors flex justify-between items-center group cursor-pointer">
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Bounced Lead Handling</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-0.5">15 contacts need updating</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Provider Connection Status -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden flex-grow">
+<div class="px-4 py-3 border-b border-outline-variant">
+<h4 class="font-label-md text-label-md font-semibold text-on-surface">Connection Status</h4>
+</div>
+<div class="p-4 space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" style="font-variation-settings: 'FILL' 0;">mail</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">SMTP Relay 1</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-xs">Sending normal</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Active</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-high border border-outline-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" style="font-variation-settings: 'FILL' 0;">contact_mail</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Data Provider API</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-xs">Syncing</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Active</span>
+<span class="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

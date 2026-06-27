@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Company Detail - Northstar CRM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#c3c0ff",
+                      "primary": "#3525cd",
+                      "on-tertiary-container": "#ffd4a4",
+                      "inverse-on-surface": "#eaf1ff",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "inverse-primary": "#c3c0ff",
+                      "on-surface-variant": "#464555",
+                      "primary-container": "#4f46e5",
+                      "surface-tint": "#4d44e3",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#006c49",
+                      "surface-dim": "#cbdbf5",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#dce9ff",
+                      "primary-fixed": "#e2dfff",
+                      "surface-container": "#e5eeff",
+                      "background": "#f8f9ff",
+                      "outline": "#777587",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed": "#ffddb8",
+                      "error": "#ba1a1a",
+                      "on-primary-container": "#dad7ff",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed": "#002113",
+                      "secondary-container": "#6cf8bb",
+                      "on-surface": "#0b1c30",
+                      "surface-variant": "#d3e4fe",
+                      "outline-variant": "#c7c4d8",
+                      "surface": "#f8f9ff",
+                      "on-primary-fixed": "#0f0069",
+                      "on-error": "#ffffff",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "surface-bright": "#f8f9ff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed": "#2a1700",
+                      "surface-container-low": "#eff4ff",
+                      "tertiary": "#684000",
+                      "inverse-surface": "#213145",
+                      "tertiary-container": "#885500",
+                      "secondary-fixed": "#6ffbbe",
+                      "on-secondary-container": "#00714d",
+                      "on-background": "#0b1c30",
+                      "on-secondary-fixed-variant": "#005236",
+                      "secondary-fixed-dim": "#4edea3",
+                      "surface-container-highest": "#d3e4fe"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "margin-desktop": "32px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "container-max": "1440px",
+                      "sidebar-width": "260px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.015em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-full py-margin-desktop bg-surface dark:bg-inverse-surface docked left-0 h-screen w-[260px] border-r border-outline-variant dark:border-outline flat no shadows fixed z-20">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">business</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">LeadsGen Pro</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Enterprise Plan</p>
+</div>
+</div>
+<div class="px-4 mb-6">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-container transition-colors duration-150 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Campaign
+            </button>
+</div>
+<nav class="flex-1 overflow-y-auto px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">category</span>
+                Niches
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">search</span>
+                Search
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">person_search</span>
+                Leads
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary-container text-on-primary-container font-semibold rounded-lg mx-2 font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">business</span>
+                Companies
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">mail_lock</span>
+                Email Studio
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">campaign</span>
+                Campaigns
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">forum</span>
+                Replies
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="px-4 pt-4 border-t border-outline-variant dark:border-outline mt-auto">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">help</span>
+                Support
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high dark:text-surface-variant dark:hover:bg-surface-container-highest mx-2 rounded-lg font-body-md text-body-md transition-colors duration-150" href="#">
+<span class="material-symbols-outlined">description</span>
+                Documentation
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col md:ml-[260px] min-h-screen">
+<!-- TopAppBar -->
+<header class="hidden md:flex justify-between items-center px-margin-desktop h-16 w-full max-w-full bg-surface-container-lowest dark:bg-surface-dim border-b border-outline-variant dark:border-outline shadow-sm sticky top-0 z-10">
+<div class="flex items-center gap-6">
+<h2 class="font-headline-md text-headline-md font-extrabold text-on-surface dark:text-inverse-on-surface">LeadsGen</h2>
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 bg-surface rounded-md border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md text-on-surface placeholder:text-outline outline-none transition-colors" placeholder="Search companies..." type="text"/>
+</div>
+</div>
+<nav class="flex items-center gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:text-primary transition-all" href="#">Analytics</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:text-primary transition-all" href="#">Reports</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:text-primary transition-all" href="#">Audit Log</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<button class="p-1.5 rounded-full hover:bg-surface-container-high hover:text-primary transition-all"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+<button class="p-1.5 rounded-full hover:bg-surface-container-high hover:text-primary transition-all"><span class="material-symbols-outlined text-[20px]">history</span></button>
+<button class="p-1.5 rounded-full hover:bg-surface-container-high hover:text-primary transition-all"><span class="material-symbols-outlined text-[20px]">help_outline</span></button>
+</div>
+<div class="flex items-center gap-2">
+<button class="font-label-md text-label-md px-3 py-1.5 border border-outline-variant rounded-md hover:bg-surface-container-high transition-colors">Export</button>
+<button class="font-label-md text-label-md px-3 py-1.5 bg-primary text-on-primary rounded-md hover:bg-primary-container transition-colors">Upgrade</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate user, smiling subtly, soft high-key lighting, corporate minimalist aesthetic, sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXnyDs2Y7fqBwaE4P5bJ1uMtpj_gqxzg6wUzhv27IA4oswlQ9d7HvYKBpLwJR0fPe5445JdmkDCdLDoPcRUfb9RtoFbLrMMg5XXvWUJe9MZ-TLIgdzqf3ui5-gcrbsl691lZPBrJU7UMVGCqsAwuqz32W9V3w0aBtsxAAIM6Y-MqcodRjHZ-4c-4ktDIsheGTXJeeSNS6inqRqUrA5cOyoUttYZZ_mB_NzBNDfGMWhbIrK4U3kSqfJ1448K_cJkv6LkT1eoUrDmXI"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto">
+<!-- Company Header & Actions -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center p-2">
+<img alt="Northstar CRM Logo" class="w-full h-full object-contain" data-alt="A clean, minimalist vector logo for Northstar CRM, geometric star shape, deep indigo and slate colors, professional corporate design, white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuANPZ7SZaBvKCKtKVzYP4bgAUsPrrc6TeW9uAjhCXG_-5N-Inbnz39BJ8fV2_0_0ji1GcKjnbjM9Kh6pgSPp3c2kJsTB6p0LMlMKlpZxLyZEgGHNbQOFpiNFYatPPQxlCHSfrjf2F_eu9KRGF5T9enACIiLzqLtUZ6evOHsyghC_jrzvLOdzzizFahJgCjTU8CcHv_gFjiFdw_0xqyuNlWIUG7Fff6xROAXnNBCJdUnLTWbljjOP-tG_zfu4x5_A_1s5jC3GFccTcg"/>
+</div>
+<div>
+<h1 class="font-display text-display text-on-surface">Northstar CRM</h1>
+<a class="font-body-md text-body-md text-primary hover:underline flex items-center gap-1" href="https://northstarcrm.com" target="_blank">
+                                northstarcrm.com <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">data_exploration</span>
+                    Run Enrichment
+                </button>
+</div>
+<!-- Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Info & Status -->
+<div class="lg:col-span-4 flex flex-col gap-gutter">
+<!-- Domain Info Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4 border-b border-outline-variant pb-2">Domain Information</h3>
+<div class="space-y-4">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block mb-1">Industry</span>
+<span class="font-body-md text-body-md text-on-surface">Enterprise Software (SaaS)</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block mb-1">Estimated Size</span>
+<span class="font-body-md text-body-md text-on-surface">500 - 1,000 Employees</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block mb-1">Location</span>
+<span class="font-body-md text-body-md text-on-surface">San Francisco, CA</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block mb-1">Tech Stack Highlights</span>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-container-high border border-outline-variant rounded text-[12px] font-medium text-on-surface-variant">React</span>
+<span class="px-2 py-1 bg-surface-container-high border border-outline-variant rounded text-[12px] font-medium text-on-surface-variant">AWS</span>
+<span class="px-2 py-1 bg-surface-container-high border border-outline-variant rounded text-[12px] font-medium text-on-surface-variant">Salesforce</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Enrichment Status & Compliance -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4 border-b border-outline-variant pb-2">Enrichment Status</h3>
+<div class="flex items-center gap-3 mb-5 p-3 bg-secondary/10 border border-secondary/20 rounded-lg">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<span class="font-label-md text-label-md text-on-surface block">Robots.txt Check Passed</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-[12px]">Crawling permitted for /about and /team</span>
+</div>
+</div>
+<div class="space-y-3 mb-6">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Last Enrichment</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Oct 24, 2023 - 09:41 AM</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Pages Crawled</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">42 / 50 limit</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Emails Found</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">14</span>
+</div>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg p-3 flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] mt-0.5">policy</span>
+<p class="font-body-md text-body-md text-on-surface-variant text-[13px] leading-tight">
+<strong class="text-on-surface">Compliance Note:</strong> Enrichment respects robots.txt, uses rate limits, and only extracts public contact information.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Right Column: Data Tables -->
+<div class="lg:col-span-8 flex flex-col gap-gutter">
+<!-- Public Emails Found -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col h-full">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface/50">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">contacts</span>
+                                Public Emails Found (14)
+                            </h3>
+<button class="font-label-sm text-label-sm text-primary hover:text-primary-container px-2 py-1 rounded border border-transparent hover:border-outline-variant transition-all">Export CSV</button>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse min-w-[600px]">
+<thead>
+<tr class="border-b border-outline-variant bg-surface-container-low">
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Contact</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Role/Title</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Source Page</th>
+<th class="py-3 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold text-right">Confidence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-lowest/50 transition-colors">
+<td class="py-3 px-4">
+<div class="font-body-md text-body-md font-medium text-on-surface">Sarah Jenkins</div>
+<div class="font-body-md text-body-md text-primary text-[13px]">s.jenkins@northstarcrm.com</div>
+</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant">VP of Engineering</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant text-[13px] truncate max-w-[150px]">/leadership-team</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-secondary/10 text-secondary border border-secondary/20">High (98%)</span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-lowest/50 transition-colors">
+<td class="py-3 px-4">
+<div class="font-body-md text-body-md font-medium text-on-surface">Marcus Chen</div>
+<div class="font-body-md text-body-md text-primary text-[13px]">mchen@northstarcrm.com</div>
+</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant">Director of Sales</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant text-[13px] truncate max-w-[150px]">/contact-sales</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-secondary/10 text-secondary border border-secondary/20">High (95%)</span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-lowest/50 transition-colors">
+<td class="py-3 px-4">
+<div class="font-body-md text-body-md font-medium text-on-surface">Press Team</div>
+<div class="font-body-md text-body-md text-primary text-[13px]">press@northstarcrm.com</div>
+</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant">Generic / Dept</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant text-[13px] truncate max-w-[150px]">/newsroom</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-secondary/10 text-secondary border border-secondary/20">High (100%)</span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-lowest/50 transition-colors">
+<td class="py-3 px-4">
+<div class="font-body-md text-body-md font-medium text-on-surface">Elena Rodriguez</div>
+<div class="font-body-md text-body-md text-primary text-[13px]">elena.r@northstarcrm.com</div>
+</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant">Product Manager</td>
+<td class="py-3 px-4 font-body-md text-body-md text-on-surface-variant text-[13px] truncate max-w-[150px]">/careers/product</td>
+<td class="py-3 px-4 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[12px] font-medium bg-tertiary-fixed/50 text-tertiary-container border border-tertiary-fixed-dim/30">Med (75%)</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 border-t border-outline-variant bg-surface-container-lowest text-center">
+<button class="font-label-md text-label-md text-primary hover:underline">View All 14 Emails</button>
+</div>
+</div>
+<!-- Crawled Pages List -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface/50">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">sliders</span>
+                                Crawled Pages Log
+                            </h3>
+</div>
+<div class="max-h-[300px] overflow-y-auto">
+<ul class="divide-y divide-outline-variant/50">
+<li class="p-3 hover:bg-surface-container-lowest/50 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline text-[18px]">draft</span>
+<span class="font-body-md text-body-md text-on-surface text-[13px] font-mono">/about-us</span>
+</div>
+<span class="font-body-md text-body-md text-outline text-[12px]">200 OK • 3 emails extracted</span>
+</li>
+<li class="p-3 hover:bg-surface-container-lowest/50 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline text-[18px]">draft</span>
+<span class="font-body-md text-body-md text-on-surface text-[13px] font-mono">/leadership-team</span>
+</div>
+<span class="font-body-md text-body-md text-outline text-[12px]">200 OK • 5 emails extracted</span>
+</li>
+<li class="p-3 hover:bg-surface-container-lowest/50 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline text-[18px]">draft</span>
+<span class="font-body-md text-body-md text-on-surface text-[13px] font-mono">/contact-sales</span>
+</div>
+<span class="font-body-md text-body-md text-outline text-[12px]">200 OK • 2 emails extracted</span>
+</li>
+<li class="p-3 hover:bg-surface-container-lowest/50 flex justify-between items-center bg-surface-container-high/30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error text-[18px]">block</span>
+<span class="font-body-md text-body-md text-on-surface-variant text-[13px] font-mono line-through">/internal/staff-dir</span>
+</div>
+<span class="font-body-md text-body-md text-error text-[12px] font-medium">Blocked by robots.txt</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

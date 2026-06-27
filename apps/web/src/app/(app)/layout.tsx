@@ -5,13 +5,19 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <div className="flex min-h-screen bg-background">
-        <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar />
-          <main className="flex-1 p-4 md:p-6">{children}</main>
+      {/* Fixed sidebar */}
+      <AppSidebar />
+      {/* Fixed topbar (offset by sidebar width) */}
+      <TopBar />
+      {/* Main content: offset from fixed sidebar + topbar */}
+      <main
+        className="ml-[260px] pt-16 min-h-screen"
+        style={{ background: "var(--background)" }}
+      >
+        <div className="p-8 max-w-[1440px] mx-auto">
+          {children}
         </div>
-      </div>
+      </main>
     </AuthGuard>
   );
 }

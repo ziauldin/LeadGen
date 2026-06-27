@@ -2,9 +2,6 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   nicheFormToPayload,
   nicheSchema,
@@ -45,60 +42,163 @@ export function NicheForm({
     defaultValues: nicheToDefaults(niche),
   });
 
+  const labelClass = "block text-[13px] font-semibold mb-1.5";
+  const inputClass = "w-full px-3 py-2.5 border rounded text-[13px] outline-none transition-all";
+  const errorClass = "text-[12px] mt-1 text-red-500";
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.target.style.borderColor = "var(--primary)";
+    e.target.style.boxShadow = "0 0 0 1px var(--primary)";
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.target.style.borderColor = "var(--outline-variant)";
+    e.target.style.boxShadow = "none";
+  };
+
+  const inputStyle: React.CSSProperties = {
+    borderColor: "var(--outline-variant)",
+    color: "var(--on-surface)",
+    background: "var(--surface-container-lowest)",
+  };
+
   return (
     <form
       onSubmit={handleSubmit((values) => onSubmit(nicheFormToPayload(values)))}
-      className="space-y-4"
+      className="flex flex-col gap-5"
     >
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Name</label>
-        <Input {...register("name")} />
-        {errors.name ? <p className="text-sm text-destructive">{errors.name.message}</p> : null}
+      <div>
+        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+          Niche Name
+        </label>
+        <input
+          {...register("name")}
+          className={inputClass}
+          style={inputStyle}
+          placeholder="e.g. UK Tech Founders"
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {errors.name && <p className={errorClass}>{errors.name.message}</p>}
       </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Country</label>
-          <Input {...register("country")} />
-          {errors.country ? (
-            <p className="text-sm text-destructive">{errors.country.message}</p>
-          ) : null}
+        <div>
+          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+            Country
+          </label>
+          <input
+            {...register("country")}
+            className={inputClass}
+            style={inputStyle}
+            placeholder="e.g. UK"
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          />
+          {errors.country && <p className={errorClass}>{errors.country.message}</p>}
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Industry</label>
-          <Input {...register("industry")} />
-          {errors.industry ? (
-            <p className="text-sm text-destructive">{errors.industry.message}</p>
-          ) : null}
+        <div>
+          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+            Industry
+          </label>
+          <input
+            {...register("industry")}
+            className={inputClass}
+            style={inputStyle}
+            placeholder="e.g. Software, E-commerce"
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          />
+          {errors.industry && <p className={errorClass}>{errors.industry.message}</p>}
         </div>
       </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Min company size</label>
-          <Input type="number" min={0} {...register("company_size_min")} />
+        <div>
+          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+            Min Company Size
+          </label>
+          <input
+            type="number"
+            min={0}
+            {...register("company_size_min")}
+            className={inputClass}
+            style={inputStyle}
+            placeholder="e.g. 10"
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          />
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Max company size</label>
-          <Input type="number" min={0} {...register("company_size_max")} />
+        <div>
+          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+            Max Company Size
+          </label>
+          <input
+            type="number"
+            min={0}
+            {...register("company_size_max")}
+            className={inputClass}
+            style={inputStyle}
+            placeholder="e.g. 200"
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          />
         </div>
       </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Target roles (comma-separated)</label>
-        <Input {...register("target_roles")} />
+
+      <div>
+        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+          Target Roles (comma-separated)
+        </label>
+        <input
+          {...register("target_roles")}
+          className={inputClass}
+          style={inputStyle}
+          placeholder="e.g. CEO, Founder, VP Sales"
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
       </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Keywords</label>
-        <Textarea rows={3} {...register("keywords")} />
-        {errors.keywords ? (
-          <p className="text-sm text-destructive">{errors.keywords.message}</p>
-        ) : null}
+
+      <div>
+        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+          Keywords (comma-separated)
+        </label>
+        <textarea
+          rows={3}
+          {...register("keywords")}
+          className="w-full px-3 py-2 border rounded text-[13px] outline-none transition-all"
+          style={inputStyle}
+          placeholder="e.g. artificial intelligence, machinery, logistics"
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {errors.keywords && <p className={errorClass}>{errors.keywords.message}</p>}
       </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Exclusion keywords</label>
-        <Textarea rows={2} {...register("exclusion_keywords")} />
+
+      <div>
+        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
+          Exclusion Keywords (comma-separated)
+        </label>
+        <textarea
+          rows={2}
+          {...register("exclusion_keywords")}
+          className="w-full px-3 py-2 border rounded text-[13px] outline-none transition-all"
+          style={inputStyle}
+          placeholder="e.g. agency, consultant, recruitment"
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
       </div>
-      <Button type="submit" disabled={loading}>
-        {loading ? "Saving…" : submitLabel}
-      </Button>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="self-start flex items-center justify-center px-6 py-2.5 rounded text-[13px] font-medium text-white transition-opacity disabled:opacity-60 active:scale-[0.98] shadow-sm"
+        style={{ background: "var(--primary)" }}
+      >
+        {loading ? "Saving niche…" : submitLabel}
+      </button>
     </form>
   );
 }

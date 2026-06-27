@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lead Detail - LeadsGen Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary": "#3525cd",
+                        "on-tertiary-container": "#ffd4a4",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "inverse-primary": "#c3c0ff",
+                        "on-surface-variant": "#464555",
+                        "primary-container": "#4f46e5",
+                        "surface-tint": "#4d44e3",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#006c49",
+                        "surface-dim": "#cbdbf5",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed": "#e2dfff",
+                        "surface-container": "#e5eeff",
+                        "background": "#f8f9ff",
+                        "outline": "#777587",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb8",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#dad7ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#002113",
+                        "secondary-container": "#6cf8bb",
+                        "on-surface": "#0b1c30",
+                        "surface-variant": "#d3e4fe",
+                        "outline-variant": "#c7c4d8",
+                        "surface": "#f8f9ff",
+                        "on-primary-fixed": "#0f0069",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-bright": "#f8f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-container-low": "#eff4ff",
+                        "tertiary": "#684000",
+                        "inverse-surface": "#213145",
+                        "tertiary-container": "#885500",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-secondary-container": "#00714d",
+                        "on-background": "#0b1c30",
+                        "on-secondary-fixed-variant": "#005236",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-desktop": "32px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "sidebar-width": "260px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-full flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-full py-margin-desktop bg-surface border-r border-outline-variant docked left-0 w-sidebar-width shrink-0 z-20 absolute lg:relative">
+<div class="px-gutter mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-lg">
+                LG
+            </div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">LeadsGen Pro</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Enterprise Plan</p>
+</div>
+</div>
+<button class="mx-gutter mb-6 bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-surface-tint transition-colors cursor-pointer active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+            New Campaign
+        </button>
+<div class="flex-1 overflow-y-auto px-2 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">category</span>
+<span class="font-body-md text-body-md">Niches</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">search</span>
+<span class="font-body-md text-body-md">Search</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary-container text-on-primary-container font-semibold transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px] fill">person_search</span>
+<span class="font-body-md text-body-md font-semibold">Leads</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">business</span>
+<span class="font-body-md text-body-md">Companies</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">mail_lock</span>
+<span class="font-body-md text-body-md">Email Studio</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">campaign</span>
+<span class="font-body-md text-body-md">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+<span class="font-body-md text-body-md">Replies</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+<div class="px-2 mt-auto pt-4 border-t border-outline-variant mx-2">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="font-body-md text-body-md">Documentation</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-desktop h-16 w-full bg-surface-container-lowest border-b border-outline-variant shadow-sm z-10 shrink-0">
+<div class="flex items-center gap-8">
+<!-- Mobile Menu Button -->
+<button class="lg:hidden text-on-surface-variant p-2 -ml-2 rounded-lg hover:bg-surface-container-low">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-extrabold text-on-surface md:hidden lg:block">LeadsGen</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1 pt-1 hover:text-primary transition-all" href="#">Analytics</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:text-primary transition-all pt-1 pb-1" href="#">Reports</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:text-primary transition-all pt-1 pb-1" href="#">Audit Log</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 mr-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+</div>
+<button class="hidden sm:block px-4 py-2 bg-surface text-on-surface font-label-md text-label-md rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors shadow-sm">
+                    Export
+                </button>
+<button class="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-surface-tint transition-colors shadow-sm">
+                    Upgrade
+                </button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant ml-2 shrink-0">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate user with a neutral background, high resolution, soft studio lighting, representing a B2B platform user profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-m7XRRErymGrPIhiGPl5FPzfiWTDBZH9m1Fp-mS93vweQsS7DeOdXTG7u79UD13YW7A7jnwTkbWvrn-caMqVKMzz43KM3fC1dG4y_bCfEwnaDXLGSIHToOFVThy9xDGdxOcnZ8h53agBEPwkSMpXcxJyb3iBRYB96fQBRvjKI3NpfsOfI7q20A220JZlfzN2hU6pebcrJ2tZOUSgD3oS2vqpSvGRFx-RQiXZpqENQNNGXgx70PL3XpGsbmA0QFtm53G__AS7uI7w"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 overflow-y-auto bg-background">
+<div class="max-w-container-max mx-auto p-margin-mobile md:p-margin-desktop space-y-6">
+<!-- Header Actions -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<button class="p-2 -ml-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Eleanor Vance</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">VP of Operations at Northstar CRM</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 bg-surface text-error font-label-md text-label-md rounded-lg border border-error-container hover:bg-error-container hover:text-on-error-container transition-colors shadow-sm">
+                            Reject
+                        </button>
+<button class="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-surface-tint transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">send</span>
+                            Approve for Outreach
+                        </button>
+</div>
+</div>
+<!-- Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Sidebar (Profile & Company) -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Profile Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+<div class="p-6 pb-0">
+<div class="flex items-start gap-4 mb-6">
+<div class="w-16 h-16 rounded-full overflow-hidden border border-outline-variant shrink-0">
+<img alt="Profile Picture" class="w-full h-full object-cover" data-alt="Professional corporate headshot of a female executive in her 40s, business attire, soft natural lighting, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnp6xBbb_x_EbP3s36njYYGb-0yKTFEf2C1k3hmn-M4oMVIOn4cC2eQF719iDO0l-zIC5BZ2V-G_4pcwxiLAJCjx3oxZZrSIEFK0f7T7Rd66a6VSE9enrWADax_S4TBz07bm0eYGbq-07RU_DAcK19IFM8ltrgfU5qgq89h9mtvX4-RubNdIKP59nLPoJw7ij1ukxbmQtnwgQrb3FqOKeVZRiZqV3UfMgB27Z5n57boxnFb3QXpY4D6ITYTuaIATw46Ek8ERKJ1O8"/>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1">Eleanor Vance</h3>
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">mail</span>
+<span class="font-body-md text-body-md truncate max-w-[180px]">e.vance@northstarcrm.com</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant mt-1">
+<span class="material-symbols-outlined text-[16px]">link</span>
+<a class="font-body-md text-body-md text-primary hover:underline" href="#">LinkedIn Profile</a>
+</div>
+</div>
+</div>
+</div>
+<div class="border-t border-outline-variant bg-surface-container-low p-4 flex justify-between items-center">
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Lead Score</div>
+<div class="flex items-center gap-2">
+<div class="w-12 h-2 bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[85%] rounded-full"></div>
+</div>
+<span class="font-headline-md text-headline-md text-secondary">85</span>
+</div>
+</div>
+</div>
+<!-- Compliance Checklist -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">Compliance Status</h3>
+<div class="space-y-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary fill text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Verified Email Address</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary fill text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Not Opted Out (Global Registry)</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary fill text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Valid Source URL Provided</span>
+</div>
+</div>
+<div class="mt-4 p-3 bg-surface-container rounded-lg border border-outline-variant/50">
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-start gap-2">
+<span class="material-symbols-outlined text-[16px] mt-0.5">info</span>
+                                    Found through public company profile and website contact page.
+                                </p>
+</div>
+</div>
+</div>
+<!-- Main Area (Outreach & Activity) -->
+<div class="lg:col-span-8 space-y-6">
+<!-- Generated Email Drafts -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+                                    Generated Outreach Drafts
+                                </h3>
+<span class="px-2 py-1 bg-primary-container text-on-primary-container font-label-sm text-label-sm rounded-md">Q3 Enterprise Expansion</span>
+</div>
+<div class="border border-outline-variant rounded-lg overflow-hidden">
+<div class="bg-surface-container-low p-3 border-b border-outline-variant flex items-center justify-between">
+<div class="font-label-md text-label-md text-on-surface">Subject: Enhancing Northstar CRM's operational scaling</div>
+<div class="flex gap-2">
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">edit</span></button>
+<button class="p-1.5 text-on-surface-variant hover:bg-surface-container rounded transition-colors"><span class="material-symbols-outlined text-[18px]">content_copy</span></button>
+</div>
+</div>
+<div class="p-4 bg-surface-container-lowest font-body-md text-body-md text-on-surface-variant whitespace-pre-wrap">Hi Eleanor,
+
+I noticed your recent push towards expanding Northstar CRM's footprint in the APAC region. Given your role in operations, scaling infrastructure efficiently is likely top of mind.
+
+Our platform has helped similar enterprise CRM teams reduce provisioning time by 40% while maintaining strict compliance standards. 
+
+Would you be open to a brief chat next Tuesday to see if there's alignment?
+
+Best,
+The LeadsGen Team</div>
+</div>
+</div>
+<!-- Activity Timeline -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm p-6">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6">Activity Timeline</h3>
+<div class="relative pl-6 border-l border-outline-variant space-y-8 pb-4">
+<div class="relative">
+<div class="absolute -left-[31px] bg-surface-container-lowest p-1 rounded-full border border-outline-variant">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Today, 10:42 AM</p>
+<p class="font-body-md text-body-md text-on-surface">Lead enriched via Clearbit integration. Confidence score updated to 85.</p>
+</div>
+<div class="relative">
+<div class="absolute -left-[31px] bg-surface-container-lowest p-1 rounded-full border border-outline-variant">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Yesterday, 3:15 PM</p>
+<p class="font-body-md text-body-md text-on-surface">Added to campaign: <span class="font-medium">Q3 Enterprise Expansion</span></p>
+</div>
+<div class="relative">
+<div class="absolute -left-[31px] bg-surface-container-lowest p-1 rounded-full border border-outline-variant">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Oct 12, 2023, 9:00 AM</p>
+<p class="font-body-md text-body-md text-on-surface">Lead discovered via LinkedIn Sales Navigator extraction.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

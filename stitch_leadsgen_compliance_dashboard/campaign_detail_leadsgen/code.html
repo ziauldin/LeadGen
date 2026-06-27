@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Campaign Detail - LeadsGen Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c7c4d8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777587;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary": "#3525cd",
+                        "on-tertiary-container": "#ffd4a4",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "inverse-primary": "#c3c0ff",
+                        "on-surface-variant": "#464555",
+                        "primary-container": "#4f46e5",
+                        "surface-tint": "#4d44e3",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#006c49",
+                        "surface-dim": "#cbdbf5",
+                        "error-container": "#ffdad6",
+                        "surface-container-high": "#dce9ff",
+                        "primary-fixed": "#e2dfff",
+                        "surface-container": "#e5eeff",
+                        "background": "#f8f9ff",
+                        "outline": "#777587",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb8",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#dad7ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#002113",
+                        "secondary-container": "#6cf8bb",
+                        "on-surface": "#0b1c30",
+                        "surface-variant": "#d3e4fe",
+                        "outline-variant": "#c7c4d8",
+                        "surface": "#f8f9ff",
+                        "on-primary-fixed": "#0f0069",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "surface-bright": "#f8f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-container-low": "#eff4ff",
+                        "tertiary": "#684000",
+                        "inverse-surface": "#213145",
+                        "tertiary-container": "#885500",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-secondary-container": "#00714d",
+                        "on-background": "#0b1c30",
+                        "on-secondary-fixed-variant": "#005236",
+                        "secondary-fixed-dim": "#4edea3",
+                        "surface-container-highest": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-desktop": "32px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "sidebar-width": "260px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- Shared Component: SideNavBar -->
+<nav class="fixed left-0 top-0 h-screen w-[260px] bg-surface border-r border-outline-variant flex flex-col py-margin-desktop z-40 shadow-none">
+<!-- Brand Header -->
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-primary flex items-center justify-center font-bold text-xl">
+                L
+            </div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">LeadsGen Pro</h1>
+<p class="font-label-sm text-label-sm text-outline">Enterprise Plan</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-6 mb-8">
+<button class="w-full bg-primary text-on-primary py-2.5 rounded-lg font-label-md text-label-md font-semibold hover:bg-surface-tint transition-colors duration-150 flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Campaign
+            </button>
+</div>
+<!-- Main Navigation Tabs -->
+<div class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<!-- Tab 0: Dashboard -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Tab 1: Niches -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">category</span>
+<span>Niches</span>
+</a>
+<!-- Tab 2: Search -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">search</span>
+<span>Search</span>
+</a>
+<!-- Tab 3: Leads -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">person_search</span>
+<span>Leads</span>
+</a>
+<!-- Tab 4: Companies -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">business</span>
+<span>Companies</span>
+</a>
+<!-- Tab 5: Email Studio -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">mail_lock</span>
+<span>Email Studio</span>
+</a>
+<!-- Tab 6: Campaigns (ACTIVE) -->
+<a class="flex items-center gap-3 px-4 py-2.5 bg-primary-container text-on-primary-container font-semibold rounded-lg mx-2 cursor-pointer active:scale-95 transition-colors duration-150 font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span>Campaigns</span>
+</a>
+<!-- Tab 7: Replies -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+<span>Replies</span>
+</a>
+<!-- Tab 8: Settings -->
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 cursor-pointer active:scale-95 mx-2 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Settings</span>
+</a>
+</div>
+<!-- Footer Tabs -->
+<div class="mt-auto pt-4 border-t border-outline-variant flex flex-col gap-1 mx-2">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-colors duration-150 rounded-lg font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span>Documentation</span>
+</a>
+</div>
+</nav>
+<!-- Shared Component: TopAppBar -->
+<header class="fixed top-0 left-[260px] w-[calc(100%-260px)] h-16 bg-surface-container-lowest border-b border-outline-variant shadow-sm flex justify-between items-center px-margin-desktop z-30">
+<!-- Search Bar (on_left) -->
+<div class="flex items-center w-64 relative">
+<span class="material-symbols-outlined absolute left-3 text-outline">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full py-1.5 pl-10 pr-4 font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search..." type="text"/>
+</div>
+<!-- Navigation Links -->
+<div class="flex items-center gap-6 font-label-md text-label-md hidden lg:flex">
+<a class="text-on-surface-variant hover:text-primary transition-all" href="#">Analytics</a>
+<a class="text-on-surface-variant hover:text-primary transition-all" href="#">Reports</a>
+<a class="text-on-surface-variant hover:text-primary transition-all" href="#">Audit Log</a>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4">
+<!-- Icon Actions -->
+<div class="flex items-center gap-2 border-r border-outline-variant pr-4">
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<button class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-primary transition-all">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+</div>
+<!-- Button Actions -->
+<button class="font-label-md text-label-md text-on-surface-variant border border-outline-variant px-3 py-1.5 rounded-md hover:bg-surface-container-high transition-colors">
+                Export
+            </button>
+<button class="font-label-md text-label-md bg-primary text-on-primary px-3 py-1.5 rounded-md hover:bg-surface-tint transition-colors shadow-sm">
+                Upgrade
+            </button>
+<!-- Profile Image -->
+<div class="w-8 h-8 rounded-full overflow-hidden ml-2 border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A detailed, professional headshot of a business executive in a well-lit corporate office environment. The lighting is soft and neutral, enhancing a clean, modern aesthetic. The subject is wearing business casual attire. The background is slightly blurred, showing a minimal glass-walled office space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMBOALqagUCoBCvkTSBAxDvGcccJybaSPk3iueC48acOVey3jKemiHZZ5XEm0xLUy9gbiIF6hOZez3T8hcstmhCIpU9pJU4NNYAF-MqRdg_xK4TvvUonGttoHisAYA2QBgk_iN_69CnJjqlSezkjflOYbgG1bZ5HcACY_EHLlsD0R18uQW4U2fw6zED6_vhJJfjmAv_dymY4Xp4JGoPaeSWr_N7n8lWQTZWOEwOSSykl9vx-yMTS-IE7DxGEG5MqagVaZlfWtnhP0"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] pt-16 min-h-screen bg-background flex flex-col">
+<!-- Page Header Area -->
+<div class="px-margin-desktop py-8 flex justify-between items-end border-b border-outline-variant bg-surface-container-lowest">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm border border-primary-fixed-dim">Active</span>
+<span class="text-on-surface-variant font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">folder</span> SaaS Outreach
+                    </span>
+</div>
+<h2 class="font-display text-display text-on-surface">UK SaaS Founder Outreach</h2>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 bg-surface text-on-surface border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+                    Add Leads
+                </button>
+<button class="px-4 py-2 bg-error text-on-error rounded-lg font-label-md text-label-md hover:bg-on-error-container transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">pause</span>
+                    Pause Campaign
+                </button>
+</div>
+</div>
+<!-- Grid Layout Content -->
+<div class="flex-1 p-margin-desktop">
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Top Overview Metrics (Bento Grid Style) -->
+<div class="col-span-12 grid grid-cols-4 gap-gutter mb-2">
+<!-- Metric 1 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[48px] text-primary">group</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Total Leads Enrolled</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface">1,248</span>
+<span class="font-label-sm text-label-sm text-secondary flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span> 12%</span>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[48px] text-primary">mark_email_read</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Open Rate</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface">48.2%</span>
+<span class="font-label-sm text-label-sm text-secondary flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span> 3.1%</span>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-[48px] text-primary">quickreply</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Reply Rate</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface">14.5%</span>
+<span class="font-label-sm text-label-sm text-secondary flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span> 1.2%</span>
+</div>
+</div>
+<!-- Metric 4: Send Gate Mini -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<span class="font-label-md text-label-md text-on-surface-variant">Daily Send Limit</span>
+<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded-sm font-label-sm text-label-sm">Healthy</span>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-1">
+<span class="text-on-surface">120 sent</span>
+<span class="text-outline">150 max</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 80%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sequence Steps (Left - 8 Columns) -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-gutter">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="p-5 border-b border-outline-variant bg-surface-bright flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface">Sequence Workflow</h3>
+<button class="text-primary font-label-md text-label-md hover:underline">Edit Sequence</button>
+</div>
+<div class="p-6 relative">
+<!-- Vertical Line -->
+<div class="absolute left-10 top-10 bottom-10 w-0.5 bg-outline-variant z-0"></div>
+<!-- Step 1 -->
+<div class="relative z-10 flex gap-6 mb-8">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm border-2 border-surface-container-lowest">
+<span class="material-symbols-outlined text-[16px]">mail</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Step 1</span>
+<span class="text-outline-variant text-sm">•</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Initial Outreach</span>
+</div>
+<div class="bg-surface p-4 rounded-lg border border-outline-variant shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<p class="font-label-md text-label-md text-on-surface mb-1 font-semibold">Subject: Connecting regarding {{Company}} growth</p>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Hi {{FirstName}}, I noticed your recent milestones at {{Company}}. We specialize in helping UK SaaS founders scale their acquisition channels efficiently without inflating CAC...</p>
+</div>
+<div class="mt-2 flex gap-4 font-label-sm text-label-sm text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">send</span> 1,248 Sent</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">mark_email_read</span> 52% Open</span>
+</div>
+</div>
+</div>
+<!-- Delay -->
+<div class="relative z-10 flex gap-6 mb-8">
+<div class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0 shadow-sm border-2 border-surface-container-lowest">
+<span class="material-symbols-outlined text-[16px]">hourglass_empty</span>
+</div>
+<div class="flex-1 flex items-center">
+<div class="bg-surface-variant px-3 py-1.5 rounded-md border border-outline-variant font-label-sm text-label-sm text-on-surface-variant">
+                                        Wait 3 days
+                                    </div>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="relative z-10 flex gap-6">
+<div class="w-8 h-8 rounded-full bg-surface text-outline flex items-center justify-center shrink-0 shadow-sm border-2 border-outline-variant">
+<span class="material-symbols-outlined text-[16px]">mail</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="font-label-md text-label-md font-bold text-on-surface">Step 2</span>
+<span class="text-outline-variant text-sm">•</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Follow-up 1</span>
+</div>
+<div class="bg-surface p-4 rounded-lg border border-outline-variant border-dashed">
+<p class="font-label-md text-label-md text-on-surface mb-1 font-semibold">Subject: Re: Connecting regarding {{Company}} growth</p>
+<p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">Just floating this to the top of your inbox. Did you have a chance to review my previous note? Happy to share a quick case study if it helps...</p>
+</div>
+<div class="mt-2 flex gap-4 font-label-sm text-label-sm text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> 432 Queued</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Lead List Panel -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex-1">
+<div class="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<h3 class="font-headline-md text-headline-md text-on-surface">Active Leads Queue</h3>
+<div class="flex gap-2">
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+</button>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant bg-surface">
+<th class="p-3 font-label-sm text-label-sm text-outline font-semibold">Lead Name</th>
+<th class="p-3 font-label-sm text-label-sm text-outline font-semibold">Company</th>
+<th class="p-3 font-label-sm text-label-sm text-outline font-semibold">Status</th>
+<th class="p-3 font-label-sm text-label-sm text-outline font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="p-3 font-body-md text-body-md text-on-surface">Sarah Jenkins</td>
+<td class="p-3 font-body-md text-body-md text-on-surface-variant">CloudSync Ltd</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-surface-container-high text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">send</span> Sent Step 1
+                                            </span>
+</td>
+<td class="p-3 text-right">
+<button class="text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="p-3 font-body-md text-body-md text-on-surface">Marcus Thorne</td>
+<td class="p-3 font-body-md text-body-md text-on-surface-variant">DataFlow AI</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]">schedule</span> Queued
+                                            </span>
+</td>
+<td class="p-3 text-right">
+<button class="text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="p-3 font-body-md text-body-md text-on-surface">Elena Rostova</td>
+<td class="p-3 font-body-md text-body-md text-on-surface-variant">FinScale</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-secondary-container text-on-secondary-container font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">mark_email_read</span> Opened
+                                            </span>
+</td>
+<td class="p-3 text-right">
+<button class="text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-3 font-body-md text-body-md text-on-surface">David Chen</td>
+<td class="p-3 font-body-md text-body-md text-on-surface-variant">Nexus Systems</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm bg-surface-container-high text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">send</span> Sent Step 1
+                                            </span>
+</td>
+<td class="p-3 text-right">
+<button class="text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">visibility</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Sidebar Columns (Right - 4 Columns) -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
+<!-- Send Gate Panel -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface-bright flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">security</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Send Gate Settings</h3>
+</div>
+<div class="p-5 flex flex-col gap-5">
+<!-- Domain Health -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface border border-outline-variant">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Domain Reputation</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold">mail.leadsgen.io</span>
+</div>
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span class="font-label-md text-label-md font-bold">98%</span>
+</div>
+</div>
+<!-- Deliverability Guard -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-md text-label-md text-on-surface">Deliverability Guard</span>
+<!-- Toggle Switch Mock -->
+<div class="w-8 h-4 bg-primary rounded-full relative cursor-pointer">
+<div class="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+</div>
+</div>
+<p class="font-label-sm text-label-sm text-outline-variant">Automatically pauses sending if bounce rate exceeds 3% or spam complaints occur.</p>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Sending Schedule -->
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-3">Sending Schedule</h4>
+<div class="flex gap-2 mb-3">
+<span class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-primary-container text-on-primary-container">M</span>
+<span class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-primary-container text-on-primary-container">T</span>
+<span class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-primary-container text-on-primary-container">W</span>
+<span class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-primary-container text-on-primary-container">T</span>
+<span class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-primary-container text-on-primary-container">F</span>
+<span class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-surface text-outline border border-outline-variant">S</span>
+<span class="w-8 h-8 rounded flex items-center justify-center font-label-sm text-label-sm bg-surface text-outline border border-outline-variant">S</span>
+</div>
+<div class="flex justify-between items-center font-label-sm text-label-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant">
+<span>Timezone:</span>
+<span class="font-semibold">Europe/London</span>
+</div>
+<div class="flex justify-between items-center font-label-sm text-label-sm text-on-surface bg-surface-container-low px-3 py-2 rounded border border-outline-variant mt-2">
+<span>Window:</span>
+<span class="font-semibold">09:00 - 17:00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Audit Log Panel -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex-1">
+<div class="p-4 border-b border-outline-variant bg-surface-bright flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-on-surface">Audit Log</h3>
+<button class="text-outline hover:text-primary"><span class="material-symbols-outlined text-[18px]">refresh</span></button>
+</div>
+<div class="p-5 flex flex-col gap-4">
+<!-- Log Item -->
+<div class="flex gap-3">
+<div class="mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-primary">play_arrow</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Campaign resumed.</p>
+<p class="font-label-sm text-label-sm text-outline">Today, 09:00 AM by System</p>
+</div>
+</div>
+<!-- Log Item -->
+<div class="flex gap-3">
+<div class="mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-primary">send</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Sent 120 emails (Step 1).</p>
+<p class="font-label-sm text-label-sm text-outline">Yesterday, 14:30 PM by System</p>
+</div>
+</div>
+<!-- Log Item -->
+<div class="flex gap-3">
+<div class="mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">group_add</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Added 250 new leads via CSV import.</p>
+<p class="font-label-sm text-label-sm text-outline">Oct 24, 11:15 AM by User</p>
+</div>
+</div>
+<!-- Log Item -->
+<div class="flex gap-3">
+<div class="mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">edit_note</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Edited Step 2 template.</p>
+<p class="font-label-sm text-label-sm text-outline">Oct 23, 16:45 PM by User</p>
+</div>
+</div>
+</div>
+<div class="p-3 border-t border-outline-variant text-center bg-surface-bright">
+<button class="font-label-sm text-label-sm text-primary hover:underline">View Full History</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

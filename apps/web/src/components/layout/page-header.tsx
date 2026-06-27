@@ -1,26 +1,35 @@
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function PageHeader({
-  title,
-  description,
-  actions,
-  className,
-}: {
+interface PageHeaderProps {
   title: string;
   description?: string;
   actions?: ReactNode;
   className?: string;
-}) {
+}
+
+export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
   return (
-    <div className={cn("mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", className)}>
+    <div className={cn("flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6", className)}>
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description ? (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        ) : null}
+        <h2
+          className="text-[36px] font-bold leading-[44px] tracking-[-0.02em]"
+          style={{ color: "var(--on-surface)" }}
+        >
+          {title}
+        </h2>
+        {description && (
+          <p
+            className="text-[14px] leading-[20px] mt-1"
+            style={{ color: "var(--on-surface-variant)" }}
+          >
+            {description}
+          </p>
+        )}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      {actions && (
+        <div className="flex flex-wrap items-center gap-3 shrink-0">{actions}</div>
+      )}
     </div>
   );
 }
