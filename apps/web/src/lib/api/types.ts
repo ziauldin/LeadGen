@@ -47,6 +47,15 @@ export type CompanySummary = {
   name: string;
   website: string | null;
   domain: string | null;
+  enrichment_status?: string;
+};
+
+export type EmailContact = {
+  id: number;
+  email: string;
+  source_provider: string | null;
+  opted_out: boolean;
+  created_at: string;
 };
 
 export type Lead = {
@@ -66,6 +75,7 @@ export type Lead = {
   updated_at: string;
   company: CompanySummary | null;
   primary_email: string | null;
+  email_contacts: EmailContact[];
 };
 
 export type Company = {
@@ -80,6 +90,7 @@ export type Company = {
   enrichment_message: string | null;
   created_at: string;
   updated_at: string;
+  email_contacts: EmailContact[];
 };
 
 export type Campaign = {
@@ -134,7 +145,7 @@ export type UserSettings = {
 };
 
 export type ProviderCredentialStatus = "not_configured" | "configured" | "error";
-export type ProviderType = "search" | "email";
+export type ProviderType = "search" | "email" | "email_discovery";
 export type ProviderName =
   | "mock"
   | "google_cse"
@@ -143,7 +154,8 @@ export type ProviderName =
   | "smtp"
   | "resend"
   | "sendgrid"
-  | "mailgun";
+  | "mailgun"
+  | "hunter";
 
 export type ProviderCredential = {
   id: number;

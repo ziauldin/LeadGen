@@ -70,6 +70,7 @@ export const leadsApi = {
 
 export const companiesApi = {
   list: () => apiFetch<Paginated<Company>>("/companies"),
+  get: (id: number) => apiFetch<Company>(`/companies/${id}`),
   enrich: (id: number, sync = false) =>
     apiFetch<Company>(`/companies/${id}/enrich?sync=${sync}`, { method: "POST" }),
 };
@@ -80,10 +81,10 @@ export const searchesApi = {
       method: "POST",
       body: JSON.stringify({ niche_id: nicheId }),
     }),
-  run: (nicheId: number, queryText: string) =>
+  run: (nicheId: number, queryText: string, provider?: string) =>
     apiFetch<SearchQuery>("/searches/run", {
       method: "POST",
-      body: JSON.stringify({ niche_id: nicheId, query_text: queryText }),
+      body: JSON.stringify({ niche_id: nicheId, query: queryText, provider: provider || "mock" }),
     }),
   get: (id: number) => apiFetch<SearchQuery>(`/searches/${id}`),
   saveResults: (id: number, resultIndexes: number[]) =>

@@ -12,6 +12,7 @@ class CompanySummary(BaseModel):
     name: str
     website: str | None = None
     domain: str | None = None
+    enrichment_status: str | None = None
 
 
 class LeadBase(BaseModel):
@@ -44,6 +45,16 @@ class LeadUpdate(BaseModel):
     compliance_source_note: str | None = None
 
 
+class EmailContactRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    source_provider: str | None = None
+    opted_out: bool
+    created_at: datetime
+
+
 class LeadRead(LeadBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -53,6 +64,7 @@ class LeadRead(LeadBase):
     updated_at: datetime
     company: CompanySummary | None = None
     primary_email: str | None = None
+    email_contacts: list[EmailContactRead] = []
 
 
 class LeadListResponse(BaseModel):

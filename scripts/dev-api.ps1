@@ -15,7 +15,7 @@ try {
     if (Test-Path ".\.venv\Scripts\Activate.ps1") {
         . .\.venv\Scripts\Activate.ps1
     }
-    uvicorn app.main:app --reload --port 8000
+    uvicorn app.main:app --reload --port 8001
 } finally {
     Pop-Location
 }

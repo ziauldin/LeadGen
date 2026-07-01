@@ -46,6 +46,10 @@ const EMAIL_PROVIDERS: ProviderDefinition[] = [
   { provider_name: "mailgun", label: "Mailgun", description: "Mailgun email API." },
 ];
 
+const EMAIL_DISCOVERY_PROVIDERS: ProviderDefinition[] = [
+  { provider_name: "hunter", label: "Hunter.io", description: "Hunter.io domain search for finding professional emails." },
+];
+
 const configureSchema = z.record(z.string(), z.union([z.string(), z.boolean()]));
 
 type ConfigureValues = z.infer<typeof configureSchema>;
@@ -266,6 +270,9 @@ function ProviderFields({
       </div>
     );
   }
+  if (providerName === "hunter") {
+    return <SecretInput label="API key" placeholder={secretPlaceholder} register={register} name="api_key" />;
+  }
   return (
     <div
       className="p-3 rounded text-[13px]"
@@ -278,7 +285,7 @@ function ProviderFields({
 
 export function ProviderSettingsPanel() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"search" | "email">("search");
+  const [activeTab, setActiveTab] = useState<"search" | "email" | "email_discovery">("search");
   const [configureTarget, setConfigureTarget] = useState<{
     providerType: ProviderType;
     definition: ProviderDefinition;
@@ -539,6 +546,17 @@ export function ProviderSettingsPanel() {
           >
             Email Gateways
           </button>
+          <button
+            onClick={() => setActiveTab("email_discovery")}
+            className="px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all"
+            style={{
+              background: activeTab === "email_discovery" ? "var(--surface-container-lowest)" : "transparent",
+              color: activeTab === "email_discovery" ? "var(--primary)" : "var(--on-surface-variant)",
+              boxShadow: activeTab === "email_discovery" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+            }}
+          >
+            Email Discovery
+          </button>
         </div>
 
         {isLoading ? (
@@ -547,8 +565,10 @@ export function ProviderSettingsPanel() {
           </div>
         ) : activeTab === "search" ? (
           renderGrid("search", SEARCH_PROVIDERS)
-        ) : (
+        ) : activeTab === "email" ? (
           renderGrid("email", EMAIL_PROVIDERS)
+        ) : (
+          renderGrid("email_discovery", EMAIL_DISCOVERY_PROVIDERS)
         )}
       </div>
 

@@ -117,25 +117,76 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
                 else:
                     _upsert_email_contact(db, company, None, extracted)
 
-            company.enrichment_status = EnrichmentStatus.COMPLETED
-            company.enrichment_message = f"Found {len(extracted_emails)} public email(s) from {len(pages)} page(s)"
-        else:
-            company.enrichment_status = EnrichmentStatus.COMPLETED
-            company.enrichment_message = (
-                f"Crawled {len(pages)} page(s); no public emails found"
-            )
-
-        for lead in leads:
-            if lead.status == LeadStatus.NEW:
-                lead.status = LeadStatus.ENRICHED
-
-        db.commit()
-        db.refresh(company)
-        return company
-
     except Exception as exc:
         company.enrichment_status = EnrichmentStatus.FAILED
         company.enrichment_message = f"Enrichment failed: {exc}"
         db.commit()
         db.refresh(company)
         return company
+
+    hunter_emails = []
+    hunter_skipped_msg = ""
+    try:
+        from app.models.lead import Lead
+        from app.models.niche import Niche
+        
+        user_id = None
+        if company.leads:
+            user_id = db.scalar(
+                select(Niche.user_id)
+                .join(Lead, Lead.niche_id == Niche.id)
+                .where(Lead.id == company.leads[0].id)
+            )
+
+        from app.services.enrichment.email_discovery.factory import get_email_discovery_provider
+        from app.services.enrichment.email_discovery.utils import extract_company_domain
+        
+        domain_for_hunter = extract_company_domain(company.website or company.domain)
+        if domain_for_hunter:
+            provider = get_email_discovery_provider(db, user_id)
+            if provider:
+                # We can call it even if we extracted emails, to supplement them
+                # But to preserve API quota, maybe we check if extracted_emails is empty?
+                # The user wrote: "First run existing public website crawler... If no useful emails are found, call Hunter using the company domain."
+                if not extracted_emails:
+                    hunter_emails = provider.discover_by_domain(domain_for_hunter)
+            else:
+                hunter_skipped_msg = "Hunter not configured or disabled"
+        else:
+            hunter_skipped_msg = "Invalid or excluded domain for Hunter"
+            
+    except Exception as exc:
+        # Hunter errors should not break the pipeline
+        hunter_skipped_msg = f"Hunter lookup skipped or failed: {str(exc).split(':')[-1].strip()}"
+
+    if hunter_emails:
+        for extracted in hunter_emails:
+            if leads:
+                for lead in leads:
+                    _upsert_email_contact(db, company, lead, extracted)
+            else:
+                _upsert_email_contact(db, company, None, extracted)
+
+    total_emails = len(extracted_emails) + len(hunter_emails)
+    if total_emails > 0:
+        company.enrichment_status = EnrichmentStatus.COMPLETED
+        msg = f"Enrichment completed. Found {total_emails} public email(s)"
+        if hunter_emails:
+            msg += f" (including {len(hunter_emails)} from Hunter)"
+        if hunter_skipped_msg:
+            msg += f". {hunter_skipped_msg}"
+        company.enrichment_message = msg
+        
+        for lead in leads:
+            if lead.status == LeadStatus.NEW:
+                lead.status = LeadStatus.ENRICHED
+    else:
+        company.enrichment_status = EnrichmentStatus.COMPLETED
+        msg = f"Enrichment completed. Crawled {len(pages)} page(s); no public emails found."
+        if hunter_skipped_msg:
+            msg += f" {hunter_skipped_msg}"
+        company.enrichment_message = msg
+
+    db.commit()
+    db.refresh(company)
+    return company

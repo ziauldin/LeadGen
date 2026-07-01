@@ -90,6 +90,7 @@ class ReplyClassification(str, enum.Enum):
 class ProviderType(str, enum.Enum):
     SEARCH = "search"
     EMAIL = "email"
+    EMAIL_DISCOVERY = "email_discovery"
 
 
 class ProviderName(str, enum.Enum):
@@ -101,6 +102,7 @@ class ProviderName(str, enum.Enum):
     RESEND = "resend"
     SENDGRID = "sendgrid"
     MAILGUN = "mailgun"
+    HUNTER = "hunter"
 
 
 class ProviderCredentialStatus(str, enum.Enum):

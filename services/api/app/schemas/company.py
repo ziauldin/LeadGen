@@ -27,6 +27,16 @@ class CompanyUpdate(BaseModel):
     about_page_url: str | None = Field(default=None, max_length=500)
 
 
+class EmailContactRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    source_provider: str | None = None
+    opted_out: bool
+    created_at: datetime
+
+
 class CompanyRead(CompanyBase):
     model_config = ConfigDict(from_attributes=True)
 
@@ -36,6 +46,7 @@ class CompanyRead(CompanyBase):
     enrichment_message: str | None = None
     created_at: datetime
     updated_at: datetime
+    email_contacts: list[EmailContactRead] = []
 
 
 class CompanyListResponse(BaseModel):

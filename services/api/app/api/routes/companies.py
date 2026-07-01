@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
@@ -24,6 +24,7 @@ def _get_owned_company(
 ) -> Company:
     company = db.scalar(
         select(Company)
+        .options(selectinload(Company.email_contacts))
         .join(Lead, Lead.company_id == Company.id)
         .join(Niche, Lead.niche_id == Niche.id)
         .where(Company.id == company_id, Niche.user_id == current_user.id)
@@ -44,6 +45,7 @@ def list_companies(
 ) -> CompanyListResponse:
     base = (
         select(Company)
+        .options(selectinload(Company.email_contacts))
         .join(Lead, Lead.company_id == Company.id)
         .join(Niche, Lead.niche_id == Niche.id)
         .where(Niche.user_id == current_user.id)

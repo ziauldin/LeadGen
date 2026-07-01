@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     bing_search_api_key: str = ""
     serpapi_api_key: str = ""
 
+    email_discovery_provider: str = "none"
+    hunter_api_key: str = ""
+    hunter_daily_limit: int = 25
+    hunter_enabled: bool = False
+
     smtp_enabled: bool = False
     smtp_host: str = ""
     smtp_port: int = 587

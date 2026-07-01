@@ -177,12 +177,19 @@ export default function LeadDetailPage() {
                     <Building2 className="w-5 h-5" style={{ color: "var(--primary)" }} />
                   </div>
                   <div>
-                    <h4
-                      className="text-[15px] font-semibold"
-                      style={{ color: "var(--on-surface)" }}
-                    >
-                      {lead.company.name}
-                    </h4>
+                    <div className="flex items-center gap-2">
+                      <h4
+                        className="text-[15px] font-semibold"
+                        style={{ color: "var(--on-surface)" }}
+                      >
+                        {lead.company.name}
+                      </h4>
+                      {lead.company.enrichment_status && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--surface-container-high)", color: "var(--on-surface-variant)" }}>
+                          {lead.company.enrichment_status.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
                     {lead.company.website && (
                       <a
                         href={lead.company.website}
@@ -211,6 +218,44 @@ export default function LeadDetailPage() {
             ) : (
               <p className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
                 No associated company information.
+              </p>
+            )}
+          </div>
+
+          {/* Card: Email Contacts */}
+          <div
+            className="bg-white border rounded-lg p-6 shadow-sm"
+            style={{ borderColor: "var(--outline-variant)" }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Mail className="w-5 h-5" style={{ color: "var(--primary)" }} />
+              <h3
+                className="text-[16px] font-semibold"
+                style={{ color: "var(--on-surface)" }}
+              >
+                Discovered Emails
+              </h3>
+            </div>
+            
+            {lead.email_contacts && lead.email_contacts.length > 0 ? (
+              <div className="space-y-3">
+                {lead.email_contacts.map((contact) => (
+                  <div key={contact.id} className="flex items-center justify-between p-3 rounded border" style={{ borderColor: "var(--outline-variant)", background: "var(--surface-container-lowest)" }}>
+                    <div>
+                      <p className="text-[14px] font-medium" style={{ color: "var(--on-surface)" }}>{contact.email}</p>
+                      <p className="text-[12px] mt-0.5" style={{ color: "var(--on-surface-variant)" }}>
+                        Source: {contact.source_provider || "Unknown"}
+                      </p>
+                    </div>
+                    {contact.opted_out && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "var(--error-container)", color: "var(--on-error-container)" }}>Opted Out</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
+                No emails discovered yet. Try enriching the associated company.
               </p>
             )}
           </div>
