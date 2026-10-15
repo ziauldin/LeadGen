@@ -13,6 +13,7 @@ celery_app = Celery(
         "app.workers.campaign_jobs",
         "app.workers.reply_jobs",
         "app.workers.platform_email_jobs",
+        "app.workers.inbound_jobs",
     ],
 )
 
@@ -48,6 +49,7 @@ celery_app.conf.update(
         "inbound.*": {"queue": "inbound"},
         "webhooks.*": {"queue": "inbound"},
         "replies.*": {"queue": "inbound"},
+        "inbox.*": {"queue": "inbound"},
     },
     beat_schedule={
         "dispatch-sends": {
@@ -62,9 +64,13 @@ celery_app.conf.update(
             "task": "sequences.advance",
             "schedule": 300.0,
         },
-        "sync-replies": {
-            "task": "replies.sync",
-            "schedule": 900.0,
+        "poll-inboxes": {
+            "task": "inbox.poll",
+            "schedule": 300.0,
+        },
+        "retry-webhooks": {
+            "task": "webhooks.retry_failed",
+            "schedule": 600.0,
         },
     },
 )

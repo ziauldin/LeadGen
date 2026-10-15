@@ -24,6 +24,7 @@ from app.api.routes import (
     scoring,
     searches,
     settings,
+    webhooks,
     workspaces,
 )
 from app.api.routes.settings import suppressions_router
@@ -112,3 +113,4 @@ app.include_router(settings.router)
 app.include_router(provider_settings.router)
 app.include_router(suppressions_router)
 app.include_router(compliance.router)
+app.include_router(webhooks.router)

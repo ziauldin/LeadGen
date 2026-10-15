@@ -21,6 +21,7 @@ from app.models.enums import (
     SearchStatus,
     UserRole,
 )
+from app.models.inbound import EmailEvent, InboxCursor, WebhookEvent
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.provider_credential import ProviderCredential
@@ -48,11 +49,13 @@ __all__ = [
     "Company",
     "EmailActionToken",
     "EmailContact",
+    "EmailEvent",
     "EmailMessage",
     "EmailMessageStatus",
     "EmailType",
     "EnrichmentStatus",
     "EnrollmentStatus",
+    "InboxCursor",
     "Lead",
     "LeadStatus",
     "Niche",
@@ -72,6 +75,7 @@ __all__ = [
     "User",
     "UserRole",
     "UserSettings",
+    "WebhookEvent",
     "Workspace",
     "WorkspaceInvitation",
     "WorkspaceMember",

@@ -44,8 +44,9 @@ def test_celery_beat_schedule_configured():
     schedule = celery_app.conf.beat_schedule
     assert schedule["dispatch-sends"]["task"] == "sending.dispatch"
     assert schedule["reap-stuck-sends"]["task"] == "sending.reap"
-    assert "sync-replies" in schedule
-    assert schedule["sync-replies"]["task"] == "replies.sync"
+    # The mock reply simulator must never run on a schedule.
+    assert all(entry["task"] != "replies.sync" for entry in schedule.values())
+    assert schedule["poll-inboxes"]["task"] == "inbox.poll"
 
 
 def test_google_cse_provider_requires_credentials():

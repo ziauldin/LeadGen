@@ -19,3 +19,9 @@ class Suppression(Base, TimestampMixin):
     domain: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # unsubscribe | hard_bounce | complaint | manual | reply_opt_out | soft_bounce
+    reason_code: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    email_message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("email_messages.id", ondelete="SET NULL"),
+        nullable=True,
+    )

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_workspace, get_verified_admin, require_admin
@@ -12,15 +13,30 @@ from app.schemas.provider_settings import (
 )
 from app.services.provider_credentials.service import (
     activate_credential,
+    configure_warmup,
     delete_credential,
     get_credential,
     list_credentials,
     record_test_result,
     upsert_credential,
+    webhook_urls,
 )
 from app.services.provider_credentials.testing import test_provider_credential
 
 router = APIRouter(prefix="/provider-settings", tags=["provider-settings"])
+
+
+def _read(credential) -> ProviderCredentialRead:
+    data = ProviderCredentialRead.model_validate(credential)
+    data.webhook_urls = webhook_urls(credential)
+    return data
+
+
+class WarmupRequest(BaseModel):
+    enabled: bool
+    start_volume: int = Field(default=10, ge=1, le=1000)
+    daily_increment: int = Field(default=5, ge=0, le=1000)
+    maximum: int | None = Field(default=None, ge=1, le=100_000)
 
 
 @router.get("", response_model=ProviderCredentialListResponse)
@@ -30,7 +46,7 @@ def get_provider_settings(
 ) -> ProviderCredentialListResponse:
     items = list_credentials(db, ctx.workspace_id)
     return ProviderCredentialListResponse(
-        items=[ProviderCredentialRead.model_validate(item) for item in items],
+        items=[_read(item) for item in items],
     )
 
 
@@ -51,7 +67,7 @@ def upsert_provider_settings(
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return ProviderCredentialRead.model_validate(credential)
+    return _read(credential)
 
 
 @router.patch("/{credential_id}/activate", response_model=ProviderCredentialRead)
@@ -64,7 +80,7 @@ def activate_provider_settings(
         credential = activate_credential(db, ctx.workspace_id, ctx.user_id, credential_id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return ProviderCredentialRead.model_validate(credential)
+    return _read(credential)
 
 
 @router.post("/{credential_id}/test", response_model=ProviderTestResponse)
@@ -92,3 +108,23 @@ def delete_provider_settings(
         delete_credential(db, ctx.workspace_id, ctx.user_id, credential_id)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.patch("/{credential_id}/warmup", response_model=ProviderCredentialRead)
+def update_warmup(
+    credential_id: int,
+    payload: WarmupRequest,
+    ctx: WorkspaceContext = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> ProviderCredentialRead:
+    credential = configure_warmup(
+        db,
+        ctx.workspace_id,
+        ctx.user_id,
+        credential_id,
+        enabled=payload.enabled,
+        start_volume=payload.start_volume,
+        daily_increment=payload.daily_increment,
+        maximum=payload.maximum,
+    )
+    return _read(credential)

@@ -89,6 +89,9 @@ class ReplyClassification(StrEnum):
     OBJECTION = "objection"
     UNSUBSCRIBE = "unsubscribe"
     BOUNCE = "bounce"
+    OUT_OF_OFFICE = "out_of_office"
+    AUTO_REPLY = "auto_reply"
+    WRONG_PERSON = "wrong_person"
     UNKNOWN = "unknown"
 
 
@@ -96,6 +99,8 @@ class ProviderType(StrEnum):
     SEARCH = "search"
     EMAIL = "email"
     EMAIL_DISCOVERY = "email_discovery"
+    INBOX = "inbox"
+    LLM = "llm"
 
 
 class ProviderName(StrEnum):
@@ -108,6 +113,10 @@ class ProviderName(StrEnum):
     SENDGRID = "sendgrid"
     MAILGUN = "mailgun"
     HUNTER = "hunter"
+    IMAP = "imap"
+    GROQ = "groq"
+    OPENAI = "openai"
+    GEMINI = "gemini"
 
 
 class ProviderCredentialStatus(StrEnum):

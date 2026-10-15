@@ -40,6 +40,8 @@ def suppress_email(
     reason: str,
     source: str,
     lead_id: int | None = None,
+    reason_code: str = "manual",
+    email_message_id: int | None = None,
 ) -> None:
     """Suppress one address in a workspace and opt out its contacts and lead.
 
@@ -72,8 +74,9 @@ def suppress_email(
     )
     cancel_pending_messages(db, workspace_id=workspace_id, email=normalized, reason=reason)
 
+    db.flush()
     existing = db.scalar(
-        select(Suppression.id).where(
+        select(Suppression).where(
             Suppression.workspace_id == workspace_id,
             Suppression.email == normalized,
         ),
@@ -85,9 +88,14 @@ def suppress_email(
                 email=normalized,
                 domain=None,
                 reason=reason,
+                reason_code=reason_code,
                 source=source,
+                email_message_id=email_message_id,
             ),
         )
+    else:
+        existing.reason_code = existing.reason_code or reason_code
+        existing.email_message_id = existing.email_message_id or email_message_id
 
 
 def process_unsubscribe_for_message(db: Session, token: str) -> EmailMessage | None:
@@ -102,6 +110,8 @@ def process_unsubscribe_for_message(db: Session, token: str) -> EmailMessage | N
         reason="unsubscribe",
         source="unsubscribe_link",
         lead_id=message.lead_id,
+        reason_code="unsubscribe",
+        email_message_id=message.id,
     )
     db.add(
         AuditLog(

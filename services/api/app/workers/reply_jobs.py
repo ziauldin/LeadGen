@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.tenancy import workspace_scope
 from app.models.workspace import Workspace
-from app.services.replies.sync import sync_mock_replies
+from app.services.replies.simulator import sync_mock_replies
 from app.services.sending.provider_factory import is_mock_email_provider_active
 
 

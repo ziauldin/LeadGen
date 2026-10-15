@@ -1,4 +1,5 @@
 import json
+import secrets
 from datetime import UTC, datetime
 
 from sqlalchemy import select
@@ -24,6 +25,10 @@ DISPLAY_NAMES: dict[ProviderName, str] = {
     ProviderName.SENDGRID: "SendGrid",
     ProviderName.MAILGUN: "Mailgun",
     ProviderName.HUNTER: "Hunter.io",
+    ProviderName.IMAP: "IMAP inbox",
+    ProviderName.GROQ: "Groq",
+    ProviderName.OPENAI: "OpenAI",
+    ProviderName.GEMINI: "Google Gemini",
 }
 
 SEARCH_PROVIDERS = {
@@ -44,10 +49,22 @@ EMAIL_DISCOVERY_PROVIDERS = {
     ProviderName.HUNTER,
 }
 
+INBOX_PROVIDERS = {ProviderName.IMAP}
+LLM_PROVIDERS = {ProviderName.GROQ, ProviderName.OPENAI, ProviderName.GEMINI}
+
 ALLOWED_PROVIDERS: dict[ProviderType, set[ProviderName]] = {
     ProviderType.SEARCH: SEARCH_PROVIDERS,
     ProviderType.EMAIL: EMAIL_PROVIDERS,
     ProviderType.EMAIL_DISCOVERY: EMAIL_DISCOVERY_PROVIDERS,
+    ProviderType.INBOX: INBOX_PROVIDERS,
+    ProviderType.LLM: LLM_PROVIDERS,
+}
+
+# Config fields holding webhook verification material, per sending provider.
+WEBHOOK_SECRET_FIELDS = {
+    ProviderName.RESEND: "webhook_secret",
+    ProviderName.SENDGRID: "event_public_key",
+    ProviderName.MAILGUN: "webhook_signing_key",
 }
 
 SECRET_FIELDS = {
@@ -114,9 +131,16 @@ def build_masked_summary(provider_name: ProviderName, config: dict) -> str:
             parts.append(f"API key {mask_secret_value(str(config['api_key']))}")
         if config.get("from_email"):
             parts.append(f"From {config.get('from_email')}")
-    elif provider_name == ProviderName.HUNTER:
+    elif provider_name in {ProviderName.HUNTER, *LLM_PROVIDERS}:
         if config.get("api_key"):
             parts.append(f"API key {mask_secret_value(str(config['api_key']))}")
+        if config.get("model"):
+            parts.append(f"Model {config.get('model')}")
+    elif provider_name == ProviderName.IMAP:
+        parts.append(f"Host {config.get('host', '')}")
+        if config.get("username"):
+            parts.append(f"User {config.get('username')}")
+        parts.append(f"Folder {config.get('folder') or 'INBOX'}")
     elif provider_name == ProviderName.MAILGUN:
         if config.get("api_key"):
             parts.append(f"API key {mask_secret_value(str(config['api_key']))}")
@@ -149,8 +173,10 @@ def _required_fields(provider_name: ProviderName) -> list[str]:
         return ["api_key", "from_email"]
     if provider_name == ProviderName.MAILGUN:
         return ["api_key", "domain", "from_email"]
-    if provider_name == ProviderName.HUNTER:
+    if provider_name == ProviderName.HUNTER or provider_name in LLM_PROVIDERS:
         return ["api_key"]
+    if provider_name == ProviderName.IMAP:
+        return ["host", "username", "password"]
     return []
 
 
@@ -163,6 +189,10 @@ def _normalize_config(provider_name: ProviderName, config: dict) -> dict:
             normalized["port"] = int(normalized["port"])
         if "use_tls" not in normalized:
             normalized["use_tls"] = True
+    if provider_name == ProviderName.IMAP:
+        normalized["port"] = int(normalized.get("port") or 993)
+        normalized.setdefault("use_ssl", True)
+        normalized.setdefault("folder", "INBOX")
     return normalized
 
 
@@ -253,7 +283,13 @@ def upsert_credential(
         else ProviderCredentialStatus.NOT_CONFIGURED
     )
 
+    webhook_field = WEBHOOK_SECRET_FIELDS.get(provider_name)
+    if webhook_field and merged_config.get(webhook_field):
+        masked = f"{masked} · Webhook verification set" if masked else "Webhook verification set"
+
     if existing:
+        if provider_type == ProviderType.EMAIL and provider_name != ProviderName.MOCK:
+            existing.webhook_token = existing.webhook_token or secrets.token_urlsafe(24)
         existing.encrypted_config_json = encrypted
         existing.masked_summary = masked
         existing.status = status
@@ -271,6 +307,11 @@ def upsert_credential(
             masked_summary=masked,
             is_active=False,
             status=status,
+            webhook_token=(
+                secrets.token_urlsafe(24)
+                if provider_type == ProviderType.EMAIL and provider_name != ProviderName.MOCK
+                else None
+            ),
         )
         db.add(credential)
         action = "provider_credential_created"
@@ -425,3 +466,57 @@ def ensure_default_mock_credentials(db: Session, workspace_id: int, user_id: int
         )
         db.add(credential)
     db.flush()
+
+
+def webhook_urls(credential: ProviderCredential) -> dict[str, str]:
+    """URLs to paste into the provider's dashboard for this sending account."""
+    from app.core.config import settings
+
+    if not credential.webhook_token:
+        return {}
+    base = f"{settings.api_public_url.rstrip('/')}/webhooks"
+    name = _as_str(credential.provider_name)
+    token = credential.webhook_token
+    if name == ProviderName.RESEND.value:
+        return {"events_and_inbound": f"{base}/resend/{token}"}
+    if name in {ProviderName.SENDGRID.value, ProviderName.MAILGUN.value}:
+        return {
+            "events": f"{base}/{name}/{token}/events",
+            "inbound": f"{base}/{name}/{token}/inbound",
+        }
+    return {}
+
+
+def configure_warmup(
+    db: Session,
+    workspace_id: int,
+    actor_id: int,
+    credential_id: int,
+    *,
+    enabled: bool,
+    start_volume: int,
+    daily_increment: int,
+    maximum: int | None,
+) -> ProviderCredential:
+    from datetime import UTC, datetime
+
+    credential = get_credential(db, workspace_id, credential_id)
+    if credential is None or _as_str(credential.provider_type) != ProviderType.EMAIL.value:
+        raise NotFoundError("Sending account not found")
+    if enabled and not credential.warmup_enabled:
+        credential.warmup_started_at = datetime.now(UTC)
+    credential.warmup_enabled = enabled
+    credential.warmup_start_volume = start_volume
+    credential.warmup_daily_increment = daily_increment
+    credential.warmup_max = maximum
+    _log_audit(
+        db,
+        actor_id,
+        "provider_credential_warmup",
+        credential.id,
+        {"enabled": enabled, "start": start_volume, "increment": daily_increment, "max": maximum},
+        workspace_id=workspace_id,
+    )
+    db.commit()
+    db.refresh(credential)
+    return credential

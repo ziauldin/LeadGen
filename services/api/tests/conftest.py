@@ -7,6 +7,8 @@ os.environ.setdefault("SECRET_ENCRYPTION_KEY", Fernet.generate_key().decode())
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "true")
 os.environ.setdefault("REFRESH_COOKIE_PATH", "/auth")
+os.environ.setdefault("FEATURE_INBOUND_WEBHOOKS", "true")
+os.environ.setdefault("FEATURE_IMAP", "true")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-for-hs256-signing")
 
 from fastapi.testclient import TestClient

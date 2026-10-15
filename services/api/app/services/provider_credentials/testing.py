@@ -111,12 +111,36 @@ def test_email_discovery_provider(credential: ProviderCredential) -> tuple[bool,
         return False, f"Hunter connection failed: {exc.__class__.__name__}"
 
 
+def test_inbox_provider(credential: ProviderCredential) -> tuple[bool, str]:
+    from app.services.inbound.imap_poller import default_imap_factory
+
+    config = decrypt_provider_config(credential)
+    try:
+        client = default_imap_factory(config)
+        try:
+            client.login(str(config["username"]), str(config["password"]))
+            status, _ = client.select(str(config.get("folder") or "INBOX"), readonly=True)
+            if status != "OK":
+                return False, "Logged in, but the folder could not be opened"
+        finally:
+            client.logout()
+        return True, "IMAP login and folder access successful"
+    except Exception as exc:
+        return False, f"IMAP connection failed: {exc.__class__.__name__}"
+
+
 def test_provider_credential(credential: ProviderCredential) -> tuple[bool, str, datetime]:
     provider_type = _as_str(credential.provider_type)
     if provider_type == "search":
         success, message = test_search_provider(credential)
     elif provider_type == "email_discovery":
         success, message = test_email_discovery_provider(credential)
+    elif provider_type == "inbox":
+        success, message = test_inbox_provider(credential)
+    elif provider_type == "llm":
+        from app.services.llm.factory import test_llm_credential
+
+        success, message = test_llm_credential(credential)
     else:
         success, message = test_email_provider(credential)
     return success, message, datetime.now(UTC)

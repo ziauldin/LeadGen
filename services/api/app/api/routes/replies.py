@@ -8,29 +8,62 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.tenancy import WorkspaceContext
 from app.models.email_message import EmailMessage
+from app.models.lead import Lead
 from app.models.reply import Reply
-from app.schemas.reply import ReplyListResponse, ReplyRead, ReplySyncResponse, ReplyUpdate
+from app.schemas.reply import (
+    ReplyDetail,
+    ReplyLinkRequest,
+    ReplyListResponse,
+    ReplyRead,
+    ReplySyncResponse,
+    ReplyUpdate,
+    SentMessageSummary,
+)
+from app.services.inbound.processor import link_reply
 from app.services.replies.export import export_replies_to_csv
-from app.services.replies.sync import sync_mock_replies, update_reply
+from app.services.replies.service import update_reply
+from app.services.replies.simulator import sync_mock_replies
 from app.services.sending.provider_factory import is_mock_email_provider_active
 
 router = APIRouter(prefix="/replies", tags=["replies"])
 
 
-def _serialize_reply(reply: Reply) -> ReplyRead:
-    lead = reply.email_message.lead if reply.email_message else None
+def _snippet(text: str, length: int = 160) -> str:
+    flat = " ".join(text.split())
+    return flat if len(flat) <= length else flat[: length - 1] + "…"
+
+
+def _serialize_reply(reply: Reply, lead: Lead | None = None) -> ReplyRead:
+    lead = lead or (reply.email_message.lead if reply.email_message else None)
     return ReplyRead(
         id=reply.id,
         email_message_id=reply.email_message_id,
         from_email=reply.from_email,
+        subject=reply.subject,
         body=reply.body,
+        snippet=_snippet(reply.body),
         classification=reply.classification,
+        classified_by=reply.classified_by,
+        classification_confidence=reply.classification_confidence,
+        is_auto_reply=reply.is_auto_reply,
+        match_method=reply.match_method,
         received_at=reply.received_at,
-        lead_id=lead.id if lead else None,
+        lead_id=lead.id if lead else reply.lead_id,
         lead_name=lead.full_name if lead else None,
         campaign_id=reply.email_message.campaign_id if reply.email_message else None,
         notes=reply.notes,
     )
+
+
+def _get_reply(db: Session, reply_id: int, ctx: WorkspaceContext) -> Reply:
+    reply = db.scalar(
+        select(Reply)
+        .where(Reply.id == reply_id, Reply.workspace_id == ctx.workspace_id)
+        .options(selectinload(Reply.email_message).selectinload(EmailMessage.lead)),
+    )
+    if reply is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reply not found")
+    return reply
 
 
 @router.get("", response_model=ReplyListResponse)
@@ -42,7 +75,11 @@ def list_replies(
     db: Session = Depends(get_db),
 ) -> ReplyListResponse:
     conditions = [Reply.workspace_id == ctx.workspace_id]
-    if classification:
+    if classification == "unclassified":
+        conditions.append(Reply.classification == "unknown")
+    elif classification == "unmatched":
+        conditions.append(Reply.email_message_id.is_(None))
+    elif classification:
         conditions.append(Reply.classification == classification)
 
     total = db.scalar(select(func.count(Reply.id)).where(*conditions)) or 0
@@ -119,3 +156,62 @@ def export_replies_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=replies.csv"},
     )
+
+
+@router.get("/{reply_id}", response_model=ReplyDetail)
+def get_reply(
+    reply_id: int,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> ReplyDetail:
+    reply = _get_reply(db, reply_id, ctx)
+    lead = db.get(Lead, reply.lead_id) if reply.lead_id else None
+    thread: list[SentMessageSummary] = []
+    if reply.email_message is not None:
+        conditions = [
+            EmailMessage.workspace_id == ctx.workspace_id,
+            EmailMessage.sent_at.is_not(None),
+        ]
+        if reply.email_message.enrollment_id:
+            conditions.append(EmailMessage.enrollment_id == reply.email_message.enrollment_id)
+        else:
+            conditions.append(EmailMessage.id == reply.email_message.id)
+        thread = [
+            SentMessageSummary(
+                id=m.id,
+                subject=m.subject,
+                body=m.body,
+                sent_at=m.sent_at,
+                step_number=m.step_number,
+            )
+            for m in db.scalars(
+                select(EmailMessage).where(*conditions).order_by(EmailMessage.sent_at)
+            ).all()
+        ]
+    base = _serialize_reply(reply, lead)
+    return ReplyDetail(
+        **base.model_dump(),
+        raw_body=reply.raw_body,
+        in_reply_to=reply.in_reply_to,
+        thread=thread,
+    )
+
+
+@router.post("/{reply_id}/link", response_model=ReplyRead)
+def link_reply_endpoint(
+    reply_id: int,
+    payload: ReplyLinkRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> ReplyRead:
+    reply = _get_reply(db, reply_id, ctx)
+    message = db.scalar(
+        select(EmailMessage).where(
+            EmailMessage.id == payload.email_message_id,
+            EmailMessage.workspace_id == ctx.workspace_id,
+        ),
+    )
+    if message is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Email message not found")
+    reply = link_reply(db, reply, message)
+    return _serialize_reply(_get_reply(db, reply.id, ctx))
