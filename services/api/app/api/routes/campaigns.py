@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.core.rate_limit import enforce
 from app.core.tenancy import WorkspaceContext
 from app.models.campaign import Campaign
+from app.models.enrollment import CampaignEnrollment, EnrollmentStatus
 from app.schemas.campaign import (
     AddLeadsRequest,
     AddLeadsResponse,
@@ -15,8 +16,11 @@ from app.schemas.campaign import (
     CampaignListResponse,
     CampaignRead,
     CampaignUpdate,
+    EnrollmentListResponse,
+    EnrollmentRead,
     ProcessSendsResponse,
 )
+from app.services.campaigns.sequences import stop_enrollment
 from app.services.campaigns.service import (
     add_leads_to_campaign,
     create_campaign,
@@ -167,3 +171,80 @@ def process_campaign_sends_endpoint(
         campaign_id=campaign_id,
     )
     return ProcessSendsResponse(**result)
+
+
+@router.get("/{campaign_id}/enrollments", response_model=EnrollmentListResponse)
+def list_enrollments(
+    campaign_id: int,
+    status: str | None = Query(default=None, max_length=20),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=200),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> EnrollmentListResponse:
+    get_campaign(db, campaign_id, ctx.workspace_id)
+    conditions = [
+        CampaignEnrollment.campaign_id == campaign_id,
+        CampaignEnrollment.workspace_id == ctx.workspace_id,
+    ]
+    if status:
+        conditions.append(CampaignEnrollment.status == status)
+    total = db.scalar(select(func.count(CampaignEnrollment.id)).where(*conditions)) or 0
+    rows = db.scalars(
+        select(CampaignEnrollment)
+        .where(*conditions)
+        .options(selectinload(CampaignEnrollment.lead))
+        .order_by(CampaignEnrollment.id)
+        .offset(skip)
+        .limit(limit),
+    ).all()
+    return EnrollmentListResponse(
+        items=[
+            EnrollmentRead(
+                **{
+                    key: getattr(row, key)
+                    for key in EnrollmentRead.model_fields
+                    if key != "lead_name"
+                },
+                lead_name=row.lead.full_name if row.lead else None,
+            )
+            for row in rows
+        ],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.post(
+    "/{campaign_id}/enrollments/{enrollment_id}/stop",
+    response_model=EnrollmentRead,
+)
+def stop_enrollment_endpoint(
+    campaign_id: int,
+    enrollment_id: int,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> EnrollmentRead:
+    enrollment = db.scalar(
+        select(CampaignEnrollment).where(
+            CampaignEnrollment.id == enrollment_id,
+            CampaignEnrollment.campaign_id == campaign_id,
+            CampaignEnrollment.workspace_id == ctx.workspace_id,
+        ),
+    )
+    if enrollment is None:
+        from app.core.errors import NotFoundError
+
+        raise NotFoundError("Enrollment not found")
+    stop_enrollment(db, enrollment, EnrollmentStatus.STOPPED, "Stopped manually")
+    db.commit()
+    db.refresh(enrollment)
+    return EnrollmentRead(
+        **{
+            key: getattr(enrollment, key)
+            for key in EnrollmentRead.model_fields
+            if key != "lead_name"
+        },
+        lead_name=None,
+    )

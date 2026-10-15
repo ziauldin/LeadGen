@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.campaign import Campaign
 from app.models.email_message import EmailMessage
+from app.models.enrollment import CampaignEnrollment, EnrollmentStatus
 from app.models.enums import CampaignStatus, EmailMessageStatus, LeadStatus
 from app.models.lead import Lead
 from app.models.provider_credential import ProviderCredential
@@ -129,6 +130,10 @@ def evaluate_send_gate(
     if lead.status in {LeadStatus.OPTED_OUT, LeadStatus.DISQUALIFIED}:
         blocks.append(f"Lead is {lead.status}")
     blocks.extend(validate_lead_for_outreach(lead, db))
+    if message.enrollment_id is not None:
+        enrollment = db.get(CampaignEnrollment, message.enrollment_id)
+        if enrollment is not None and enrollment.status != EnrollmentStatus.ACTIVE:
+            blocks.append(f"Sequence for this lead is {enrollment.status}")
     if blocks:
         return GateDecision(GateKind.BLOCK, blocks)
 

@@ -1,6 +1,7 @@
 from app.core.celery_app import celery_app
 from app.core.database import SessionLocal
 from app.core.tenancy import system_session
+from app.services.campaigns.sequences import advance_sequences
 from app.services.sending.sender import deliver_message, dispatch, reap_stuck_messages
 
 
@@ -28,6 +29,15 @@ def reap_stuck() -> dict[str, int]:
     db = SessionLocal()
     try:
         return reap_stuck_messages(db)
+    finally:
+        db.close()
+
+
+@celery_app.task(name="sequences.advance")
+def advance_sequences_task() -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        return advance_sequences(db)
     finally:
         db.close()
 

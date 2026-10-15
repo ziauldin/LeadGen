@@ -28,6 +28,7 @@ from app.models.enums import CampaignStatus, EmailMessageStatus, LeadStatus
 from app.models.lead import Lead
 from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.billing.usage import record_usage
+from app.services.campaigns.sequences import on_message_sent
 from app.services.sending.base import SendKind
 from app.services.sending.gate import GateKind, campaign_sent_today, evaluate_send_gate
 from app.services.sending.mime import build_outbound, make_message_id
@@ -172,6 +173,7 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
         message.last_error = None
         message.next_attempt_at = None
         record_usage(db, message.workspace_id, "monthly_sends")
+        on_message_sent(db, message, message.sent_at)
         if lead.status not in {LeadStatus.REPLIED, LeadStatus.MEETING_BOOKED, LeadStatus.CLIENT}:
             lead.status = LeadStatus.CONTACTED
         db.add(

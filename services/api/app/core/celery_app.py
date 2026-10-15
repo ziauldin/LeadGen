@@ -58,6 +58,10 @@ celery_app.conf.update(
             "task": "sending.reap",
             "schedule": 300.0,
         },
+        "advance-sequences": {
+            "task": "sequences.advance",
+            "schedule": 300.0,
+        },
         "sync-replies": {
             "task": "replies.sync",
             "schedule": 900.0,

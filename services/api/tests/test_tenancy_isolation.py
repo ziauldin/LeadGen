@@ -55,6 +55,10 @@ def _build_workspace_a(client, headers) -> dict[str, int]:
         json={"lead_ids": [lead_id]},
     ).json()["message_ids"][0]
     client.post("/emails/approve", headers=headers, json={"email_message_id": message_id})
+    enrollment_id = client.get(
+        f"/campaigns/{campaign_id}/enrollments",
+        headers=headers,
+    ).json()["items"][0]["id"]
     client.post(f"/campaigns/{campaign_id}/start", headers=headers)
     client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers)
     client.post("/replies/sync", headers=headers)
@@ -76,6 +80,7 @@ def _build_workspace_a(client, headers) -> dict[str, int]:
         "company_id": company_id,
         "campaign_id": campaign_id,
         "message_id": message_id,
+        "enrollment_id": enrollment_id,
         "reply_id": reply_id,
         "search_id": search_id,
         "credential_id": credential_id,
@@ -101,6 +106,8 @@ ATTACKS = [
     ("POST", "/campaigns/{campaign_id}/start", None),
     ("POST", "/campaigns/{campaign_id}/pause", None),
     ("POST", "/campaigns/{campaign_id}/process-sends", None),
+    ("GET", "/campaigns/{campaign_id}/enrollments", None),
+    ("POST", "/campaigns/{campaign_id}/enrollments/{enrollment_id}/stop", None),
     ("PATCH", "/replies/{reply_id}", {"notes": "pwned"}),
     ("GET", "/searches/{search_id}", None),
     ("POST", "/searches/{search_id}/save-results", {"selected_urls": []}),

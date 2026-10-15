@@ -60,6 +60,16 @@ def suppress_email(
             lead.status = LeadStatus.OPTED_OUT
             lead.score = 0.0
 
+    from app.models.enrollment import EnrollmentStatus
+    from app.services.campaigns.sequences import stop_enrollments_for_email
+
+    stop_enrollments_for_email(
+        db,
+        workspace_id=workspace_id,
+        email=normalized,
+        status=EnrollmentStatus.OPTED_OUT,
+        reason=reason,
+    )
     cancel_pending_messages(db, workspace_id=workspace_id, email=normalized, reason=reason)
 
     existing = db.scalar(

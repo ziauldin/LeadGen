@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -53,6 +53,9 @@ class Campaign(Base, TenantScoped, TimestampMixin):
 
 class CampaignStep(Base, TenantScoped):
     __tablename__ = "campaign_steps"
+    __table_args__ = (
+        UniqueConstraint("campaign_id", "step_number", name="uq_campaign_steps_campaign_step"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     campaign_id: Mapped[int] = mapped_column(
@@ -63,5 +66,10 @@ class CampaignStep(Base, TenantScoped):
     delay_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     subject_template: Mapped[str] = mapped_column(String(500), nullable=False)
     body_template: Mapped[str] = mapped_column(String, nullable=False)
+    template_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    use_ai: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    ai_instructions: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    # Send follow-ups as replies in the same thread (In-Reply-To / "Re:" subject).
+    thread_with_previous: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     campaign: Mapped[Campaign] = relationship(back_populates="steps")

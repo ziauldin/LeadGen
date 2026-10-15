@@ -4,6 +4,7 @@ from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
+from app.models.enrollment import CampaignEnrollment, EnrollmentStatus
 from app.models.enums import (
     BounceStatus,
     CampaignStatus,
@@ -41,6 +42,7 @@ __all__ = [
     "AuditLog",
     "BounceStatus",
     "Campaign",
+    "CampaignEnrollment",
     "CampaignStatus",
     "CampaignStep",
     "Company",
@@ -50,6 +52,7 @@ __all__ = [
     "EmailMessageStatus",
     "EmailType",
     "EnrichmentStatus",
+    "EnrollmentStatus",
     "Lead",
     "LeadStatus",
     "Niche",

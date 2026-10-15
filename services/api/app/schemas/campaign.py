@@ -116,6 +116,30 @@ class CampaignActionResponse(BaseModel):
     message: str
 
 
+class EnrollmentRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    campaign_id: int
+    lead_id: int
+    lead_name: str | None = None
+    recipient_email: str
+    status: str
+    current_step: int
+    next_step_number: int | None
+    next_send_at: datetime | None
+    last_sent_at: datetime | None
+    stopped_reason: str | None
+    created_at: datetime
+
+
+class EnrollmentListResponse(BaseModel):
+    items: list[EnrollmentRead]
+    total: int
+    skip: int
+    limit: int
+
+
 class ProcessSendsResponse(BaseModel):
     sent: int
     failed: int

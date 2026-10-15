@@ -22,6 +22,11 @@ class EmailMessage(Base, TenantScoped, TimestampUpdatedMixin):
     __table_args__ = (
         UniqueConstraint("idempotency_key", name="uq_email_messages_idempotency_key"),
         UniqueConstraint("reply_token", name="uq_email_messages_reply_token"),
+        UniqueConstraint(
+            "enrollment_id",
+            "step_number",
+            name="uq_email_messages_enrollment_step",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -31,6 +36,16 @@ class EmailMessage(Base, TenantScoped, TimestampUpdatedMixin):
         nullable=True,
     )
     lead_id: Mapped[int] = mapped_column(ForeignKey("leads.id", ondelete="CASCADE"), index=True)
+    enrollment_id: Mapped[int | None] = mapped_column(
+        ForeignKey("campaign_enrollments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    campaign_step_id: Mapped[int | None] = mapped_column(
+        ForeignKey("campaign_steps.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    step_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     recipient_email: Mapped[str] = mapped_column(String(255), nullable=False)
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)

@@ -1,5 +1,3 @@
-import secrets
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -7,16 +5,13 @@ from app.core.config import settings
 from app.core.errors import NotFoundError, ValidationFailedError
 from app.core.tenancy import WorkspaceContext
 from app.models.campaign import Campaign, CampaignStep
-from app.models.email_message import EmailMessage
-from app.models.enums import CampaignStatus, EmailMessageStatus
+from app.models.enrollment import CampaignEnrollment
+from app.models.enums import CampaignStatus, LeadStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.user import User
-from app.models.workspace import WorkspaceSettings
 from app.services.billing.usage import check_campaign_limit
-from app.services.compliance.outreach import primary_recipient_email, validate_lead_for_outreach
-from app.services.email_generation.generator import has_opt_out_line
-from app.services.email_generation.personalisation import build_context, render_template
+from app.services.campaigns.sequences import StepRenderError, enroll_lead
 from app.services.email_generation.templates import WELLPREDICT_TEMPLATE
 from app.services.workspaces.service import get_or_create_settings
 
@@ -119,45 +114,20 @@ def create_campaign(
     return campaign
 
 
-def _render_step(
-    lead: Lead,
-    niche: Niche,
-    workspace_settings: WorkspaceSettings,
-    sender_fallback_name: str,
-    step: CampaignStep,
-    unsubscribe_token: str,
-) -> tuple[str, str, str]:
-    context = build_context(
-        lead,
-        niche,
-        workspace_settings,
-        sender_fallback_name=sender_fallback_name,
-        api_base_url=settings.api_public_url.rstrip("/"),
-        unsubscribe_token=unsubscribe_token,
-    )
-    subject = render_template(step.subject_template, context)
-    body = render_template(step.body_template, context)
-    recipient = primary_recipient_email(lead) or ""
-    return subject, body, recipient
-
-
 def add_leads_to_campaign(
     db: Session,
     ctx: WorkspaceContext,
     campaign_id: int,
     lead_ids: list[int],
 ) -> dict[str, int | list[str] | list[int]]:
+    """Enroll leads and create each one's step-1 draft. Ineligible leads are reported."""
     campaign = get_campaign(db, campaign_id, ctx.workspace_id)
     if not campaign.steps:
         raise ValidationFailedError("Campaign has no steps configured")
 
-    first_step = sorted(campaign.steps, key=lambda step: step.step_number)[0]
-    niche = db.get(Niche, campaign.niche_id)
-    if niche is None:
-        raise NotFoundError("Niche not found")
     actor = db.get(User, ctx.user_id)
-    sender_fallback = actor.name if actor else "The team"
     workspace_settings = get_or_create_settings(db, ctx.workspace_id)
+    sender_fallback = workspace_settings.sender_name or (actor.name if actor else "The team")
 
     created = 0
     skipped = 0
@@ -178,51 +148,31 @@ def add_leads_to_campaign(
             errors.append(f"Lead {lead_id} not found in campaign niche")
             skipped += 1
             continue
-
-        existing = db.scalar(
-            select(EmailMessage.id).where(
-                EmailMessage.campaign_id == campaign.id,
-                EmailMessage.lead_id == lead.id,
+        if lead.status in {LeadStatus.DISQUALIFIED, LeadStatus.OPTED_OUT}:
+            errors.append(f"Lead {lead_id}: lead is {lead.status}")
+            skipped += 1
+            continue
+        already = db.scalar(
+            select(CampaignEnrollment.id).where(
+                CampaignEnrollment.campaign_id == campaign.id,
+                CampaignEnrollment.lead_id == lead.id,
             ),
         )
-        if existing:
+        if already:
             skipped += 1
             continue
 
-        compliance_errors = validate_lead_for_outreach(lead, db)
-        if compliance_errors:
-            errors.append(f"Lead {lead_id}: {'; '.join(compliance_errors)}")
+        try:
+            message = enroll_lead(
+                db,
+                campaign=campaign,
+                lead=lead,
+                sender_fallback_name=sender_fallback,
+            )
+        except StepRenderError as exc:
+            errors.append(f"Lead {lead_id}: {exc}")
             skipped += 1
             continue
-
-        token = secrets.token_urlsafe(32)
-        subject, body, recipient = _render_step(
-            lead,
-            niche,
-            workspace_settings,
-            sender_fallback,
-            first_step,
-            token,
-        )
-        if not has_opt_out_line(body):
-            errors.append(f"Lead {lead_id}: generated email missing opt-out line")
-            skipped += 1
-            continue
-
-        message = EmailMessage(
-            workspace_id=ctx.workspace_id,
-            campaign_id=campaign.id,
-            lead_id=lead.id,
-            recipient_email=recipient,
-            recipient_domain=recipient.rsplit("@", 1)[-1].lower() or None,
-            subject=subject,
-            body=body,
-            status=EmailMessageStatus.DRAFT,
-            unsubscribe_token=token,
-            generation_mode="template",
-        )
-        db.add(message)
-        db.flush()
         message_ids.append(message.id)
         created += 1
 
