@@ -1,3 +1,9 @@
+"""Company enrichment: public website crawl (robots.txt respected) plus optional Hunter lookup."""
+
+from __future__ import annotations
+
+import logging
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
@@ -5,17 +11,21 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
+from app.core.http import UnsafeURLError
 from app.models.company import Company
 from app.models.email_contact import EmailContact
-from app.models.enums import EnrichmentStatus, LeadStatus
+from app.models.enums import EmailType, EnrichmentStatus, LeadStatus
 from app.models.lead import Lead
+from app.models.niche import Niche
 from app.services.enrichment.email_extractor import extract_emails_from_html
 from app.services.enrichment.robots_checker import fetch_robots_parser
-from app.services.enrichment.website_crawler import crawl_company_site
+from app.services.enrichment.website_crawler import CrawledPage, crawl_company_site
 from app.services.enrichment.website_finder import resolve_website
 
+logger = logging.getLogger(__name__)
 
-def _pick_page_url(pages, keyword: str) -> str | None:
+
+def _pick_page_url(pages: list[CrawledPage], keyword: str) -> str | None:
     for page in pages:
         path = urlparse(page.url).path.lower()
         if keyword in path:
@@ -23,37 +33,151 @@ def _pick_page_url(pages, keyword: str) -> str | None:
     return None
 
 
+def _email_type(value: Any) -> EmailType:
+    try:
+        return EmailType(str(getattr(value, "value", value)))
+    except ValueError:
+        return EmailType.GENERIC
+
+
 def _upsert_email_contact(
     db: Session,
     company: Company,
     lead: Lead | None,
-    extracted,
+    extracted: Any,
+    *,
+    source_provider: str,
 ) -> None:
+    """Insert or update one contact. Works for crawler results and Hunter results alike."""
+    email = str(extracted.email).strip().lower()
+    if not email:
+        return
     existing = db.scalar(
         select(EmailContact).where(
             EmailContact.company_id == company.id,
-            EmailContact.email == extracted.email,
+            EmailContact.email == email,
         ),
     )
     if existing:
         if lead and existing.lead_id is None:
             existing.lead_id = lead.id
         if not existing.source_url:
-            existing.source_url = extracted.source_url
+            existing.source_url = getattr(extracted, "source_url", None)
         return
 
+    confidence = getattr(extracted, "confidence", None)
+    email_type = _email_type(getattr(extracted, "email_type", EmailType.GENERIC))
     db.add(
         EmailContact(
             lead_id=lead.id if lead else None,
             company_id=company.id,
-            email=extracted.email,
-            email_type=extracted.email_type,
-            confidence=extracted.confidence,
-            source_url=extracted.source_url,
-            is_role_based=extracted.is_role_based,
-            is_personal=extracted.is_personal,
+            email=email,
+            email_type=email_type,
+            confidence=float(confidence) if confidence is not None else 0.0,
+            source_url=getattr(extracted, "source_url", None),
+            is_role_based=bool(
+                getattr(extracted, "is_role_based", email_type == EmailType.ROLE_BASED),
+            ),
+            is_personal=bool(getattr(extracted, "is_personal", email_type == EmailType.NAMED)),
         ),
     )
+
+
+def _save_contacts(
+    db: Session,
+    company: Company,
+    leads: list[Lead],
+    contacts: list[Any],
+    *,
+    source_provider: str,
+) -> None:
+    for extracted in contacts:
+        if leads:
+            for lead in leads:
+                _upsert_email_contact(db, company, lead, extracted, source_provider=source_provider)
+        else:
+            _upsert_email_contact(db, company, None, extracted, source_provider=source_provider)
+        db.flush()
+
+
+def _hunter_lookup(db: Session, company: Company) -> tuple[list[Any], str]:
+    """Return ``(emails, note)``. Hunter problems never fail the enrichment."""
+    from app.services.enrichment.email_discovery.factory import get_email_discovery_provider
+    from app.services.enrichment.email_discovery.utils import extract_company_domain
+
+    domain = extract_company_domain(company.website or company.domain)
+    if not domain:
+        return [], "Invalid or excluded domain for Hunter"
+
+    user_id = None
+    if company.leads:
+        user_id = db.scalar(
+            select(Niche.user_id)
+            .join(Lead, Lead.niche_id == Niche.id)
+            .where(Lead.id == company.leads[0].id),
+        )
+    try:
+        provider = get_email_discovery_provider(db, user_id)
+        if provider is None:
+            return [], "Hunter not configured or disabled"
+        return list(provider.discover_by_domain(domain)), ""
+    except Exception as exc:
+        logger.warning("Hunter lookup failed for company %s: %s", company.id, exc)
+        return [], "Hunter lookup failed"
+
+
+def _run_enrichment(db: Session, company: Company, website: str) -> None:
+    headers = {"User-Agent": settings.enrichment_user_agent}
+    with httpx.Client(headers=headers) as client:
+        parser, fetched = fetch_robots_parser(website, client)
+    company.robots_checked = fetched
+
+    pages, crawl_error = crawl_company_site(
+        website,
+        robots_parser=parser,
+        max_pages=settings.enrichment_max_pages,
+    )
+    if crawl_error:
+        company.enrichment_status = EnrichmentStatus.FAILED
+        company.enrichment_message = crawl_error
+        return
+    if not pages:
+        company.enrichment_status = EnrichmentStatus.FAILED
+        company.enrichment_message = "No pages could be fetched"
+        return
+
+    company.contact_page_url = _pick_page_url(pages, "contact") or company.contact_page_url
+    company.about_page_url = (
+        _pick_page_url(pages, "about") or _pick_page_url(pages, "team") or company.about_page_url
+    )
+
+    extracted_emails: list[Any] = []
+    for page in pages:
+        extracted_emails.extend(extract_emails_from_html(page.html, page.url))
+
+    leads = list(company.leads or [])
+    _save_contacts(db, company, leads, extracted_emails, source_provider="website")
+
+    hunter_emails: list[Any] = []
+    hunter_note = ""
+    if not extracted_emails:
+        hunter_emails, hunter_note = _hunter_lookup(db, company)
+        _save_contacts(db, company, leads, hunter_emails, source_provider="hunter")
+
+    total = len(extracted_emails) + len(hunter_emails)
+    company.enrichment_status = EnrichmentStatus.COMPLETED
+    if total:
+        message = f"Enrichment completed. Found {total} public email(s)"
+        if hunter_emails:
+            message += f" (including {len(hunter_emails)} from Hunter)"
+        for lead in leads:
+            if lead.status == LeadStatus.NEW:
+                lead.status = LeadStatus.ENRICHED
+    else:
+        message = f"Enrichment completed. Crawled {len(pages)} page(s); no public emails found."
+    if hunter_note:
+        message += f". {hunter_note}" if total else f" {hunter_note}"
+    company.enrichment_message = message
 
 
 def enrich_company_record(db: Session, company_id: int) -> Company:
@@ -76,115 +200,22 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
     company.enrichment_message = "Enrichment in progress"
     db.commit()
 
-    headers = {"User-Agent": settings.enrichment_user_agent}
     try:
-        with httpx.Client(headers=headers, follow_redirects=True) as client:
-            _parser, fetched = fetch_robots_parser(website, client)
-            company.robots_checked = fetched or True
-
-        pages, crawl_error = crawl_company_site(website)
-        if crawl_error:
-            company.enrichment_status = EnrichmentStatus.FAILED
-            company.enrichment_message = crawl_error
-            db.commit()
-            return company
-
-        if not pages:
-            company.enrichment_status = EnrichmentStatus.FAILED
-            company.enrichment_message = "No pages could be fetched"
-            db.commit()
-            return company
-
-        company.contact_page_url = _pick_page_url(pages, "contact") or company.contact_page_url
-        company.about_page_url = (
-            _pick_page_url(pages, "about")
-            or _pick_page_url(pages, "team")
-            or company.about_page_url
-        )
-
-        extracted_emails = []
-        for page in pages:
-            extracted_emails.extend(extract_emails_from_html(page.html, page.url))
-
-        leads = list(company.leads or [])
-        if extracted_emails:
-            for extracted in extracted_emails:
-                if leads:
-                    for lead in leads:
-                        _upsert_email_contact(db, company, lead, extracted)
-                else:
-                    _upsert_email_contact(db, company, None, extracted)
-
-    except Exception as exc:
+        _run_enrichment(db, company, website)
+    except UnsafeURLError:
+        db.rollback()
         company.enrichment_status = EnrichmentStatus.FAILED
-        company.enrichment_message = f"Enrichment failed: {exc}"
+        company.enrichment_message = "Website address is not allowed (private or reserved host)"
+    except Exception:
+        logger.exception("Enrichment failed for company %s", company_id)
+        db.rollback()
+        company.enrichment_status = EnrichmentStatus.FAILED
+        company.enrichment_message = "Enrichment failed unexpectedly. Please try again later."
+    finally:
+        if company.enrichment_status == EnrichmentStatus.IN_PROGRESS:
+            company.enrichment_status = EnrichmentStatus.FAILED
+            company.enrichment_message = "Enrichment did not finish"
         db.commit()
-        db.refresh(company)
-        return company
 
-    hunter_emails = []
-    hunter_skipped_msg = ""
-    try:
-        from app.models.lead import Lead
-        from app.models.niche import Niche
-
-        user_id = None
-        if company.leads:
-            user_id = db.scalar(
-                select(Niche.user_id)
-                .join(Lead, Lead.niche_id == Niche.id)
-                .where(Lead.id == company.leads[0].id)
-            )
-
-        from app.services.enrichment.email_discovery.factory import get_email_discovery_provider
-        from app.services.enrichment.email_discovery.utils import extract_company_domain
-
-        domain_for_hunter = extract_company_domain(company.website or company.domain)
-        if domain_for_hunter:
-            provider = get_email_discovery_provider(db, user_id)
-            if provider:
-                # We can call it even if we extracted emails, to supplement them
-                # But to preserve API quota, maybe we check if extracted_emails is empty?
-                # The user wrote: "First run existing public website crawler... If no useful emails are found, call Hunter using the company domain."
-                if not extracted_emails:
-                    hunter_emails = provider.discover_by_domain(domain_for_hunter)
-            else:
-                hunter_skipped_msg = "Hunter not configured or disabled"
-        else:
-            hunter_skipped_msg = "Invalid or excluded domain for Hunter"
-
-    except Exception as exc:
-        # Hunter errors should not break the pipeline
-        hunter_skipped_msg = f"Hunter lookup skipped or failed: {str(exc).split(':')[-1].strip()}"
-
-    if hunter_emails:
-        for extracted in hunter_emails:
-            if leads:
-                for lead in leads:
-                    _upsert_email_contact(db, company, lead, extracted)
-            else:
-                _upsert_email_contact(db, company, None, extracted)
-
-    total_emails = len(extracted_emails) + len(hunter_emails)
-    if total_emails > 0:
-        company.enrichment_status = EnrichmentStatus.COMPLETED
-        msg = f"Enrichment completed. Found {total_emails} public email(s)"
-        if hunter_emails:
-            msg += f" (including {len(hunter_emails)} from Hunter)"
-        if hunter_skipped_msg:
-            msg += f". {hunter_skipped_msg}"
-        company.enrichment_message = msg
-
-        for lead in leads:
-            if lead.status == LeadStatus.NEW:
-                lead.status = LeadStatus.ENRICHED
-    else:
-        company.enrichment_status = EnrichmentStatus.COMPLETED
-        msg = f"Enrichment completed. Crawled {len(pages)} page(s); no public emails found."
-        if hunter_skipped_msg:
-            msg += f" {hunter_skipped_msg}"
-        company.enrichment_message = msg
-
-    db.commit()
     db.refresh(company)
     return company

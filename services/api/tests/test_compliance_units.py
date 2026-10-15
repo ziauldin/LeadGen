@@ -4,7 +4,7 @@ from app.models.enums import LeadStatus
 from app.models.lead import Lead
 from app.models.suppression import Suppression
 from app.services.compliance.outreach import is_email_suppressed, validate_lead_for_outreach
-from tests.conftest import TestingSessionLocal
+from tests.conftest import TestingSessionLocal, setup_db
 
 
 def _make_lead(**kwargs) -> Lead:
@@ -33,6 +33,7 @@ def test_validate_lead_for_outreach_requires_source_and_note():
 
 
 def test_is_email_suppressed_by_email_and_domain():
+    setup_db()
     db = TestingSessionLocal()
     try:
         db.add(

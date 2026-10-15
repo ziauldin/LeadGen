@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -20,6 +22,7 @@ from app.services.enrichment.enricher import enrich_company_record
 from app.workers.enrichment_jobs import enrich_company
 
 router = APIRouter(prefix="/companies", tags=["companies"])
+logger = logging.getLogger(__name__)
 
 
 def _get_owned_company(
@@ -139,11 +142,23 @@ def enrich_company_endpoint(
             message=company.enrichment_message or "Enrichment completed",
         )
 
+    previous_status = company.enrichment_status
+    previous_message = company.enrichment_message
     company.enrichment_status = EnrichmentStatus.IN_PROGRESS
     company.enrichment_message = "Enrichment queued"
     db.commit()
 
-    enrich_company.delay(company.id)
+    try:
+        enrich_company.delay(company.id)
+    except Exception as exc:
+        logger.warning("Could not queue enrichment for company %s: %s", company.id, exc)
+        company.enrichment_status = previous_status
+        company.enrichment_message = previous_message
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Background workers are unavailable. Try again shortly, or run it inline.",
+        ) from None
 
     return EnrichCompanyResponse(
         company_id=company.id,

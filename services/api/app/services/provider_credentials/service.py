@@ -23,6 +23,7 @@ DISPLAY_NAMES: dict[ProviderName, str] = {
     ProviderName.RESEND: "Resend",
     ProviderName.SENDGRID: "SendGrid",
     ProviderName.MAILGUN: "Mailgun",
+    ProviderName.HUNTER: "Hunter.io",
 }
 
 SEARCH_PROVIDERS = {
@@ -37,6 +38,16 @@ EMAIL_PROVIDERS = {
     ProviderName.RESEND,
     ProviderName.SENDGRID,
     ProviderName.MAILGUN,
+}
+
+EMAIL_DISCOVERY_PROVIDERS = {
+    ProviderName.HUNTER,
+}
+
+ALLOWED_PROVIDERS: dict[ProviderType, set[ProviderName]] = {
+    ProviderType.SEARCH: SEARCH_PROVIDERS,
+    ProviderType.EMAIL: EMAIL_PROVIDERS,
+    ProviderType.EMAIL_DISCOVERY: EMAIL_DISCOVERY_PROVIDERS,
 }
 
 SECRET_FIELDS = {
@@ -100,6 +111,9 @@ def build_masked_summary(provider_name: ProviderName, config: dict) -> str:
             parts.append(f"API key {mask_secret_value(str(config['api_key']))}")
         if config.get("from_email"):
             parts.append(f"From {config.get('from_email')}")
+    elif provider_name == ProviderName.HUNTER:
+        if config.get("api_key"):
+            parts.append(f"API key {mask_secret_value(str(config['api_key']))}")
     elif provider_name == ProviderName.MAILGUN:
         if config.get("api_key"):
             parts.append(f"API key {mask_secret_value(str(config['api_key']))}")
@@ -112,7 +126,7 @@ def build_masked_summary(provider_name: ProviderName, config: dict) -> str:
 
 
 def _validate_provider_type_name(provider_type: ProviderType, provider_name: ProviderName) -> None:
-    allowed = SEARCH_PROVIDERS if provider_type == ProviderType.SEARCH else EMAIL_PROVIDERS
+    allowed = ALLOWED_PROVIDERS.get(provider_type, set())
     if provider_name not in allowed:
         raise ValueError(f"Provider {provider_name.value} is not valid for {provider_type.value}")
 
@@ -132,6 +146,8 @@ def _required_fields(provider_name: ProviderName) -> list[str]:
         return ["api_key", "from_email"]
     if provider_name == ProviderName.MAILGUN:
         return ["api_key", "domain", "from_email"]
+    if provider_name == ProviderName.HUNTER:
+        return ["api_key"]
     return []
 
 

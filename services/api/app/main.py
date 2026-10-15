@@ -1,3 +1,5 @@
+import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -22,24 +24,44 @@ from app.api.routes import (
     settings,
 )
 from app.api.routes.settings import suppressions_router
+from app.core.config import production_config_errors
 from app.core.config import settings as app_settings
-from app.core.exceptions import http_exception_handler, validation_exception_handler
+from app.core.errors import AppError
+from app.core.exceptions import (
+    app_error_handler,
+    http_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
 from app.core.logging import setup_logging
+from app.core.middleware import RequestContextMiddleware
+from app.core.observability import init_sentry
 from app.core.security import ensure_encryption_key_configured
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     setup_logging()
+    if app_settings.is_production:
+        errors = production_config_errors(app_settings)
+        if errors:
+            raise RuntimeError("Invalid production configuration: " + "; ".join(errors))
     ensure_encryption_key_configured()
     yield
 
 
+init_sentry("api")
+
 app = FastAPI(
     title=app_settings.app_name,
-    version="0.1.0",
+    version="1.0.0",
     description="B2B lead-intelligence and outreach workflow API",
     lifespan=lifespan,
+    docs_url="/docs" if app_settings.expose_api_docs else None,
+    redoc_url="/redoc" if app_settings.expose_api_docs else None,
+    openapi_url="/openapi.json" if app_settings.expose_api_docs else None,
 )
 
 app.add_middleware(
@@ -47,12 +69,23 @@ app.add_middleware(
     allow_origins=app_settings.cors_origins,
     allow_origin_regex=app_settings.resolved_cors_origin_regex(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-Request-ID",
+        "X-Workspace-Id",
+        "X-Requested-With",
+    ],
+    expose_headers=["X-Request-ID", "Content-Disposition"],
 )
+# Outermost: request ids and security headers apply to every response, including CORS errors.
+app.add_middleware(RequestContextMiddleware, hsts=app_settings.is_production)
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(AppError, app_error_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(health.router)
 app.include_router(auth.router)

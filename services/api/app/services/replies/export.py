@@ -8,6 +8,7 @@ from app.models.email_message import EmailMessage
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.reply import Reply
+from app.services.common.csv_safety import safe_cell
 
 
 def export_replies_to_csv(db: Session, user_id: int) -> str:
@@ -45,14 +46,17 @@ def export_replies_to_csv(db: Session, user_id: int) -> str:
         )
         writer.writerow(
             [
-                reply.id,
-                reply.from_email,
-                lead.full_name if lead else "",
-                lead.id if lead else "",
-                classification,
-                reply.received_at.isoformat(),
-                reply.notes or "",
-                reply.body,
+                safe_cell(value)
+                for value in (
+                    reply.id,
+                    reply.from_email,
+                    lead.full_name if lead else "",
+                    lead.id if lead else "",
+                    classification,
+                    reply.received_at.isoformat(),
+                    reply.notes or "",
+                    reply.body,
+                )
             ],
         )
 

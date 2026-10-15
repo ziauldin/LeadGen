@@ -54,7 +54,7 @@ def test_enrich_company_sync_extracts_emails():
     companies = client.get("/companies", headers=headers).json()
     company_id = companies["items"][0]["id"]
 
-    def fake_crawl(base_url: str):
+    def fake_crawl(base_url: str, **_kwargs):
         return [
             CrawledPage(url=base_url, html=SAMPLE_HTML),
             CrawledPage(url=f"{base_url.rstrip('/')}/contact", html=CONTACT_HTML),

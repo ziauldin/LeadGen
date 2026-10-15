@@ -5,12 +5,14 @@ from dataclasses import dataclass, field
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.config import settings
 from app.models.company import Company
 from app.models.email_contact import EmailContact
 from app.models.enums import EmailType, LeadStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.user import User
+from app.services.common.csv_safety import safe_row
 from app.services.companies.helpers import extract_domain, normalize_website
 
 CSV_IMPORT_COLUMNS = [
@@ -139,6 +141,11 @@ def import_leads_from_csv(db: Session, user: User, file_content: str) -> ImportR
         return result
 
     for row_num, row in enumerate(reader, start=2):
+        if row_num - 1 > settings.csv_max_rows:
+            result.errors.append(
+                f"Import stopped: only the first {settings.csv_max_rows} rows are processed per file",
+            )
+            break
         full_name = (row.get("full_name") or "").strip()
         if not full_name:
             result.skipped += 1
@@ -241,17 +248,19 @@ def export_leads_to_csv(db: Session, user: User, niche_id: int | None = None) ->
     for lead in leads:
         primary_email = next((c.email for c in lead.email_contacts), "")
         writer.writerow(
-            {
-                "full_name": lead.full_name,
-                "job_title": lead.job_title or "",
-                "company": lead.company.name if lead.company else "",
-                "website": lead.company.website if lead.company else "",
-                "email": primary_email,
-                "score": lead.score,
-                "status": lead.status.value if hasattr(lead.status, "value") else lead.status,
-                "source_url": lead.source_url or "",
-                "compliance_source_note": lead.compliance_source_note or "",
-            },
+            safe_row(
+                {
+                    "full_name": lead.full_name,
+                    "job_title": lead.job_title or "",
+                    "company": lead.company.name if lead.company else "",
+                    "website": lead.company.website if lead.company else "",
+                    "email": primary_email,
+                    "score": lead.score,
+                    "status": lead.status.value if hasattr(lead.status, "value") else lead.status,
+                    "source_url": lead.source_url or "",
+                    "compliance_source_note": lead.compliance_source_note or "",
+                }
+            ),
         )
 
     return output.getvalue()

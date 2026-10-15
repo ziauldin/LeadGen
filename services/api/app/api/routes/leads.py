@@ -4,6 +4,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_user, get_owned_lead
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.company import Company
 from app.models.enums import LeadStatus
@@ -110,7 +111,19 @@ async def import_csv(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> LeadImportResult:
-    content = (await file.read()).decode("utf-8-sig")
+    raw = await file.read(settings.csv_max_bytes + 1)
+    if len(raw) > settings.csv_max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"CSV file is larger than {settings.csv_max_bytes // 1_000_000} MB",
+        )
+    try:
+        content = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CSV file must be UTF-8 encoded",
+        ) from None
     result = import_leads_from_csv(db, current_user, content)
     return LeadImportResult(
         created=result.created,

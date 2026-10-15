@@ -92,9 +92,31 @@ def test_email_provider(credential: ProviderCredential) -> tuple[bool, str]:
         return False, str(exc)
 
 
+def test_email_discovery_provider(credential: ProviderCredential) -> tuple[bool, str]:
+    provider_name = ProviderName(_as_str(credential.provider_name))
+    if provider_name != ProviderName.HUNTER:
+        return False, f"Unsupported email discovery provider: {_as_str(provider_name)}"
+    config = decrypt_provider_config(credential)
+    try:
+        response = httpx.get(
+            "https://api.hunter.io/v2/account",
+            params={"api_key": str(config["api_key"])},
+            timeout=15.0,
+        )
+        if response.status_code == 401:
+            return False, "Hunter rejected the API key"
+        response.raise_for_status()
+        return True, "Hunter API key validated"
+    except Exception as exc:
+        return False, f"Hunter connection failed: {exc.__class__.__name__}"
+
+
 def test_provider_credential(credential: ProviderCredential) -> tuple[bool, str, datetime]:
-    if _as_str(credential.provider_type) == "search":
+    provider_type = _as_str(credential.provider_type)
+    if provider_type == "search":
         success, message = test_search_provider(credential)
+    elif provider_type == "email_discovery":
+        success, message = test_email_discovery_provider(credential)
     else:
         success, message = test_email_provider(credential)
     return success, message, datetime.now(UTC)

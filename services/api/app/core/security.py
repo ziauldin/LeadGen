@@ -3,9 +3,14 @@ from typing import Any
 
 import bcrypt
 import jwt
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 
 from app.core.config import settings
+
+_KEY_HELP = (
+    "Generate one with: "
+    'python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
+)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -42,34 +47,31 @@ def get_token_subject(token: str) -> str | None:
         return None
 
 
-def ensure_encryption_key_configured() -> None:
-    if not settings.secret_encryption_key:
-        raise RuntimeError(
-            "SECRET_ENCRYPTION_KEY is not set. Generate one with: "
-            'python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"',
-        )
+def _fernet() -> MultiFernet:
+    keys = settings.encryption_keys()
+    if not keys:
+        raise RuntimeError(f"SECRET_ENCRYPTION_KEY is not set. {_KEY_HELP}")
     try:
-        Fernet(settings.secret_encryption_key.encode())
-    except Exception as exc:
+        return MultiFernet([Fernet(key.encode()) for key in keys])
+    except (ValueError, TypeError) as exc:
         raise RuntimeError("SECRET_ENCRYPTION_KEY is invalid for Fernet encryption") from exc
 
 
+def ensure_encryption_key_configured() -> None:
+    _fernet()
+
+
 def encrypt_secret_payload(payload: str) -> str:
-    ensure_encryption_key_configured()
-    return (
-        Fernet(settings.secret_encryption_key.encode())
-        .encrypt(payload.encode("utf-8"))
-        .decode("utf-8")
-    )
+    """Encrypt with the newest key (the first in SECRET_ENCRYPTION_KEYS)."""
+    return _fernet().encrypt(payload.encode("utf-8")).decode("utf-8")
 
 
 def decrypt_secret_payload(encrypted_payload: str) -> str:
-    ensure_encryption_key_configured()
-    return (
-        Fernet(settings.secret_encryption_key.encode())
-        .decrypt(encrypted_payload.encode("utf-8"))
-        .decode("utf-8")
-    )
+    """Decrypt with any configured key, so old ciphertexts survive a key rotation."""
+    try:
+        return _fernet().decrypt(encrypted_payload.encode("utf-8")).decode("utf-8")
+    except InvalidToken as exc:
+        raise RuntimeError("Stored secret could not be decrypted with the configured keys") from exc
 
 
 def mask_secret_value(value: str | None) -> str:
