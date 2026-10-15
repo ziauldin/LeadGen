@@ -83,7 +83,7 @@ export default function CampaignDetailPage() {
   const sendMutation = useMutation({
     mutationFn: () => campaignsApi.processSends(id),
     onSuccess: (result) => {
-      toast.success(`Sent ${result.sent}, blocked ${result.blocked}`);
+      toast.success(`Queued ${result.sent}, skipped ${result.skipped}, failed ${result.failed}`);
       setConfirmSend(false);
       queryClient.invalidateQueries({ queryKey: ["campaigns", id] });
     },

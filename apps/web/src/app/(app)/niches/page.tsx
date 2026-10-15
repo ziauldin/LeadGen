@@ -125,7 +125,7 @@ function NicheCard({ niche }: { niche: Niche }) {
 export default function NichesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["niches"],
-    queryFn: nichesApi.list,
+    queryFn: () => nichesApi.list(),
   });
 
   return (

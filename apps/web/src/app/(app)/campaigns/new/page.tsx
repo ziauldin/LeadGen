@@ -9,17 +9,24 @@ import { ArrowLeft, ChevronDown, Plus } from "lucide-react";
 import { CampaignStepEditor } from "@/components/campaigns/campaign-step-editor";
 import { PageHeader } from "@/components/layout/page-header";
 import { campaignsApi, nichesApi } from "@/lib/api/endpoints";
-import { WELLPREDICT_CAMPAIGN_STEP } from "@/lib/constants/wellpredict";
 
 export default function NewCampaignPage() {
   const router = useRouter();
   const [nicheId, setNicheId] = useState("");
   const [name, setName] = useState("");
-  const [step, setStep] = useState(WELLPREDICT_CAMPAIGN_STEP);
+  const [step, setStep] = useState({
+    step_number: 1,
+    delay_days: 0,
+    subject_template: "Quick question about {{company}}",
+    body_template:
+      "Hi {{first_name}},\n\n\n\nRegards,\n{{sender_name}}\n\n" +
+      'If this is not relevant, reply "not relevant" and I will not contact you again.\n\n' +
+      "To opt out of future emails, use this link: {{unsubscribe_link}}",
+  });
 
   const { data: niches } = useQuery({
     queryKey: ["niches"],
-    queryFn: nichesApi.list,
+    queryFn: () => nichesApi.list(),
   });
 
   const mutation = useMutation({

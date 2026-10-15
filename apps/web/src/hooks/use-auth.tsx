@@ -10,68 +10,120 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, setAuthToken } from "@/lib/api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getErrorMessage,
+  refreshAccessToken,
+  setAccessToken,
+  setSessionExpiredHandler,
+  setWorkspaceId,
+} from "@/lib/api/client";
 import { authApi } from "@/lib/api/endpoints";
 import type { User } from "@/lib/api/types";
 
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  isVerified: boolean;
+  login: (email: string, password: string, next?: string | null) => Promise<void>;
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    next?: string | null,
+  ) => Promise<void>;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** Only follow same-site relative redirects after sign-in. */
+export function safeNext(next?: string | null): string {
+  if (next && next.startsWith("/") && !next.startsWith("//")) return next;
+  return "/dashboard";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshUser = useCallback(async () => {
     try {
-      const me = await authApi.me();
-      setUser(me);
+      setUser(await authApi.me());
     } catch {
       setUser(null);
-      setAuthToken(null);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
+  // Restore the session from the refresh cookie on first load.
   useEffect(() => {
-    void refreshUser();
+    let cancelled = false;
+    (async () => {
+      const token = await refreshAccessToken();
+      if (!cancelled && token) await refreshUser();
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [refreshUser]);
 
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      setUser(null);
+      setAccessToken(null);
+      queryClient.clear();
+      const next = encodeURIComponent(window.location.pathname + window.location.search);
+      router.replace(`/login?next=${next}`);
+    });
+    return () => setSessionExpiredHandler(null);
+  }, [queryClient, router]);
+
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, next?: string | null) => {
       const token = await authApi.login({ email, password });
-      setAuthToken(token.access_token);
+      setAccessToken(token.access_token);
+      queryClient.clear();
       await refreshUser();
-      router.push("/dashboard");
+      router.push(safeNext(next));
     },
-    [refreshUser, router],
+    [queryClient, refreshUser, router],
   );
 
   const register = useCallback(
-    async (name: string, email: string, password: string) => {
+    async (name: string, email: string, password: string, next?: string | null) => {
       await authApi.register({ name, email, password });
-      await login(email, password);
+      await login(email, password, next);
     },
     [login],
   );
 
-  const logout = useCallback(() => {
-    setAuthToken(null);
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch {
+      // Signing out locally is enough if the API is unreachable.
+    }
+    setAccessToken(null);
+    setWorkspaceId(null);
     setUser(null);
+    queryClient.clear();
     router.push("/login");
-  }, [router]);
+  }, [queryClient, router]);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refreshUser }),
+    () => ({
+      user,
+      loading,
+      isVerified: Boolean(user?.email_verified_at),
+      login,
+      register,
+      logout,
+      refreshUser,
+    }),
     [user, loading, login, register, logout, refreshUser],
   );
 
@@ -85,14 +137,5 @@ export function useAuth() {
 }
 
 export function getAuthErrorMessage(error: unknown) {
-  if (error instanceof ApiError) {
-    const detail = error.detail as { detail?: string } | string | undefined;
-    if (typeof detail === "string") return detail;
-    if (detail && typeof detail.detail === "string") return detail.detail;
-    if (error.status === 409) return "An account with this email already exists.";
-  }
-  if (error instanceof TypeError) {
-    return "Cannot reach the API. Check NEXT_PUBLIC_API_URL and backend CORS settings.";
-  }
-  return "Something went wrong. Please try again.";
+  return getErrorMessage(error);
 }

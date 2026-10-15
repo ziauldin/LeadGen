@@ -139,7 +139,7 @@ export default function SettingsPage() {
 
   const { data: suppressions } = useQuery({
     queryKey: ["suppressions"],
-    queryFn: settingsApi.listSuppressions,
+    queryFn: () => settingsApi.listSuppressions(),
   });
 
   const {

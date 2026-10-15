@@ -159,3 +159,12 @@ def test_expired_access_token_is_rejected():
     expired = create_access_token(user_id, expires_delta=timedelta(seconds=-5))
     response = client.get("/auth/me", headers={"Authorization": f"Bearer {expired}"})
     assert response.status_code == 401
+
+
+def test_session_hint_cookie_follows_the_refresh_cookie():
+    client = get_client()
+    register_user(client, EMAIL, PASSWORD)
+    client.post("/auth/login", json={"email": EMAIL, "password": PASSWORD})
+    assert client.cookies.get("lg_session") == "1"
+    client.post("/auth/logout")
+    assert client.cookies.get("lg_session") is None

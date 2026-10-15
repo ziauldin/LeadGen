@@ -67,14 +67,14 @@ export default function CompaniesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["companies"],
-    queryFn: companiesApi.list,
+    queryFn: () => companiesApi.list({ limit: 200 }),
   });
 
   const enrichMutation = useMutation({
     mutationFn: (id: number) => companiesApi.enrich(id, true),
     onSuccess: (company) => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      toast.success(`Enriching ${company.name}…`);
+      toast.success(company.message);
     },
     onError: () => toast.error("Enrichment failed"),
   });

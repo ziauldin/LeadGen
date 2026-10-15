@@ -36,6 +36,9 @@ def _access_token_for(user: User) -> Token:
     )
 
 
+SESSION_HINT_COOKIE = "lg_session"
+
+
 def _set_refresh_cookie(response: Response, raw: str) -> None:
     response.set_cookie(
         key=settings.refresh_cookie_name,
@@ -47,9 +50,28 @@ def _set_refresh_cookie(response: Response, raw: str) -> None:
         httponly=True,
         samesite=settings.refresh_cookie_samesite,  # type: ignore[arg-type]
     )
+    # A non-secret hint so the web app's middleware can send signed-out visitors to /login
+    # (the refresh cookie itself is only sent to /api/auth).
+    response.set_cookie(
+        key=SESSION_HINT_COOKIE,
+        value="1",
+        max_age=settings.jwt_refresh_token_expire_days * 86_400,
+        path="/",
+        domain=settings.refresh_cookie_domain,
+        secure=settings.cookie_secure,
+        httponly=False,
+        samesite="lax",
+    )
 
 
 def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=SESSION_HINT_COOKIE,
+        path="/",
+        domain=settings.refresh_cookie_domain,
+        secure=settings.cookie_secure,
+        samesite="lax",
+    )
     response.delete_cookie(
         key=settings.refresh_cookie_name,
         path=settings.refresh_cookie_path,

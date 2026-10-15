@@ -51,6 +51,27 @@ const CLASSIFICATION_CONFIG: Record<
     dot: "var(--on-error-container)",
     icon: XCircle,
   },
+  out_of_office: {
+    label: "Out of office",
+    bg: "var(--surface-variant)",
+    text: "var(--on-surface-variant)",
+    dot: "var(--outline)",
+    icon: MessageSquare,
+  },
+  auto_reply: {
+    label: "Auto-reply",
+    bg: "var(--surface-variant)",
+    text: "var(--on-surface-variant)",
+    dot: "var(--outline)",
+    icon: MessageSquare,
+  },
+  wrong_person: {
+    label: "Wrong person",
+    bg: "var(--tertiary-fixed)",
+    text: "var(--on-tertiary-fixed)",
+    dot: "var(--on-tertiary-fixed)",
+    icon: ThumbsDown,
+  },
   bounce: {
     label: "Bounce",
     bg: "var(--error-container)",
@@ -106,7 +127,7 @@ export default function RepliesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["replies", activeTab],
-    queryFn: () => repliesApi.list(activeTab || undefined),
+    queryFn: () => repliesApi.list({ classification: activeTab || undefined }),
   });
 
   const syncMutation = useMutation({

@@ -73,7 +73,7 @@ export default function SearchPage() {
 
   const { data: niches } = useQuery({
     queryKey: ["niches"],
-    queryFn: nichesApi.list,
+    queryFn: () => nichesApi.list(),
   });
 
   const tableRows = useMemo(
