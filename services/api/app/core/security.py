@@ -1,3 +1,4 @@
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -24,26 +25,46 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def create_access_token(subject: str | int, expires_delta: timedelta | None = None) -> str:
-    expire = datetime.now(UTC) + (
-        expires_delta
-        if expires_delta
-        else timedelta(minutes=settings.jwt_access_token_expire_minutes)
-    )
-    payload: dict[str, Any] = {"sub": str(subject), "exp": expire}
+ACCESS_TOKEN_TYPE = "access"  # noqa: S105 - JWT "typ" claim, not a secret
+
+
+def create_access_token(
+    subject: str | int,
+    *,
+    token_version: int = 0,
+    expires_delta: timedelta | None = None,
+) -> str:
+    now = datetime.now(UTC)
+    expire = now + (expires_delta or timedelta(minutes=settings.jwt_access_token_expire_minutes))
+    payload: dict[str, Any] = {
+        "sub": str(subject),
+        "ver": token_version,
+        "typ": ACCESS_TOKEN_TYPE,
+        "iat": now,
+        "exp": expire,
+        "jti": secrets.token_hex(8),
+    }
     return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
+    payload = jwt.decode(
+        token,
+        settings.secret_key,
+        algorithms=[settings.jwt_algorithm],
+        options={"require": ["sub", "exp", "typ"]},
+    )
+    if payload.get("typ") != ACCESS_TOKEN_TYPE:
+        raise jwt.InvalidTokenError("Not an access token")
+    return payload
 
 
-def get_token_subject(token: str) -> str | None:
+def read_access_token(token: str) -> tuple[int, int] | None:
+    """Return ``(user_id, token_version)`` for a valid access token, else None."""
     try:
         payload = decode_access_token(token)
-        subject = payload.get("sub")
-        return str(subject) if subject is not None else None
-    except jwt.PyJWTError:
+        return int(payload["sub"]), int(payload.get("ver", 0))
+    except (jwt.PyJWTError, ValueError, KeyError):
         return None
 
 

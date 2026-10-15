@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import (
@@ -30,12 +31,14 @@ from app.core.errors import AppError
 from app.core.exceptions import (
     app_error_handler,
     http_exception_handler,
+    rate_limit_exceeded_handler,
     unhandled_exception_handler,
     validation_exception_handler,
 )
 from app.core.logging import setup_logging
 from app.core.middleware import RequestContextMiddleware
 from app.core.observability import init_sentry
+from app.core.rate_limit import limiter
 from app.core.security import ensure_encryption_key_configured
 
 logger = logging.getLogger(__name__)
@@ -85,6 +88,8 @@ app.add_middleware(RequestContextMiddleware, hsts=app_settings.is_production)
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(AppError, app_error_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+app.state.limiter = limiter
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(health.router)

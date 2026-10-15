@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_verified_user
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.provider_settings import (
@@ -36,7 +36,7 @@ def get_provider_settings(
 @router.post("", response_model=ProviderCredentialRead, status_code=status.HTTP_200_OK)
 def upsert_provider_settings(
     payload: ProviderCredentialUpsertRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_user),
     db: Session = Depends(get_db),
 ) -> ProviderCredentialRead:
     try:
@@ -55,7 +55,7 @@ def upsert_provider_settings(
 @router.patch("/{credential_id}/activate", response_model=ProviderCredentialRead)
 def activate_provider_settings(
     credential_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_user),
     db: Session = Depends(get_db),
 ) -> ProviderCredentialRead:
     try:

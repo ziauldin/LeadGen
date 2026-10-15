@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_verified_user
 from app.core.database import get_db
 from app.models.campaign import Campaign
 from app.models.niche import Niche
@@ -155,7 +155,7 @@ def add_leads(
 @router.post("/{campaign_id}/start", response_model=CampaignActionResponse)
 def start_campaign_endpoint(
     campaign_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_user),
     db: Session = Depends(get_db),
 ) -> CampaignActionResponse:
     try:
@@ -194,7 +194,7 @@ def pause_campaign_endpoint(
 @router.post("/{campaign_id}/process-sends", response_model=ProcessSendsResponse)
 def process_campaign_sends_endpoint(
     campaign_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_user),
     db: Session = Depends(get_db),
 ) -> ProcessSendsResponse:
     _get_owned_campaign_or_404(db, campaign_id, current_user.id)

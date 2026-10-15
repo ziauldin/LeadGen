@@ -12,6 +12,7 @@ GOOD = {
     "frontend_url": "https://app.leadsgen.app",
     "cors_origins": ["https://app.leadsgen.app"],
     "platform_email_provider": "resend",
+    "celery_task_always_eager": False,
 }
 
 

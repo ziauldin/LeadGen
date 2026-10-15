@@ -36,6 +36,17 @@ async def app_error_handler(_request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(status_code=exc.status_code, content=content)
 
 
+async def rate_limit_exceeded_handler(_request: Request, _exc: Exception) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Too many requests. Please wait a moment and try again.",
+            "code": "rate_limited",
+        },
+        headers={"Retry-After": "60"},
+    )
+
+
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Never leak exception text; return a request id the user can quote to support."""
     # This handler runs in Starlette's outermost error middleware, after the request-context

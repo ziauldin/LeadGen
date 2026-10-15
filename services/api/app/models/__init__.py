@@ -1,4 +1,5 @@
 from app.models.audit_log import AuditLog
+from app.models.auth_tokens import EmailActionToken, RefreshToken
 from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
 from app.models.email_contact import EmailContact
@@ -35,6 +36,7 @@ __all__ = [
     "CampaignStatus",
     "CampaignStep",
     "Company",
+    "EmailActionToken",
     "EmailContact",
     "EmailMessage",
     "EmailMessageStatus",
@@ -47,6 +49,7 @@ __all__ = [
     "ProviderCredentialStatus",
     "ProviderName",
     "ProviderType",
+    "RefreshToken",
     "Reply",
     "ReplyClassification",
     "ReplyStatus",
