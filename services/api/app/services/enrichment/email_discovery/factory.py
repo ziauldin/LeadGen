@@ -13,11 +13,11 @@ from .hunter_provider import HunterEmailDiscoveryProvider
 
 def get_email_discovery_provider(
     db: Session,
-    user_id: int | None = None,
+    workspace_id: int | None = None,
 ) -> HunterEmailDiscoveryProvider | None:
-    # 1. The account's own active Hunter credential.
-    if user_id is not None:
-        credential = get_active_credential(db, user_id, ProviderType.EMAIL_DISCOVERY)
+    # 1. The workspace's own active Hunter credential.
+    if workspace_id is not None:
+        credential = get_active_credential(db, workspace_id, ProviderType.EMAIL_DISCOVERY)
         if credential and _as_str(credential.provider_name) == ProviderName.HUNTER.value:
             api_key = decrypt_provider_config(credential).get("api_key")
             if api_key:

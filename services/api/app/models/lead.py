@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Float, ForeignKey, String, Text
+from sqlalchemy import Float, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import LeadStatus
 from app.models.mixins import TimestampUpdatedMixin
+from app.models.workspace import TenantScoped
 
 if TYPE_CHECKING:
     from app.models.company import Company
@@ -16,8 +17,16 @@ if TYPE_CHECKING:
     from app.models.niche import Niche
 
 
-class Lead(Base, TimestampUpdatedMixin):
+class Lead(Base, TenantScoped, TimestampUpdatedMixin):
     __tablename__ = "leads"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "niche_id",
+            "linkedin_url",
+            name="uq_leads_workspace_niche_linkedin",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     niche_id: Mapped[int] = mapped_column(ForeignKey("niches.id", ondelete="CASCADE"), index=True)

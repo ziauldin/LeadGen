@@ -33,7 +33,7 @@ class NicheRead(NicheBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    user_id: int
+    user_id: int | None = None
     created_at: datetime
 
 

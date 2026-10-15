@@ -8,13 +8,14 @@ from app.models.campaign import Campaign
 from app.models.email_message import EmailMessage
 from app.models.enums import CampaignStatus, EmailMessageStatus, LeadStatus
 from app.models.lead import Lead
-from app.models.niche import Niche
+from app.services.billing.usage import record_usage
 from app.services.sending.gate import evaluate_send_gate
-from app.services.sending.provider_factory import get_email_sender_for_user
+from app.services.sending.provider_factory import get_email_sender_for_workspace
 
 
 def _log_audit(
     db: Session,
+    workspace_id: int,
     actor_id: int | None,
     action: str,
     entity_type: str,
@@ -23,6 +24,7 @@ def _log_audit(
 ) -> None:
     db.add(
         AuditLog(
+            workspace_id=workspace_id,
             actor_id=actor_id,
             action=action,
             entity_type=entity_type,
@@ -61,6 +63,7 @@ def send_email_message(db: Session, message_id: int, actor_id: int | None = None
         db.commit()
         _log_audit(
             db,
+            message.workspace_id,
             actor_id,
             "email_send_blocked",
             "email_message",
@@ -70,16 +73,14 @@ def send_email_message(db: Session, message_id: int, actor_id: int | None = None
         db.commit()
         raise ValueError("; ".join(gate.reasons))
 
-    niche = db.get(Niche, campaign.niche_id)
-    user_id = niche.user_id if niche is not None else 0
-
-    sender = get_email_sender_for_user(db, user_id)
+    sender = get_email_sender_for_workspace(db, message.workspace_id)
     result = sender.send(message.recipient_email, message.subject, message.body)
     if not result.success:
         message.status = EmailMessageStatus.FAILED
         db.commit()
         _log_audit(
             db,
+            message.workspace_id,
             actor_id,
             "email_send_failed",
             "email_message",
@@ -91,6 +92,7 @@ def send_email_message(db: Session, message_id: int, actor_id: int | None = None
 
     message.status = EmailMessageStatus.SENT
     message.sent_at = datetime.now(UTC)
+    record_usage(db, message.workspace_id, "monthly_sends")
     message.provider_message_id = result.provider_message_id
 
     if lead.status not in {LeadStatus.REPLIED, LeadStatus.MEETING_BOOKED, LeadStatus.CLIENT}:
@@ -98,6 +100,7 @@ def send_email_message(db: Session, message_id: int, actor_id: int | None = None
 
     _log_audit(
         db,
+        message.workspace_id,
         actor_id,
         "email_sent",
         "email_message",
@@ -113,10 +116,19 @@ def send_email_message(db: Session, message_id: int, actor_id: int | None = None
     return message
 
 
-def process_active_campaigns(db: Session, actor_id: int | None = None) -> dict[str, int]:
-    campaigns = db.scalars(
-        select(Campaign).where(Campaign.status == CampaignStatus.ACTIVE),
-    ).all()
+def process_active_campaigns(
+    db: Session,
+    actor_id: int | None = None,
+    *,
+    workspace_id: int | None = None,
+    campaign_id: int | None = None,
+) -> dict[str, int]:
+    query = select(Campaign).where(Campaign.status == CampaignStatus.ACTIVE)
+    if workspace_id is not None:
+        query = query.where(Campaign.workspace_id == workspace_id)
+    if campaign_id is not None:
+        query = query.where(Campaign.id == campaign_id)
+    campaigns = db.scalars(query).all()
 
     sent = 0
     failed = 0

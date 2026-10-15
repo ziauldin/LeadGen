@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import (
     auth,
+    billing,
     campaigns,
     companies,
     compliance,
@@ -23,6 +24,7 @@ from app.api.routes import (
     scoring,
     searches,
     settings,
+    workspaces,
 )
 from app.api.routes.settings import suppressions_router
 from app.core.config import production_config_errors
@@ -94,6 +96,9 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(workspaces.router)
+app.include_router(workspaces.invitations_router)
+app.include_router(billing.router)
 app.include_router(niches.router)
 app.include_router(searches.router)
 app.include_router(leads.router)

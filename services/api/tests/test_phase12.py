@@ -63,7 +63,7 @@ def test_google_cse_provider_requires_credentials():
 
 
 def test_search_factory_supports_external_providers():
-    from app.services.search.provider_factory import get_search_provider_for_user
+    from app.services.search.provider_factory import get_search_provider_for_workspace
 
     client = get_client()
     headers = auth_headers(client)
@@ -82,8 +82,8 @@ def test_search_factory_supports_external_providers():
 
     db = TestingSessionLocal()
     try:
-        user_id = client.get("/auth/me", headers=headers).json()["id"]
-        provider = get_search_provider_for_user(db, user_id)
+        workspace_id = client.get("/workspaces/current", headers=headers).json()["id"]
+        provider = get_search_provider_for_workspace(db, workspace_id)
         assert provider.provider_name == "bing"
     finally:
         db.close()

@@ -13,6 +13,7 @@ from sqlalchemy import delete, select
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
+from app.core.tenancy import bind_session, unbind_session
 from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
 from app.models.email_contact import EmailContact
@@ -35,8 +36,8 @@ from app.models.reply import Reply
 from app.models.search_query import SearchQuery
 from app.models.suppression import Suppression
 from app.models.user import User
-from app.models.user_settings import UserSettings
-from app.services.provider_credentials.service import ensure_default_mock_credentials
+from app.models.workspace import Workspace
+from app.services.workspaces.service import create_workspace, get_or_create_settings
 
 DEMO_EMAIL = "demo@leadsgen.local"
 
@@ -201,12 +202,11 @@ def reset_demo_data(db) -> None:
     if user is None:
         return
 
-    niche_ids = list(db.scalars(select(Niche.id).where(Niche.user_id == user.id)).all())
-    if niche_ids:
-        lead_ids = list(db.scalars(select(Lead.id).where(Lead.niche_id.in_(niche_ids))).all())
-        if lead_ids:
-            db.execute(delete(EmailMessage).where(EmailMessage.lead_id.in_(lead_ids)))
-
+    owned = list(db.scalars(select(Workspace).where(Workspace.created_by == user.id)).all())
+    for workspace in owned:
+        db.execute(delete(EmailMessage).where(EmailMessage.workspace_id == workspace.id))
+        db.delete(workspace)
+    db.flush()
     db.delete(user)
     db.commit()
 
@@ -233,15 +233,13 @@ def seed(db, *, force: bool = False) -> None:
     db.add(user)
     db.flush()
 
-    db.add(
-        UserSettings(
-            user_id=user.id,
-            sender_name="Alex Founder",
-            sender_company="WellPredict",
-            business_address="London, UK",
-        ),
-    )
-    ensure_default_mock_credentials(db, user.id)
+    workspace = create_workspace(db, user, "Demo workspace")
+    workspace_settings = get_or_create_settings(db, workspace.id)
+    workspace_settings.sender_name = "Alex Founder"
+    workspace_settings.sender_company = "WellPredict"
+    workspace_settings.business_address = "London, UK"
+    # New tenant rows below are stamped with the demo workspace automatically.
+    bind_session(db, workspace.id)
 
     niche = Niche(
         user_id=user.id,
@@ -392,14 +390,16 @@ def seed(db, *, force: bool = False) -> None:
 
     db.add(
         Suppression(
+            workspace_id=workspace.id,
             email="blocked@spam.example",
-            domain="spam.example",
+            domain=None,
             reason="manual",
             source="seed",
         ),
     )
 
     db.commit()
+    unbind_session(db)
     print(f"Seeded demo user: {DEMO_EMAIL} / {demo_password}")
     print(f"Niche: {niche.name} ({len(SAMPLE_LEADS)} leads, 2 campaigns, 1 search query)")
 

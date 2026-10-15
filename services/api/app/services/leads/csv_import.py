@@ -11,7 +11,8 @@ from app.models.email_contact import EmailContact
 from app.models.enums import EmailType, LeadStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
-from app.models.user import User
+from app.models.workspace import Workspace
+from app.services.billing.usage import record_usage, remaining
 from app.services.common.csv_safety import safe_row
 from app.services.companies.helpers import extract_domain, normalize_website
 
@@ -48,33 +49,46 @@ class ImportResult:
     errors: list[str] = field(default_factory=list)
 
 
-def _resolve_niche(db: Session, user: User, niche_value: str | None) -> Niche | None:
+def _resolve_niche(db: Session, workspace_id: int, niche_value: str | None) -> Niche | None:
+    in_workspace = Niche.workspace_id == workspace_id
     if not niche_value or not niche_value.strip():
-        return db.scalar(select(Niche).where(Niche.user_id == user.id).limit(1))
+        return db.scalar(select(Niche).where(in_workspace).order_by(Niche.id).limit(1))
 
     niche_value = niche_value.strip()
     if niche_value.isdigit():
-        return db.scalar(
-            select(Niche).where(Niche.id == int(niche_value), Niche.user_id == user.id),
-        )
+        return db.scalar(select(Niche).where(Niche.id == int(niche_value), in_workspace))
 
-    return db.scalar(
-        select(Niche).where(Niche.name.ilike(niche_value), Niche.user_id == user.id),
-    )
+    return db.scalar(select(Niche).where(Niche.name.ilike(niche_value), in_workspace))
 
 
-def _get_or_create_company(db: Session, name: str, website: str | None) -> Company:
+def _get_or_create_company(
+    db: Session,
+    workspace_id: int,
+    name: str,
+    website: str | None,
+) -> Company:
+    """Find the company in this workspace by domain, then name; create it if missing.
+
+    Existing company names are never overwritten by an import.
+    """
     domain = extract_domain(website)
     company: Company | None = None
+    in_workspace = Company.workspace_id == workspace_id
 
     if domain:
-        company = db.scalar(select(Company).where(Company.domain == domain))
+        company = db.scalar(select(Company).where(in_workspace, Company.domain == domain))
 
     if company is None and name:
-        company = db.scalar(select(Company).where(Company.name.ilike(name.strip())))
+        company = db.scalar(
+            select(Company)
+            .where(in_workspace, Company.name.ilike(name.strip()))
+            .order_by(Company.id)
+            .limit(1),
+        )
 
     if company is None:
         company = Company(
+            workspace_id=workspace_id,
             name=name.strip(),
             website=normalize_website(website),
             domain=domain,
@@ -87,8 +101,6 @@ def _get_or_create_company(db: Session, name: str, website: str | None) -> Compa
         company.website = normalize_website(website)
     if domain and not company.domain:
         company.domain = domain
-    if name and company.name != name.strip():
-        company.name = name.strip()
 
     db.flush()
     return company
@@ -127,8 +139,15 @@ def _find_existing_lead(
     )
 
 
-def import_leads_from_csv(db: Session, user: User, file_content: str) -> ImportResult:
+def import_leads_from_csv(
+    db: Session,
+    workspace_id: int,
+    file_content: str,
+    *,
+    workspace: Workspace | None = None,
+) -> ImportResult:
     result = ImportResult()
+    lead_allowance = remaining(db, workspace, "monthly_leads") if workspace is not None else None
     reader = csv.DictReader(io.StringIO(file_content))
 
     if not reader.fieldnames:
@@ -152,17 +171,17 @@ def import_leads_from_csv(db: Session, user: User, file_content: str) -> ImportR
             result.errors.append(f"Row {row_num}: full_name is required")
             continue
 
-        niche = _resolve_niche(db, user, row.get("niche"))
+        niche = _resolve_niche(db, workspace_id, row.get("niche"))
         if niche is None:
             result.skipped += 1
-            result.errors.append(f"Row {row_num}: niche not found for user")
+            result.errors.append(f"Row {row_num}: niche not found in this workspace")
             continue
 
         company_name = (row.get("company") or "").strip()
         website = (row.get("website") or "").strip() or None
         company = None
         if company_name:
-            company = _get_or_create_company(db, company_name, website)
+            company = _get_or_create_company(db, workspace_id, company_name, website)
 
         linkedin_url = (row.get("linkedin_url") or "").strip() or None
         existing = _find_existing_lead(
@@ -188,7 +207,16 @@ def import_leads_from_csv(db: Session, user: User, file_content: str) -> ImportR
             lead = existing
             result.updated += 1
         else:
+            if lead_allowance is not None and result.created >= lead_allowance:
+                result.skipped += 1
+                if not any("plan limit" in error for error in result.errors):
+                    result.errors.append(
+                        "Some rows were not imported: the monthly lead limit on your plan "
+                        "has been reached",
+                    )
+                continue
             lead = Lead(
+                workspace_id=workspace_id,
                 niche_id=niche.id,
                 full_name=full_name,
                 job_title=(row.get("job_title") or "").strip() or None,
@@ -213,24 +241,26 @@ def import_leads_from_csv(db: Session, user: User, file_content: str) -> ImportR
             if contact is None:
                 db.add(
                     EmailContact(
+                        workspace_id=workspace_id,
                         lead_id=lead.id,
                         company_id=company.id if company else None,
                         email=email,
                         email_type=EmailType.GENERIC,
                         source_url=source_url,
+                        source_provider="csv_import",
                         confidence=0.8,
                     ),
                 )
 
+    record_usage(db, workspace_id, "monthly_leads", result.created)
     db.commit()
     return result
 
 
-def export_leads_to_csv(db: Session, user: User, niche_id: int | None = None) -> str:
+def export_leads_to_csv(db: Session, workspace_id: int, niche_id: int | None = None) -> str:
     query = (
         select(Lead)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == user.id)
+        .where(Lead.workspace_id == workspace_id)
         .options(
             selectinload(Lead.company),
             selectinload(Lead.email_contacts),

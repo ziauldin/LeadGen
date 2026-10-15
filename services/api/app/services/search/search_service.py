@@ -1,3 +1,4 @@
+import logging
 import re
 
 from sqlalchemy import select
@@ -8,26 +9,40 @@ from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.search_query import SearchQuery
 from app.services.search.base import SearchResult
-from app.services.search.provider_factory import get_search_provider_for_user
+from app.services.search.provider_factory import get_search_provider_for_workspace
+
+logger = logging.getLogger(__name__)
+
+
+def _public_search_error(exc: Exception) -> str:
+    """Describe a provider failure without leaking keys or internal details."""
+    from app.services.search.external_providers import ProviderConfigurationError
+
+    if isinstance(exc, ProviderConfigurationError):
+        return str(exc)
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    if status in {401, 403}:
+        return "The search provider rejected the API key. Check it in Settings > Providers."
+    if status == 429:
+        return "The search provider rate limit was reached. Try again later."
+    return "The search provider request failed. Try again later."
 
 
 def run_search_query_record(db: Session, search_query: SearchQuery, limit: int = 10) -> SearchQuery:
     search_query.status = SearchStatus.RUNNING
     db.commit()
 
-    niche = db.get(Niche, search_query.niche_id)
-    user_id = niche.user_id if niche is not None else 0
-
     try:
-        provider = get_search_provider_for_user(db, user_id)
+        provider = get_search_provider_for_workspace(db, search_query.workspace_id)
         raw_results = provider.search(search_query.query, limit=limit)
         search_query.results = [item.to_dict() for item in raw_results]
         search_query.result_count = len(raw_results)
         search_query.status = SearchStatus.COMPLETED
         search_query.provider = SearchProvider(provider.provider_name)
     except Exception as exc:
+        logger.warning("Search %s failed: %s", search_query.id, exc)
         search_query.status = SearchStatus.FAILED
-        search_query.results = [{"error": str(exc)}]
+        search_query.results = [{"error": _public_search_error(exc)}]
         search_query.result_count = 0
 
     db.commit()
@@ -77,13 +92,19 @@ def save_search_results(
         f"Query: {search_query.query}"
     )
 
+    seen: set[str] = set()
     for item in stored:
-        if not item.url:
+        if not item.url or item.url in seen:
             skipped += 1
             continue
+        seen.add(item.url)
 
         existing = db.scalar(
-            select(Lead).where(Lead.niche_id == niche.id, Lead.linkedin_url == item.url),
+            select(Lead.id).where(
+                Lead.workspace_id == niche.workspace_id,
+                Lead.niche_id == niche.id,
+                Lead.linkedin_url == item.url,
+            ),
         )
         if existing:
             skipped += 1
@@ -91,6 +112,7 @@ def save_search_results(
 
         full_name, parsed_title = _parse_name_from_title(item.title)
         lead = Lead(
+            workspace_id=niche.workspace_id,
             niche_id=niche.id,
             full_name=full_name or "Unknown",
             job_title=parsed_title or default_role,

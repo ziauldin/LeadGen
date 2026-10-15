@@ -3,8 +3,7 @@ from urllib.parse import urljoin
 
 from app.models.lead import Lead
 from app.models.niche import Niche
-from app.models.user import User
-from app.models.user_settings import UserSettings
+from app.models.workspace import WorkspaceSettings
 
 
 @dataclass
@@ -26,21 +25,33 @@ def derive_first_name(full_name: str) -> str:
 
 def default_pain_point(niche: Niche) -> str:
     if niche.industry:
-        return f"governance, operational pressure and evidence around team risk in {niche.industry.lower()}"
+        return (
+            "governance, operational pressure and evidence around team risk in "
+            f"{niche.industry.lower()}"
+        )
     return "governance, operational pressure and evidence around team risk"
+
+
+def unsubscribe_url(api_base_url: str, token: str) -> str:
+    return urljoin(api_base_url.rstrip("/") + "/", f"unsubscribe/{token}")
 
 
 def build_context(
     lead: Lead,
     niche: Niche,
-    user: User,
-    settings: UserSettings | None,
+    settings: WorkspaceSettings | None,
+    *,
+    sender_fallback_name: str,
     api_base_url: str,
     unsubscribe_token: str | None = None,
 ) -> PersonalisationContext:
     company_name = lead.company.name if lead.company else "your organisation"
-    token = unsubscribe_token or "preview-token"
-    unsubscribe_link = urljoin(api_base_url.rstrip("/") + "/", f"unsubscribe/{token}")
+    sender_name = (settings.sender_name if settings and settings.sender_name else None) or (
+        sender_fallback_name
+    )
+    sender_company = (
+        settings.sender_company if settings and settings.sender_company else None
+    ) or sender_name
 
     return PersonalisationContext(
         first_name=derive_first_name(lead.full_name),
@@ -48,11 +59,9 @@ def build_context(
         role=lead.job_title or (niche.target_roles[0] if niche.target_roles else "your role"),
         industry=niche.industry,
         pain_point=default_pain_point(niche),
-        sender_name=(settings.sender_name if settings and settings.sender_name else user.name),
-        sender_company=(
-            settings.sender_company if settings and settings.sender_company else "WellPredict"
-        ),
-        unsubscribe_link=unsubscribe_link,
+        sender_name=sender_name,
+        sender_company=sender_company,
+        unsubscribe_link=unsubscribe_url(api_base_url, unsubscribe_token or "preview-token"),
     )
 
 

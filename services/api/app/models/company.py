@@ -2,20 +2,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Integer, String, Text
+from sqlalchemy import Boolean, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import EnrichmentStatus
 from app.models.mixins import TimestampUpdatedMixin
+from app.models.workspace import TenantScoped
 
 if TYPE_CHECKING:
     from app.models.email_contact import EmailContact
     from app.models.lead import Lead
 
 
-class Company(Base, TimestampUpdatedMixin):
+class Company(Base, TenantScoped, TimestampUpdatedMixin):
     __tablename__ = "companies"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "domain", name="uq_companies_workspace_domain"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)

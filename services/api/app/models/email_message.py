@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import BounceStatus, EmailMessageStatus, ReplyStatus
+from app.models.workspace import TenantScoped
 
 if TYPE_CHECKING:
     from app.models.campaign import Campaign
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from app.models.reply import Reply
 
 
-class EmailMessage(Base):
+class EmailMessage(Base, TenantScoped):
     __tablename__ = "email_messages"
 
     id: Mapped[int] = mapped_column(primary_key=True)

@@ -2,21 +2,21 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_workspace
 from app.core.database import get_db
+from app.core.tenancy import WorkspaceContext
 from app.models.company import Company
 from app.models.enums import EnrichmentStatus
-from app.models.lead import Lead
-from app.models.niche import Niche
-from app.models.user import User
 from app.schemas.company import (
     CompanyListResponse,
     CompanyRead,
     CompanyUpdate,
     EnrichCompanyResponse,
 )
+from app.services.billing.usage import check_quota, record_usage
 from app.services.companies.helpers import extract_domain, normalize_website
 from app.services.enrichment.enricher import enrich_company_record
 from app.workers.enrichment_jobs import enrich_company
@@ -25,18 +25,11 @@ router = APIRouter(prefix="/companies", tags=["companies"])
 logger = logging.getLogger(__name__)
 
 
-def _get_owned_company(
-    company_id: int,
-    current_user: User,
-    db: Session,
-) -> Company:
+def _get_company(db: Session, company_id: int, ctx: WorkspaceContext) -> Company:
     company = db.scalar(
         select(Company)
-        .options(selectinload(Company.email_contacts))
-        .join(Lead, Lead.company_id == Company.id)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Company.id == company_id, Niche.user_id == current_user.id)
-        .limit(1),
+        .where(Company.id == company_id, Company.workspace_id == ctx.workspace_id)
+        .options(selectinload(Company.email_contacts)),
     )
     if company is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
@@ -45,34 +38,25 @@ def _get_owned_company(
 
 @router.get("", response_model=CompanyListResponse)
 def list_companies(
-    search: str | None = None,
+    search: str | None = Query(default=None, max_length=255),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> CompanyListResponse:
-    base = (
-        select(Company)
-        .options(selectinload(Company.email_contacts))
-        .join(Lead, Lead.company_id == Company.id)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id)
-        .distinct()
-    )
-    count_base = (
-        select(func.count(func.distinct(Company.id)))
-        .join(Lead, Lead.company_id == Company.id)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id)
-    )
-
+    conditions = [Company.workspace_id == ctx.workspace_id]
     if search:
-        pattern = f"%{search.strip()}%"
-        base = base.where(Company.name.ilike(pattern))
-        count_base = count_base.where(Company.name.ilike(pattern))
+        conditions.append(Company.name.ilike(f"%{search.strip()}%"))
 
-    total = db.scalar(count_base) or 0
-    companies = db.scalars(base.order_by(Company.name).offset(skip).limit(limit)).all()
+    total = db.scalar(select(func.count(Company.id)).where(*conditions)) or 0
+    companies = db.scalars(
+        select(Company)
+        .where(*conditions)
+        .options(selectinload(Company.email_contacts))
+        .order_by(Company.name)
+        .offset(skip)
+        .limit(limit),
+    ).all()
 
     return CompanyListResponse(
         items=[CompanyRead.model_validate(c) for c in companies],
@@ -85,20 +69,20 @@ def list_companies(
 @router.get("/{company_id}", response_model=CompanyRead)
 def get_company(
     company_id: int,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> Company:
-    return _get_owned_company(company_id, current_user, db)
+    return _get_company(db, company_id, ctx)
 
 
 @router.patch("/{company_id}", response_model=CompanyRead)
 def update_company(
     payload: CompanyUpdate,
     company_id: int,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> Company:
-    company = _get_owned_company(company_id, current_user, db)
+    company = _get_company(db, company_id, ctx)
 
     updates = payload.model_dump(exclude_unset=True)
     if updates.get("website"):
@@ -110,7 +94,14 @@ def update_company(
     for field, value in updates.items():
         setattr(company, field, value)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Another company in this workspace already uses that domain",
+        ) from None
     db.refresh(company)
     return company
 
@@ -118,27 +109,25 @@ def update_company(
 @router.post("/{company_id}/enrich", response_model=EnrichCompanyResponse)
 def enrich_company_endpoint(
     company_id: int,
-    sync: bool = Query(
-        default=False, description="Run enrichment inline instead of queueing Celery"
-    ),
-    current_user: User = Depends(get_current_user),
+    sync: bool = Query(default=False, description="Run inline instead of on a worker"),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> EnrichCompanyResponse:
-    company = _get_owned_company(company_id, current_user, db)
+    company = _get_company(db, company_id, ctx)
 
     if not company.website:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Company has no website to enrich",
         )
+    check_quota(db, ctx.workspace, "daily_enrichments")
+    record_usage(db, ctx.workspace_id, "daily_enrichments")
 
     if sync:
         company = enrich_company_record(db, company.id)
         return EnrichCompanyResponse(
             company_id=company.id,
-            status=company.enrichment_status.value
-            if hasattr(company.enrichment_status, "value")
-            else str(company.enrichment_status),
+            status=str(company.enrichment_status),
             message=company.enrichment_message or "Enrichment completed",
         )
 

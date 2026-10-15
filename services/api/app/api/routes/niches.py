@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_owned_niche
+from app.api.deps import get_current_workspace, get_owned_niche
 from app.core.database import get_db
+from app.core.tenancy import WorkspaceContext
 from app.models.niche import Niche
-from app.models.user import User
 from app.schemas.niche import NicheCreate, NicheListResponse, NicheRead, NicheUpdate
 
 router = APIRouter(prefix="/niches", tags=["niches"])
@@ -15,18 +15,14 @@ router = APIRouter(prefix="/niches", tags=["niches"])
 def list_niches(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> NicheListResponse:
-    total = (
-        db.scalar(
-            select(func.count(Niche.id)).where(Niche.user_id == current_user.id),
-        )
-        or 0
-    )
+    in_workspace = Niche.workspace_id == ctx.workspace_id
+    total = db.scalar(select(func.count(Niche.id)).where(in_workspace)) or 0
     niches = db.scalars(
         select(Niche)
-        .where(Niche.user_id == current_user.id)
+        .where(in_workspace)
         .order_by(Niche.created_at.desc())
         .offset(skip)
         .limit(limit),
@@ -42,10 +38,10 @@ def list_niches(
 @router.post("", response_model=NicheRead, status_code=status.HTTP_201_CREATED)
 def create_niche(
     payload: NicheCreate,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> Niche:
-    niche = Niche(user_id=current_user.id, **payload.model_dump())
+    niche = Niche(workspace_id=ctx.workspace_id, user_id=ctx.user_id, **payload.model_dump())
     db.add(niche)
     db.commit()
     db.refresh(niche)

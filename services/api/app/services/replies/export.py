@@ -5,19 +5,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.email_message import EmailMessage
-from app.models.lead import Lead
-from app.models.niche import Niche
 from app.models.reply import Reply
 from app.services.common.csv_safety import safe_cell
 
 
-def export_replies_to_csv(db: Session, user_id: int) -> str:
+def export_replies_to_csv(db: Session, workspace_id: int) -> str:
     replies = db.scalars(
         select(Reply)
-        .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
-        .join(Lead, EmailMessage.lead_id == Lead.id)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == user_id)
+        .where(Reply.workspace_id == workspace_id)
         .options(selectinload(Reply.email_message).selectinload(EmailMessage.lead))
         .order_by(Reply.received_at.desc()),
     ).all()

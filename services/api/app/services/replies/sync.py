@@ -5,8 +5,6 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.email_message import EmailMessage
 from app.models.enums import EmailMessageStatus, LeadStatus, ReplyClassification, ReplyStatus
-from app.models.lead import Lead
-from app.models.niche import Niche
 from app.models.reply import Reply
 from app.services.compliance.opt_out import process_unsubscribe_for_message
 from app.services.replies.classification import classify_reply_body
@@ -27,13 +25,11 @@ MOCK_REPLIES = [
 ]
 
 
-def sync_mock_replies(db: Session, user_id: int) -> int:
+def sync_mock_replies(db: Session, workspace_id: int) -> int:
     sent_messages = db.scalars(
         select(EmailMessage)
-        .join(Lead, EmailMessage.lead_id == Lead.id)
-        .join(Niche, Lead.niche_id == Niche.id)
         .where(
-            Niche.user_id == user_id,
+            EmailMessage.workspace_id == workspace_id,
             EmailMessage.status == EmailMessageStatus.SENT,
         )
         .options(selectinload(EmailMessage.replies))
@@ -54,6 +50,7 @@ def sync_mock_replies(db: Session, user_id: int) -> int:
             classification = expected_class
 
         reply = Reply(
+            workspace_id=workspace_id,
             email_message_id=message.id,
             from_email=message.recipient_email,
             body=body,
@@ -82,17 +79,14 @@ def sync_mock_replies(db: Session, user_id: int) -> int:
 def update_reply(
     db: Session,
     reply_id: int,
-    user_id: int,
+    workspace_id: int,
     classification: ReplyClassification | None = None,
     mark_meeting_booked: bool = False,
     notes: str | None = None,
 ) -> Reply:
     reply = db.scalar(
         select(Reply)
-        .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
-        .join(Lead, EmailMessage.lead_id == Lead.id)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Reply.id == reply_id, Niche.user_id == user_id)
+        .where(Reply.id == reply_id, Reply.workspace_id == workspace_id)
         .options(selectinload(Reply.email_message).selectinload(EmailMessage.lead)),
     )
     if reply is None:

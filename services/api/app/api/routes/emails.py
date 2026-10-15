@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, require_verified_user
+from app.api.deps import get_current_user, get_current_workspace, get_verified_workspace
 from app.core.database import get_db
+from app.core.tenancy import WorkspaceContext
 from app.models.user import User
 from app.schemas.email import (
     EmailApproveRequest,
@@ -26,7 +27,7 @@ router = APIRouter(prefix="/emails", tags=["emails"])
 
 @router.get("/templates", response_model=list[EmailTemplateRead])
 def get_email_templates(
-    _current_user: User = Depends(get_current_user),
+    _ctx: WorkspaceContext = Depends(get_current_workspace),
 ) -> list[EmailTemplateRead]:
     return [
         EmailTemplateRead(id=template.id, name=template.name, subject=template.subject)
@@ -37,6 +38,7 @@ def get_email_templates(
 @router.post("/preview", response_model=EmailPreviewResponse)
 def preview_email(
     payload: EmailPreviewRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> EmailPreviewResponse:
@@ -44,11 +46,10 @@ def preview_email(
         rendered = render_email_for_lead(
             db,
             payload.lead_id,
-            current_user.id,
+            ctx.workspace_id,
+            sender_fallback_name=current_user.name,
             template_id=payload.template_id,
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -68,6 +69,7 @@ def preview_email(
 @router.post("/generate", response_model=EmailGenerateResponse, status_code=status.HTTP_201_CREATED)
 def generate_email(
     payload: EmailGenerateRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> EmailGenerateResponse:
@@ -75,12 +77,11 @@ def generate_email(
         message = generate_email_message(
             db,
             payload.lead_id,
-            current_user.id,
+            ctx.workspace_id,
+            sender_fallback_name=current_user.name,
             template_id=payload.template_id,
             campaign_id=payload.campaign_id,
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -93,18 +94,8 @@ def generate_email(
 @router.post("/approve", response_model=EmailApproveResponse)
 def approve_email(
     payload: EmailApproveRequest,
-    current_user: User = Depends(require_verified_user),
+    ctx: WorkspaceContext = Depends(get_verified_workspace),
     db: Session = Depends(get_db),
 ) -> EmailApproveResponse:
-    try:
-        message = approve_email_message(db, payload.email_message_id, current_user.id)
-    except ValueError as exc:
-        detail = str(exc)
-        status_code = (
-            status.HTTP_404_NOT_FOUND
-            if "not found" in detail.lower()
-            else status.HTTP_400_BAD_REQUEST
-        )
-        raise HTTPException(status_code=status_code, detail=detail) from exc
-
+    message = approve_email_message(db, payload.email_message_id, ctx.workspace_id)
     return EmailApproveResponse(message=EmailMessageRead.model_validate(message))

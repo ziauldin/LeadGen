@@ -22,17 +22,18 @@ class LeadBase(BaseModel):
     source_url: str | None = Field(default=None, max_length=500)
     source_provider: str | None = Field(default=None, max_length=100)
     company_id: int | None = None
-    status: LeadStatus = LeadStatus.NEW
-    score: float = Field(default=0.0, ge=0)
-    qualification_notes: str | None = None
-    compliance_source_note: str | None = None
+    qualification_notes: str | None = Field(default=None, max_length=5000)
+    compliance_source_note: str | None = Field(default=None, max_length=2000)
 
 
 class LeadCreate(LeadBase):
     niche_id: int
+    status: LeadStatus = LeadStatus.NEW
 
 
 class LeadUpdate(BaseModel):
+    """Score is calculated by the scoring rules and cannot be set by clients."""
+
     full_name: str | None = Field(default=None, min_length=1, max_length=255)
     job_title: str | None = Field(default=None, max_length=255)
     linkedin_url: str | None = Field(default=None, max_length=500)
@@ -40,9 +41,8 @@ class LeadUpdate(BaseModel):
     source_provider: str | None = Field(default=None, max_length=100)
     company_id: int | None = None
     status: LeadStatus | None = None
-    score: float | None = Field(default=None, ge=0)
-    qualification_notes: str | None = None
-    compliance_source_note: str | None = None
+    qualification_notes: str | None = Field(default=None, max_length=5000)
+    compliance_source_note: str | None = Field(default=None, max_length=2000)
 
 
 class EmailContactRead(BaseModel):
@@ -50,7 +50,11 @@ class EmailContactRead(BaseModel):
 
     id: int
     email: str
+    email_type: str | None = None
+    confidence: float = 0.0
+    source_url: str | None = None
     source_provider: str | None = None
+    is_role_based: bool = False
     opted_out: bool
     created_at: datetime
 
@@ -60,6 +64,8 @@ class LeadRead(LeadBase):
 
     id: int
     niche_id: int
+    status: LeadStatus
+    score: float
     created_at: datetime
     updated_at: datetime
     company: CompanySummary | None = None

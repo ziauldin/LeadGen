@@ -3,21 +3,50 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_user, get_owned_lead
+from app.api.deps import get_current_workspace, get_owned_lead
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.tenancy import WorkspaceContext
 from app.models.company import Company
 from app.models.enums import LeadStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
-from app.models.user import User
 from app.schemas.lead import LeadCreate, LeadImportResult, LeadListResponse, LeadRead, LeadUpdate
 from app.schemas.outreach import OutreachReadiness
+from app.services.billing.usage import check_quota, record_usage
 from app.services.compliance.outreach import validate_lead_for_outreach
 from app.services.leads.csv_import import export_leads_to_csv, import_leads_from_csv
 from app.services.leads.serializers import serialize_lead
+from app.services.leads.status import validate_user_status_change
 
 router = APIRouter(prefix="/leads", tags=["leads"])
+
+
+def _load_lead(db: Session, lead_id: int, workspace_id: int) -> Lead:
+    lead = db.scalar(
+        select(Lead)
+        .where(Lead.id == lead_id, Lead.workspace_id == workspace_id)
+        .options(selectinload(Lead.company), selectinload(Lead.email_contacts)),
+    )
+    if lead is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
+    return lead
+
+
+def _ensure_company_in_workspace(db: Session, company_id: int, workspace_id: int) -> None:
+    company = db.scalar(
+        select(Company.id).where(Company.id == company_id, Company.workspace_id == workspace_id),
+    )
+    if company is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+
+
+def _ensure_niche_in_workspace(db: Session, niche_id: int, workspace_id: int) -> None:
+    niche = db.scalar(
+        select(Niche.id).where(Niche.id == niche_id, Niche.workspace_id == workspace_id),
+    )
+    if niche is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")
 
 
 @router.get("", response_model=LeadListResponse)
@@ -25,45 +54,31 @@ def list_leads(
     niche_id: int | None = None,
     status: LeadStatus | None = None,
     min_score: float | None = Query(default=None, ge=0),
-    search: str | None = None,
+    search: str | None = Query(default=None, max_length=255),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> LeadListResponse:
-    query = (
-        select(Lead)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id)
-        .options(selectinload(Lead.company), selectinload(Lead.email_contacts))
-    )
-    count_query = (
-        select(func.count(Lead.id))
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id)
-    )
-
+    conditions = [Lead.workspace_id == ctx.workspace_id]
     if niche_id is not None:
-        query = query.where(Lead.niche_id == niche_id)
-        count_query = count_query.where(Lead.niche_id == niche_id)
+        conditions.append(Lead.niche_id == niche_id)
     if status is not None:
-        query = query.where(Lead.status == status)
-        count_query = count_query.where(Lead.status == status)
+        conditions.append(Lead.status == status)
     if min_score is not None:
-        query = query.where(Lead.score >= min_score)
-        count_query = count_query.where(Lead.score >= min_score)
+        conditions.append(Lead.score >= min_score)
     if search:
         pattern = f"%{search.strip()}%"
-        filter_clause = or_(
-            Lead.full_name.ilike(pattern),
-            Lead.job_title.ilike(pattern),
-        )
-        query = query.where(filter_clause)
-        count_query = count_query.where(filter_clause)
+        conditions.append(or_(Lead.full_name.ilike(pattern), Lead.job_title.ilike(pattern)))
 
-    total = db.scalar(count_query) or 0
+    total = db.scalar(select(func.count(Lead.id)).where(*conditions)) or 0
     leads = db.scalars(
-        query.order_by(Lead.updated_at.desc()).offset(skip).limit(limit),
+        select(Lead)
+        .where(*conditions)
+        .options(selectinload(Lead.company), selectinload(Lead.email_contacts))
+        .order_by(Lead.updated_at.desc(), Lead.id.desc())
+        .offset(skip)
+        .limit(limit),
     ).all()
 
     return LeadListResponse(
@@ -77,44 +92,33 @@ def list_leads(
 @router.post("", response_model=LeadRead, status_code=status.HTTP_201_CREATED)
 def create_lead(
     payload: LeadCreate,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> LeadRead:
-    niche = db.scalar(
-        select(Niche).where(Niche.id == payload.niche_id, Niche.user_id == current_user.id),
-    )
-    if niche is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")
-
+    _ensure_niche_in_workspace(db, payload.niche_id, ctx.workspace_id)
     if payload.company_id is not None:
-        company = db.get(Company, payload.company_id)
-        if company is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+        _ensure_company_in_workspace(db, payload.company_id, ctx.workspace_id)
+    data = payload.model_dump()
+    data["status"] = validate_user_status_change(LeadStatus.NEW, payload.status)
 
-    lead = Lead(**payload.model_dump())
+    check_quota(db, ctx.workspace, "monthly_leads")
+    lead = Lead(workspace_id=ctx.workspace_id, **data)
     db.add(lead)
+    record_usage(db, ctx.workspace_id, "monthly_leads")
     db.commit()
-    db.refresh(lead)
-    lead = db.scalar(
-        select(Lead)
-        .where(Lead.id == lead.id)
-        .options(selectinload(Lead.company), selectinload(Lead.email_contacts)),
-    )
-    if lead is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
-    return serialize_lead(lead)
+    return serialize_lead(_load_lead(db, lead.id, ctx.workspace_id))
 
 
 @router.post("/import-csv", response_model=LeadImportResult)
 async def import_csv(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> LeadImportResult:
     raw = await file.read(settings.csv_max_bytes + 1)
     if len(raw) > settings.csv_max_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=f"CSV file is larger than {settings.csv_max_bytes // 1_000_000} MB",
         )
     try:
@@ -124,7 +128,7 @@ async def import_csv(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="CSV file must be UTF-8 encoded",
         ) from None
-    result = import_leads_from_csv(db, current_user, content)
+    result = import_leads_from_csv(db, ctx.workspace_id, content, workspace=ctx.workspace)
     return LeadImportResult(
         created=result.created,
         updated=result.updated,
@@ -136,17 +140,12 @@ async def import_csv(
 @router.get("/export-csv")
 def export_csv(
     niche_id: int | None = None,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> PlainTextResponse:
     if niche_id is not None:
-        niche = db.scalar(
-            select(Niche).where(Niche.id == niche_id, Niche.user_id == current_user.id),
-        )
-        if niche is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")
-
-    csv_content = export_leads_to_csv(db, current_user, niche_id)
+        _ensure_niche_in_workspace(db, niche_id, ctx.workspace_id)
+    csv_content = export_leads_to_csv(db, ctx.workspace_id, niche_id)
     return PlainTextResponse(
         content=csv_content,
         media_type="text/csv",
@@ -172,26 +171,20 @@ def get_lead(lead: Lead = Depends(get_owned_lead)) -> LeadRead:
 def update_lead(
     payload: LeadUpdate,
     lead: Lead = Depends(get_owned_lead),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> LeadRead:
-    if payload.company_id is not None:
-        company = db.get(Company, payload.company_id)
-        if company is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
+    updates = payload.model_dump(exclude_unset=True)
+    if updates.get("company_id") is not None:
+        _ensure_company_in_workspace(db, updates["company_id"], ctx.workspace_id)
+    if updates.get("status") is not None:
+        updates["status"] = validate_user_status_change(lead.status, updates["status"])
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    for field, value in updates.items():
         setattr(lead, field, value)
 
     db.commit()
-    db.refresh(lead)
-    lead = db.scalar(
-        select(Lead)
-        .where(Lead.id == lead.id)
-        .options(selectinload(Lead.company), selectinload(Lead.email_contacts)),
-    )
-    if lead is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
-    return serialize_lead(lead)
+    return serialize_lead(_load_lead(db, lead.id, ctx.workspace_id))
 
 
 @router.delete("/{lead_id}", status_code=status.HTTP_204_NO_CONTENT)

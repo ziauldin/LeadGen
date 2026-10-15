@@ -98,8 +98,10 @@ def test_leads_crud_and_csv():
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["status"] == "qualified"
+    # Scores come from the scoring rules only; clients cannot set them.
+    assert patch_resp.json()["score"] == 0.0
 
-    list_resp = client.get("/leads?min_score=70", headers=headers)
+    list_resp = client.get("/leads?status=qualified", headers=headers)
     assert list_resp.status_code == 200
     assert list_resp.json()["total"] >= 1
 

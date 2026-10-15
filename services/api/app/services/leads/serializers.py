@@ -1,9 +1,10 @@
 from app.models.lead import Lead
-from app.schemas.lead import CompanySummary, LeadRead
+from app.schemas.lead import CompanySummary, EmailContactRead, LeadRead
+from app.services.compliance.outreach import primary_recipient_email
 
 
 def serialize_lead(lead: Lead) -> LeadRead:
-    primary_email = lead.email_contacts[0].email if lead.email_contacts else None
+    contacts = list(lead.email_contacts or [])
     company = CompanySummary.model_validate(lead.company) if lead.company else None
     return LeadRead(
         id=lead.id,
@@ -21,5 +22,6 @@ def serialize_lead(lead: Lead) -> LeadRead:
         created_at=lead.created_at,
         updated_at=lead.updated_at,
         company=company,
-        primary_email=primary_email,
+        primary_email=primary_recipient_email(lead) or (contacts[0].email if contacts else None),
+        email_contacts=[EmailContactRead.model_validate(contact) for contact in contacts],
     )

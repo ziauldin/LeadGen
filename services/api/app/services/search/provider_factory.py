@@ -14,8 +14,8 @@ from app.services.search.external_providers import (
 from app.services.search.mock_provider import MockSearchProvider
 
 
-def get_search_provider_for_user(db: Session, user_id: int):
-    credential = get_active_credential(db, user_id, ProviderType.SEARCH)
+def get_search_provider_for_workspace(db: Session, workspace_id: int):
+    credential = get_active_credential(db, workspace_id, ProviderType.SEARCH)
     if credential is None:
         return MockSearchProvider()
 
@@ -41,8 +41,8 @@ def get_search_provider_for_user(db: Session, user_id: int):
     return MockSearchProvider()
 
 
-def get_active_search_provider_name(db: Session, user_id: int) -> str:
-    credential = get_active_credential(db, user_id, ProviderType.SEARCH)
+def get_active_search_provider_name(db: Session, workspace_id: int) -> str:
+    credential = get_active_credential(db, workspace_id, ProviderType.SEARCH)
     if credential is None:
         return ProviderName.MOCK.value
     return _as_str(credential.provider_name)

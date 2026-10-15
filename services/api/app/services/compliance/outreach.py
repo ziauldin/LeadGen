@@ -1,16 +1,36 @@
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.lead import Lead
 from app.models.suppression import Suppression
 
 
-def is_email_suppressed(db: Session, email: str) -> bool:
-    domain = email.split("@")[-1].lower() if "@" in email else None
-    clauses = [Suppression.email == email.lower()]
+def _domain_of(email: str) -> str | None:
+    return email.rsplit("@", 1)[-1].lower() if "@" in email else None
+
+
+def is_email_suppressed(db: Session, workspace_id: int, email: str) -> bool:
+    """True if ``email`` is suppressed for this workspace or platform-wide.
+
+    A row with an email blocks that address only. A row with only a domain (added manually)
+    blocks the whole domain. Unsubscribes never create domain-wide rows.
+    """
+    normalized = email.strip().lower()
+    domain = _domain_of(normalized)
+    match = [Suppression.email == normalized]
     if domain:
-        clauses.append(Suppression.domain == domain)
-    return db.scalar(select(Suppression.id).where(or_(*clauses)).limit(1)) is not None
+        match.append(and_(Suppression.email.is_(None), Suppression.domain == domain))
+    return (
+        db.scalar(
+            select(Suppression.id)
+            .where(
+                or_(Suppression.workspace_id == workspace_id, Suppression.workspace_id.is_(None)),
+                or_(*match),
+            )
+            .limit(1),
+        )
+        is not None
+    )
 
 
 def validate_lead_for_outreach(lead: Lead, db: Session) -> list[str]:
@@ -26,7 +46,7 @@ def validate_lead_for_outreach(lead: Lead, db: Session) -> list[str]:
         errors.append("Lead has no active email contact")
 
     for contact in active_contacts:
-        if is_email_suppressed(db, contact.email):
+        if is_email_suppressed(db, lead.workspace_id, contact.email):
             errors.append(f"Email {contact.email} is on the suppression list")
             break
 

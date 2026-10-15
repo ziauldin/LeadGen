@@ -9,48 +9,80 @@ from app.models.lead import Lead
 from app.models.suppression import Suppression
 
 
-def process_unsubscribe_for_message(db: Session, token: str) -> EmailMessage | None:
-    message = db.scalar(select(EmailMessage).where(EmailMessage.unsubscribe_token == token))
-    if message is None:
+def find_message_by_unsubscribe_token(db: Session, token: str) -> EmailMessage | None:
+    if not token or len(token) > 128:
         return None
+    return db.scalar(select(EmailMessage).where(EmailMessage.unsubscribe_token == token))
 
-    contact = db.scalar(select(EmailContact).where(EmailContact.email == message.recipient_email))
-    if contact:
+
+def suppress_email(
+    db: Session,
+    *,
+    workspace_id: int,
+    email: str,
+    reason: str,
+    source: str,
+    lead_id: int | None = None,
+) -> None:
+    """Suppress one address in a workspace and opt out its contacts and lead.
+
+    Only the address itself is suppressed, never the whole domain.
+    """
+    normalized = email.strip().lower()
+    for contact in db.scalars(
+        select(EmailContact).where(
+            EmailContact.workspace_id == workspace_id,
+            EmailContact.email == normalized,
+        ),
+    ).all():
         contact.opted_out = True
 
-    lead = db.get(Lead, message.lead_id)
-    if lead:
-        lead.status = LeadStatus.OPTED_OUT
-        lead.score = 0.0
+    if lead_id is not None:
+        lead = db.get(Lead, lead_id)
+        if lead is not None and lead.workspace_id == workspace_id:
+            lead.status = LeadStatus.OPTED_OUT
+            lead.score = 0.0
 
-    domain = (
-        message.recipient_email.split("@")[-1].lower() if "@" in message.recipient_email else None
-    )
     existing = db.scalar(
-        select(Suppression).where(Suppression.email == message.recipient_email.lower())
+        select(Suppression.id).where(
+            Suppression.workspace_id == workspace_id,
+            Suppression.email == normalized,
+        ),
     )
     if existing is None:
         db.add(
             Suppression(
-                email=message.recipient_email.lower(),
-                domain=domain,
-                reason="unsubscribe",
-                source="unsubscribe_link",
+                workspace_id=workspace_id,
+                email=normalized,
+                domain=None,
+                reason=reason,
+                source=source,
             ),
         )
 
+
+def process_unsubscribe_for_message(db: Session, token: str) -> EmailMessage | None:
+    message = find_message_by_unsubscribe_token(db, token)
+    if message is None:
+        return None
+
+    suppress_email(
+        db,
+        workspace_id=message.workspace_id,
+        email=message.recipient_email,
+        reason="unsubscribe",
+        source="unsubscribe_link",
+        lead_id=message.lead_id,
+    )
     db.add(
         AuditLog(
+            workspace_id=message.workspace_id,
             actor_id=None,
             action="unsubscribe",
             entity_type="email_message",
             entity_id=message.id,
-            metadata_={
-                "recipient_email": message.recipient_email,
-                "lead_id": message.lead_id,
-            },
+            metadata_={"lead_id": message.lead_id},
         ),
     )
-
     db.commit()
     return message

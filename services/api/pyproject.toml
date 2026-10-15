@@ -79,7 +79,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "S107", "S108"]
+"tests/**" = ["S101", "S105", "S106", "S107", "S108", "S608"]
 "scripts/**" = ["S311"]
 
 [tool.ruff.lint.flake8-bugbear]

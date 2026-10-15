@@ -3,16 +3,16 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_workspace
+from app.core.config import settings
 from app.core.database import get_db
+from app.core.tenancy import WorkspaceContext
 from app.models.email_message import EmailMessage
-from app.models.lead import Lead
-from app.models.niche import Niche
 from app.models.reply import Reply
-from app.models.user import User
 from app.schemas.reply import ReplyListResponse, ReplyRead, ReplySyncResponse, ReplyUpdate
 from app.services.replies.export import export_replies_to_csv
 from app.services.replies.sync import sync_mock_replies, update_reply
+from app.services.sending.provider_factory import is_mock_email_provider_active
 
 router = APIRouter(prefix="/replies", tags=["replies"])
 
@@ -35,37 +35,24 @@ def _serialize_reply(reply: Reply) -> ReplyRead:
 
 @router.get("", response_model=ReplyListResponse)
 def list_replies(
-    classification: str | None = None,
+    classification: str | None = Query(default=None, max_length=50),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> ReplyListResponse:
-    query = (
-        select(Reply)
-        .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
-        .join(Lead, EmailMessage.lead_id == Lead.id)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id)
-        .options(
-            selectinload(Reply.email_message).selectinload(EmailMessage.lead),
-        )
-    )
-    count_query = (
-        select(func.count(Reply.id))
-        .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
-        .join(Lead, EmailMessage.lead_id == Lead.id)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id)
-    )
-
+    conditions = [Reply.workspace_id == ctx.workspace_id]
     if classification:
-        query = query.where(Reply.classification == classification)
-        count_query = count_query.where(Reply.classification == classification)
+        conditions.append(Reply.classification == classification)
 
-    total = db.scalar(count_query) or 0
+    total = db.scalar(select(func.count(Reply.id)).where(*conditions)) or 0
     replies = db.scalars(
-        query.order_by(Reply.received_at.desc()).offset(skip).limit(limit),
+        select(Reply)
+        .where(*conditions)
+        .options(selectinload(Reply.email_message).selectinload(EmailMessage.lead))
+        .order_by(Reply.received_at.desc(), Reply.id.desc())
+        .offset(skip)
+        .limit(limit),
     ).all()
 
     return ReplyListResponse(
@@ -80,14 +67,14 @@ def list_replies(
 def patch_reply(
     reply_id: int,
     payload: ReplyUpdate,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> ReplyRead:
     try:
         reply = update_reply(
             db,
             reply_id,
-            current_user.id,
+            ctx.workspace_id,
             classification=payload.classification,
             mark_meeting_booked=payload.mark_meeting_booked,
             notes=payload.notes,
@@ -106,24 +93,29 @@ def patch_reply(
 
 @router.post("/sync", response_model=ReplySyncResponse)
 def sync_replies(
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> ReplySyncResponse:
-    synced = sync_mock_replies(db, current_user.id)
-    return ReplySyncResponse(
-        synced=synced,
-        message=f"Synced {synced} mock replies from sent messages.",
-    )
+    """Development helper: simulate replies to emails sent with the mock provider.
+
+    Real replies arrive through provider webhooks or the IMAP inbox poller.
+    """
+    if settings.is_production or not is_mock_email_provider_active(db, ctx.workspace_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reply simulation is only available with the mock email provider in development.",
+        )
+    synced = sync_mock_replies(db, ctx.workspace_id)
+    return ReplySyncResponse(synced=synced, message=f"Simulated {synced} replies (mock provider).")
 
 
 @router.get("/export-csv")
 def export_replies_csv(
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> PlainTextResponse:
-    csv_content = export_replies_to_csv(db, current_user.id)
     return PlainTextResponse(
-        content=csv_content,
+        content=export_replies_to_csv(db, ctx.workspace_id),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=replies.csv"},
     )

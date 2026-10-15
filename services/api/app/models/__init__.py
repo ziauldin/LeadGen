@@ -28,6 +28,14 @@ from app.models.search_query import SearchQuery
 from app.models.suppression import Suppression
 from app.models.user import User
 from app.models.user_settings import UserSettings
+from app.models.workspace import (
+    UsageCounter,
+    Workspace,
+    WorkspaceInvitation,
+    WorkspaceMember,
+    WorkspaceRole,
+    WorkspaceSettings,
+)
 
 __all__ = [
     "AuditLog",
@@ -57,7 +65,14 @@ __all__ = [
     "SearchQuery",
     "SearchStatus",
     "Suppression",
+    "UsageCounter",
     "User",
     "UserRole",
     "UserSettings",
+    "Workspace",
+    "WorkspaceInvitation",
+    "WorkspaceMember",
+    "WorkspaceRole",
+    "WorkspaceSettings",
 ]
+import app.core.tenancy  # noqa: F401 - registers tenant isolation listeners

@@ -8,12 +8,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.models.enums import SearchProvider, SearchStatus
 from app.models.mixins import TimestampMixin
+from app.models.workspace import TenantScoped
 
 if TYPE_CHECKING:
     from app.models.niche import Niche
 
 
-class SearchQuery(Base, TimestampMixin):
+class SearchQuery(Base, TenantScoped, TimestampMixin):
     __tablename__ = "search_queries"
 
     id: Mapped[int] = mapped_column(primary_key=True)

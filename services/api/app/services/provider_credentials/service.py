@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.errors import NotFoundError
 from app.core.security import (
     decrypt_secret_payload,
     encrypt_secret_payload,
@@ -12,7 +13,6 @@ from app.core.security import (
 from app.models.audit_log import AuditLog
 from app.models.enums import ProviderCredentialStatus, ProviderName, ProviderType
 from app.models.provider_credential import ProviderCredential
-from app.models.user import User
 
 DISPLAY_NAMES: dict[ProviderName, str] = {
     ProviderName.MOCK: "Mock (local testing)",
@@ -63,13 +63,16 @@ def _as_str(value) -> str:
 
 def _log_audit(
     db: Session,
-    actor_id: int,
+    actor_id: int | None,
     action: str,
     entity_id: int,
     metadata: dict | None = None,
+    *,
+    workspace_id: int | None = None,
 ) -> None:
     db.add(
         AuditLog(
+            workspace_id=workspace_id,
             actor_id=actor_id,
             action=action,
             entity_type="provider_credential",
@@ -171,22 +174,22 @@ def decrypt_provider_config(credential: ProviderCredential) -> dict:
 
 def get_credential(
     db: Session,
-    user_id: int,
+    workspace_id: int,
     credential_id: int,
 ) -> ProviderCredential | None:
     return db.scalar(
         select(ProviderCredential).where(
             ProviderCredential.id == credential_id,
-            ProviderCredential.user_id == user_id,
+            ProviderCredential.workspace_id == workspace_id,
         ),
     )
 
 
-def list_credentials(db: Session, user_id: int) -> list[ProviderCredential]:
+def list_credentials(db: Session, workspace_id: int) -> list[ProviderCredential]:
     return list(
         db.scalars(
             select(ProviderCredential)
-            .where(ProviderCredential.user_id == user_id)
+            .where(ProviderCredential.workspace_id == workspace_id)
             .order_by(ProviderCredential.provider_type, ProviderCredential.provider_name),
         ).all(),
     )
@@ -194,12 +197,12 @@ def list_credentials(db: Session, user_id: int) -> list[ProviderCredential]:
 
 def get_active_credential(
     db: Session,
-    user_id: int,
+    workspace_id: int,
     provider_type: ProviderType,
 ) -> ProviderCredential | None:
     return db.scalar(
         select(ProviderCredential).where(
-            ProviderCredential.user_id == user_id,
+            ProviderCredential.workspace_id == workspace_id,
             ProviderCredential.provider_type == provider_type,
             ProviderCredential.is_active.is_(True),
         ),
@@ -208,7 +211,8 @@ def get_active_credential(
 
 def upsert_credential(
     db: Session,
-    user: User,
+    workspace_id: int,
+    actor_id: int,
     provider_type: ProviderType,
     provider_name: ProviderName,
     config: dict,
@@ -217,7 +221,7 @@ def upsert_credential(
 
     existing = db.scalar(
         select(ProviderCredential).where(
-            ProviderCredential.user_id == user.id,
+            ProviderCredential.workspace_id == workspace_id,
             ProviderCredential.provider_type == provider_type,
             ProviderCredential.provider_name == provider_name,
         ),
@@ -258,7 +262,8 @@ def upsert_credential(
         action = "provider_credential_updated"
     else:
         credential = ProviderCredential(
-            user_id=user.id,
+            workspace_id=workspace_id,
+            user_id=actor_id,
             provider_type=provider_type,
             provider_name=provider_name,
             display_name=DISPLAY_NAMES[provider_name],
@@ -273,7 +278,7 @@ def upsert_credential(
     db.flush()
     _log_audit(
         db,
-        user.id,
+        actor_id,
         action,
         credential.id,
         {
@@ -281,16 +286,22 @@ def upsert_credential(
             "provider_name": _as_str(provider_name),
             "masked_summary": masked,
         },
+        workspace_id=workspace_id,
     )
     db.commit()
     db.refresh(credential)
     return credential
 
 
-def activate_credential(db: Session, user: User, credential_id: int) -> ProviderCredential:
-    credential = get_credential(db, user.id, credential_id)
+def activate_credential(
+    db: Session,
+    workspace_id: int,
+    actor_id: int,
+    credential_id: int,
+) -> ProviderCredential:
+    credential = get_credential(db, workspace_id, credential_id)
     if credential is None:
-        raise ValueError("Provider credential not found")
+        raise NotFoundError("Provider credential not found")
     if (
         _as_str(credential.status)
         not in {
@@ -303,7 +314,7 @@ def activate_credential(db: Session, user: User, credential_id: int) -> Provider
 
     others = db.scalars(
         select(ProviderCredential).where(
-            ProviderCredential.user_id == user.id,
+            ProviderCredential.workspace_id == workspace_id,
             ProviderCredential.provider_type == credential.provider_type,
             ProviderCredential.id != credential.id,
         ),
@@ -317,23 +328,24 @@ def activate_credential(db: Session, user: User, credential_id: int) -> Provider
 
     _log_audit(
         db,
-        user.id,
+        actor_id,
         "provider_credential_activated",
         credential.id,
         {
             "provider_type": _as_str(credential.provider_type),
             "provider_name": _as_str(credential.provider_name),
         },
+        workspace_id=workspace_id,
     )
     db.commit()
     db.refresh(credential)
     return credential
 
 
-def delete_credential(db: Session, user: User, credential_id: int) -> None:
-    credential = get_credential(db, user.id, credential_id)
+def delete_credential(db: Session, workspace_id: int, actor_id: int, credential_id: int) -> None:
+    credential = get_credential(db, workspace_id, credential_id)
     if credential is None:
-        raise ValueError("Provider credential not found")
+        raise NotFoundError("Provider credential not found")
 
     metadata = {
         "provider_type": _as_str(credential.provider_type),
@@ -341,7 +353,14 @@ def delete_credential(db: Session, user: User, credential_id: int) -> None:
     }
     db.delete(credential)
     db.flush()
-    _log_audit(db, user.id, "provider_credential_deleted", credential_id, metadata)
+    _log_audit(
+        db,
+        actor_id,
+        "provider_credential_deleted",
+        credential_id,
+        metadata,
+        workspace_id=workspace_id,
+    )
     db.commit()
 
 
@@ -371,20 +390,21 @@ def record_test_result(
                 "success": success,
                 "message": message,
             },
+            workspace_id=credential.workspace_id,
         )
     db.commit()
     db.refresh(credential)
     return credential
 
 
-def ensure_default_mock_credentials(db: Session, user_id: int) -> None:
+def ensure_default_mock_credentials(db: Session, workspace_id: int, user_id: int) -> None:
     for provider_type, provider_name in (
         (ProviderType.SEARCH, ProviderName.MOCK),
         (ProviderType.EMAIL, ProviderName.MOCK),
     ):
         existing = db.scalar(
             select(ProviderCredential).where(
-                ProviderCredential.user_id == user_id,
+                ProviderCredential.workspace_id == workspace_id,
                 ProviderCredential.provider_type == provider_type,
                 ProviderCredential.provider_name == provider_name,
             ),
@@ -393,6 +413,7 @@ def ensure_default_mock_credentials(db: Session, user_id: int) -> None:
             continue
         encrypted = encrypt_secret_payload("{}")
         credential = ProviderCredential(
+            workspace_id=workspace_id,
             user_id=user_id,
             provider_type=provider_type,
             provider_name=provider_name,
@@ -403,4 +424,4 @@ def ensure_default_mock_credentials(db: Session, user_id: int) -> None:
             status=ProviderCredentialStatus.CONFIGURED,
         )
         db.add(credential)
-    db.commit()
+    db.flush()

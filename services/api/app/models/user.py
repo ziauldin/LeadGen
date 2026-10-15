@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -39,8 +39,14 @@ class User(Base, TimestampMixin):
     failed_login_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_workspace_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "workspaces.id", ondelete="SET NULL", use_alter=True, name="fk_users_last_workspace"
+        ),
+        nullable=True,
+    )
 
-    niches: Mapped[list[Niche]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    niches: Mapped[list[Niche]] = relationship(back_populates="user", passive_deletes=True)
     audit_logs: Mapped[list[AuditLog]] = relationship(back_populates="actor")
     settings: Mapped[UserSettings | None] = relationship(
         back_populates="user",
@@ -49,5 +55,5 @@ class User(Base, TimestampMixin):
     )
     provider_credentials: Mapped[list[ProviderCredential]] = relationship(
         back_populates="user",
-        cascade="all, delete-orphan",
+        passive_deletes=True,
     )

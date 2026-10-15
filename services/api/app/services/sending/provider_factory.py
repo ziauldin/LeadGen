@@ -15,8 +15,8 @@ from app.services.sending.external_providers import (
 from app.services.sending.mock_provider import MockEmailSender
 
 
-def get_email_sender_for_user(db: Session, user_id: int):
-    credential = get_active_credential(db, user_id, ProviderType.EMAIL)
+def get_email_sender_for_workspace(db: Session, workspace_id: int):
+    credential = get_active_credential(db, workspace_id, ProviderType.EMAIL)
     if credential is None or ProviderName(_as_str(credential.provider_name)) == ProviderName.MOCK:
         return MockEmailSender()
 
@@ -56,8 +56,8 @@ def get_email_sender_for_user(db: Session, user_id: int):
     return MockEmailSender()
 
 
-def is_mock_email_provider_active(db: Session, user_id: int) -> bool:
-    credential = get_active_credential(db, user_id, ProviderType.EMAIL)
+def is_mock_email_provider_active(db: Session, workspace_id: int) -> bool:
+    credential = get_active_credential(db, workspace_id, ProviderType.EMAIL)
     return (
         credential is None or ProviderName(_as_str(credential.provider_name)) == ProviderName.MOCK
     )

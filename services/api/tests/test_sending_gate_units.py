@@ -13,6 +13,7 @@ from app.models.enums import CampaignStatus, EmailMessageStatus, LeadStatus, Use
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.user import User
+from app.models.workspace import Workspace
 from app.services.sending.gate import evaluate_send_gate
 
 
@@ -37,7 +38,13 @@ def _seed_gate_fixtures(db):
     db.add(user)
     db.flush()
 
+    workspace = Workspace(name=f"Gate {suffix}", slug=f"gate-{suffix}")
+    db.add(workspace)
+    db.flush()
+    ws = workspace.id
+
     niche = Niche(
+        workspace_id=ws,
         user_id=user.id,
         name=f"Gate Niche {suffix}",
         country="UK",
@@ -50,6 +57,7 @@ def _seed_gate_fixtures(db):
     db.flush()
 
     campaign = Campaign(
+        workspace_id=ws,
         niche_id=niche.id,
         name="Gate Campaign",
         status=CampaignStatus.ACTIVE,
@@ -61,6 +69,7 @@ def _seed_gate_fixtures(db):
     db.flush()
 
     lead = Lead(
+        workspace_id=ws,
         niche_id=niche.id,
         full_name="Gate Lead",
         status=LeadStatus.READY_FOR_OUTREACH,
@@ -73,6 +82,7 @@ def _seed_gate_fixtures(db):
 
     db.add(
         EmailContact(
+            workspace_id=ws,
             lead_id=lead.id,
             email="gate@example.com",
             is_personal=True,
@@ -80,6 +90,7 @@ def _seed_gate_fixtures(db):
     )
 
     message = EmailMessage(
+        workspace_id=ws,
         campaign_id=campaign.id,
         lead_id=lead.id,
         recipient_email="gate@example.com",

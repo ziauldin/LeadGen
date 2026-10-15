@@ -8,13 +8,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.models.enums import CampaignStatus
 from app.models.mixins import TimestampMixin
+from app.models.workspace import TenantScoped
 
 if TYPE_CHECKING:
     from app.models.email_message import EmailMessage
     from app.models.niche import Niche
 
 
-class Campaign(Base, TimestampMixin):
+class Campaign(Base, TenantScoped, TimestampMixin):
     __tablename__ = "campaigns"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -38,7 +39,7 @@ class Campaign(Base, TimestampMixin):
     email_messages: Mapped[list[EmailMessage]] = relationship(back_populates="campaign")
 
 
-class CampaignStep(Base):
+class CampaignStep(Base, TenantScoped):
     __tablename__ = "campaign_steps"
 
     id: Mapped[int] = mapped_column(primary_key=True)

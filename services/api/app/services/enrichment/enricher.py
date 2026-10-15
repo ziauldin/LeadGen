@@ -16,7 +16,6 @@ from app.models.company import Company
 from app.models.email_contact import EmailContact
 from app.models.enums import EmailType, EnrichmentStatus, LeadStatus
 from app.models.lead import Lead
-from app.models.niche import Niche
 from app.services.enrichment.email_extractor import extract_emails_from_html
 from app.services.enrichment.robots_checker import fetch_robots_parser
 from app.services.enrichment.website_crawler import CrawledPage, crawl_company_site
@@ -52,15 +51,19 @@ def _upsert_email_contact(
     email = str(extracted.email).strip().lower()
     if not email:
         return
-    existing = db.scalar(
-        select(EmailContact).where(
-            EmailContact.company_id == company.id,
-            EmailContact.email == email,
-        ),
+    lookup = select(EmailContact).where(
+        EmailContact.workspace_id == company.workspace_id,
+        EmailContact.email == email,
     )
+    if lead is not None:
+        lookup = lookup.where(EmailContact.lead_id == lead.id)
+    else:
+        lookup = lookup.where(
+            EmailContact.company_id == company.id,
+            EmailContact.lead_id.is_(None),
+        )
+    existing = db.scalar(lookup)
     if existing:
-        if lead and existing.lead_id is None:
-            existing.lead_id = lead.id
         if not existing.source_url:
             existing.source_url = getattr(extracted, "source_url", None)
         return
@@ -69,12 +72,14 @@ def _upsert_email_contact(
     email_type = _email_type(getattr(extracted, "email_type", EmailType.GENERIC))
     db.add(
         EmailContact(
+            workspace_id=company.workspace_id,
             lead_id=lead.id if lead else None,
             company_id=company.id,
             email=email,
             email_type=email_type,
             confidence=float(confidence) if confidence is not None else 0.0,
             source_url=getattr(extracted, "source_url", None),
+            source_provider=source_provider,
             is_role_based=bool(
                 getattr(extracted, "is_role_based", email_type == EmailType.ROLE_BASED),
             ),
@@ -109,18 +114,19 @@ def _hunter_lookup(db: Session, company: Company) -> tuple[list[Any], str]:
     if not domain:
         return [], "Invalid or excluded domain for Hunter"
 
-    user_id = None
-    if company.leads:
-        user_id = db.scalar(
-            select(Niche.user_id)
-            .join(Lead, Lead.niche_id == Niche.id)
-            .where(Lead.id == company.leads[0].id),
-        )
+    from app.models.workspace import Workspace
+    from app.services.billing.usage import record_usage, remaining
+
     try:
-        provider = get_email_discovery_provider(db, user_id)
+        provider = get_email_discovery_provider(db, company.workspace_id)
         if provider is None:
             return [], "Hunter not configured or disabled"
-        return list(provider.discover_by_domain(domain)), ""
+        workspace = db.get(Workspace, company.workspace_id)
+        if workspace is not None and remaining(db, workspace, "daily_hunter_lookups") <= 0:
+            return [], "Hunter daily lookup limit reached"
+        results = list(provider.discover_by_domain(domain))
+        record_usage(db, company.workspace_id, "daily_hunter_lookups")
+        return results, ""
     except Exception as exc:
         logger.warning("Hunter lookup failed for company %s: %s", company.id, exc)
         return [], "Hunter lookup failed"

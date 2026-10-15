@@ -24,7 +24,7 @@ from app.schemas.auth import (
 )
 from app.services.auth import service as auth_service
 from app.services.auth import tokens
-from app.services.provider_credentials.service import ensure_default_mock_credentials
+from app.services.workspaces.service import create_personal_workspace
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -81,7 +81,7 @@ def register(request: Request, payload: UserRegister, db: Session = Depends(get_
         email=str(payload.email),
         password=payload.password,
     )
-    ensure_default_mock_credentials(db, user.id)
+    create_personal_workspace(db, user)
     return user
 
 
