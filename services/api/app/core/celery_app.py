@@ -50,8 +50,12 @@ celery_app.conf.update(
         "replies.*": {"queue": "inbound"},
     },
     beat_schedule={
-        "process-campaign-sends": {
-            "task": "campaign.process_sends",
+        "dispatch-sends": {
+            "task": "sending.dispatch",
+            "schedule": 60.0,
+        },
+        "reap-stuck-sends": {
+            "task": "sending.reap",
             "schedule": 300.0,
         },
         "sync-replies": {

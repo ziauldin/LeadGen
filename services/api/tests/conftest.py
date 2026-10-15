@@ -14,6 +14,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core import database as core_database
 from app.core.database import Base, get_db
 from app.core.rate_limit import reset_rate_limits
 from app.main import app
@@ -27,6 +28,8 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Background tasks run eagerly in tests and open sessions via SessionLocal: point it here too.
+core_database.SessionLocal.configure(bind=engine)
 
 
 def override_get_db():

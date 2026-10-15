@@ -1,5 +1,6 @@
 import secrets
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -17,6 +18,7 @@ from app.services.compliance.outreach import (
 )
 from app.services.email_generation.personalisation import build_context, render_template
 from app.services.email_generation.templates import get_template
+from app.services.sending.state import transition
 from app.services.workspaces.service import get_or_create_settings
 
 OPT_OUT_MARKERS = (
@@ -143,10 +145,13 @@ def generate_email_message(
         campaign_id=campaign_id,
         lead_id=lead_id,
         recipient_email=rendered.recipient_email,
+        recipient_domain=rendered.recipient_email.rsplit("@", 1)[-1].lower() or None,
         subject=rendered.subject,
         body=rendered.body,
         status=EmailMessageStatus.DRAFT,
         unsubscribe_token=token,
+        generation_mode="template",
+        template_id=template_id,
     )
     db.add(message)
     db.commit()
@@ -154,7 +159,13 @@ def generate_email_message(
     return message
 
 
-def approve_email_message(db: Session, message_id: int, workspace_id: int) -> EmailMessage:
+def approve_email_message(
+    db: Session,
+    message_id: int,
+    workspace_id: int,
+    *,
+    actor_id: int | None = None,
+) -> EmailMessage:
     message = db.scalar(
         select(EmailMessage)
         .where(EmailMessage.id == message_id, EmailMessage.workspace_id == workspace_id)
@@ -177,7 +188,10 @@ def approve_email_message(db: Session, message_id: int, workspace_id: int) -> Em
     if not has_opt_out_line(message.body):
         raise ValidationFailedError("Email is missing a required opt-out line")
 
-    message.status = EmailMessageStatus.APPROVED
+    transition(db, message, EmailMessageStatus.APPROVED, actor_id=actor_id)
+    message.approved_by = actor_id
+    message.approved_at = datetime.now(UTC)
+    message.next_attempt_at = None
     db.commit()
     db.refresh(message)
     return message

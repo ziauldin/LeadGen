@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -29,6 +30,17 @@ class Campaign(Base, TenantScoped, TimestampMixin):
     daily_send_limit: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
     sending_window_start: Mapped[str | None] = mapped_column(String(5), nullable=True)
     sending_window_end: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    # None = inherit from the workspace (timezone, sending days, per-domain limit).
+    timezone: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    sending_days: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    per_domain_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sender_credential_id: Mapped[int | None] = mapped_column(
+        ForeignKey("provider_credentials.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    stop_on_reply: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    auto_paused_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     niche: Mapped[Niche] = relationship(back_populates="campaigns")
     steps: Mapped[list[CampaignStep]] = relationship(

@@ -15,6 +15,7 @@ def test_reply_sync_after_send():
             "name": "Reply test campaign",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]
@@ -55,6 +56,7 @@ def test_patch_reply_mark_meeting_booked():
             "name": "Meeting test",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]

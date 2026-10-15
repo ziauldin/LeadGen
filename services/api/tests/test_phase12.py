@@ -42,8 +42,8 @@ def test_celery_beat_schedule_configured():
     from app.core.celery_app import celery_app
 
     schedule = celery_app.conf.beat_schedule
-    assert "process-campaign-sends" in schedule
-    assert schedule["process-campaign-sends"]["task"] == "campaign.process_sends"
+    assert schedule["dispatch-sends"]["task"] == "sending.dispatch"
+    assert schedule["reap-stuck-sends"]["task"] == "sending.reap"
     assert "sync-replies" in schedule
     assert schedule["sync-replies"]["task"] == "replies.sync"
 
@@ -183,6 +183,7 @@ def test_mvp_workflow_smoke():
             "daily_send_limit": 10,
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]

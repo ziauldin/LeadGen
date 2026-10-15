@@ -24,6 +24,7 @@ from app.services.campaigns.service import (
     pause_campaign,
     start_campaign,
 )
+from app.services.campaigns.service import update_campaign as apply_campaign_update
 from app.services.sending.sender import process_active_campaigns
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
@@ -77,6 +78,15 @@ def create_campaign_endpoint(
         daily_send_limit=payload.daily_send_limit,
         sending_window_start=payload.sending_window_start,
         sending_window_end=payload.sending_window_end,
+        schedule=payload.model_dump(
+            include={
+                "timezone",
+                "sending_days",
+                "per_domain_limit",
+                "sender_credential_id",
+                "stop_on_reply",
+            },
+        ),
     )
     return _serialize_campaign(get_campaign(db, campaign.id, ctx.workspace_id))
 
@@ -98,11 +108,9 @@ def update_campaign(
     db: Session = Depends(get_db),
 ) -> CampaignRead:
     campaign = get_campaign(db, campaign_id, ctx.workspace_id)
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(campaign, field, value)
-    db.commit()
-    db.refresh(campaign)
-    return _serialize_campaign(campaign)
+    return _serialize_campaign(
+        apply_campaign_update(db, campaign, payload.model_dump(exclude_unset=True))
+    )
 
 
 @router.post("/{campaign_id}/add-leads", response_model=AddLeadsResponse)

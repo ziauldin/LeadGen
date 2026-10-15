@@ -21,6 +21,31 @@ from app.services.email_generation.templates import WELLPREDICT_TEMPLATE
 from app.services.workspaces.service import get_or_create_settings
 
 
+def _ensure_sending_credential(db: Session, workspace_id: int, credential_id: int) -> None:
+    from app.models.enums import ProviderType
+    from app.models.provider_credential import ProviderCredential
+
+    found = db.scalar(
+        select(ProviderCredential.id).where(
+            ProviderCredential.id == credential_id,
+            ProviderCredential.workspace_id == workspace_id,
+            ProviderCredential.provider_type == ProviderType.EMAIL,
+        ),
+    )
+    if found is None:
+        raise NotFoundError("Sending account not found")
+
+
+def update_campaign(db: Session, campaign: Campaign, updates: dict) -> Campaign:
+    if updates.get("sender_credential_id") is not None:
+        _ensure_sending_credential(db, campaign.workspace_id, updates["sender_credential_id"])
+    for field, value in updates.items():
+        setattr(campaign, field, value)
+    db.commit()
+    db.refresh(campaign)
+    return campaign
+
+
 def get_campaign(db: Session, campaign_id: int, workspace_id: int) -> Campaign:
     campaign = db.scalar(
         select(Campaign)
@@ -41,6 +66,7 @@ def create_campaign(
     daily_send_limit: int | None = None,
     sending_window_start: str | None = None,
     sending_window_end: str | None = None,
+    schedule: dict | None = None,
 ) -> Campaign:
     niche = db.scalar(
         select(Niche).where(Niche.id == niche_id, Niche.workspace_id == ctx.workspace_id),
@@ -68,6 +94,11 @@ def create_campaign(
         sending_window_start=sending_window_start or settings.default_sending_window_start,
         sending_window_end=sending_window_end or settings.default_sending_window_end,
     )
+    for field, value in (schedule or {}).items():
+        if value is not None:
+            setattr(campaign, field, value)
+    if campaign.sender_credential_id is not None:
+        _ensure_sending_credential(db, ctx.workspace_id, campaign.sender_credential_id)
     db.add(campaign)
     db.flush()
 
@@ -183,10 +214,12 @@ def add_leads_to_campaign(
             campaign_id=campaign.id,
             lead_id=lead.id,
             recipient_email=recipient,
+            recipient_domain=recipient.rsplit("@", 1)[-1].lower() or None,
             subject=subject,
             body=body,
             status=EmailMessageStatus.DRAFT,
             unsubscribe_token=token,
+            generation_mode="template",
         )
         db.add(message)
         db.flush()

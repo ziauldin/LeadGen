@@ -97,5 +97,10 @@ def approve_email(
     ctx: WorkspaceContext = Depends(get_verified_workspace),
     db: Session = Depends(get_db),
 ) -> EmailApproveResponse:
-    message = approve_email_message(db, payload.email_message_id, ctx.workspace_id)
+    message = approve_email_message(
+        db,
+        payload.email_message_id,
+        ctx.workspace_id,
+        actor_id=ctx.user_id,
+    )
     return EmailApproveResponse(message=EmailMessageRead.model_validate(message))

@@ -25,13 +25,19 @@ def period_key(metric: str, now: datetime | None = None) -> str:
     return now.strftime("%Y-%m")
 
 
-def current_usage(db: Session, workspace_id: int, metric: str) -> int:
+def current_usage(
+    db: Session,
+    workspace_id: int,
+    metric: str,
+    *,
+    now: datetime | None = None,
+) -> int:
     return (
         db.scalar(
             select(UsageCounter.count).where(
                 UsageCounter.workspace_id == workspace_id,
                 UsageCounter.metric == metric,
-                UsageCounter.period_key == period_key(metric),
+                UsageCounter.period_key == period_key(metric, now),
             ),
         )
         or 0

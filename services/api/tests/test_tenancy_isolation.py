@@ -45,6 +45,7 @@ def _build_workspace_a(client, headers) -> dict[str, int]:
             "name": "Iso campaign",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [STEP],
         },
     ).json()["id"]

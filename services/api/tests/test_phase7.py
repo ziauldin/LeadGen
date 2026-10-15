@@ -72,6 +72,7 @@ def test_campaign_flow_add_approve_and_send():
             "daily_send_limit": 20,
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     )
@@ -120,6 +121,7 @@ def test_send_blocked_when_campaign_paused():
             "name": "Paused campaign",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]

@@ -99,6 +99,9 @@ class Settings(BaseSettings):
     platform_smtp_username: str = ""
     platform_smtp_password: str = ""
 
+    # Domain whose MX routes to our inbound webhook/IMAP (reply+token@, unsubscribe+token@).
+    inbound_email_domain: str = ""
+
     frontend_url: str = "http://localhost:3000"
     api_public_url: str = "http://localhost:8000"
     expose_api_docs: bool = True

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -24,6 +24,7 @@ class ProviderCredential(Base, TenantScoped, TimestampUpdatedMixin):
             "provider_name",
             name="uq_workspace_provider",
         ),
+        UniqueConstraint("webhook_token", name="uq_provider_credentials_webhook_token"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -47,5 +48,17 @@ class ProviderCredential(Base, TenantScoped, TimestampUpdatedMixin):
     last_tested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_test_status: Mapped[str | None] = mapped_column(String(30), nullable=True)
     last_test_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Sending warm-up: daily cap = start + increment * days since start (up to max).
+    warmup_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    warmup_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    warmup_start_volume: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
+    warmup_daily_increment: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    warmup_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Random token in inbound webhook URLs: identifies the workspace and signing secret.
+    webhook_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     user: Mapped[User | None] = relationship(back_populates="provider_credentials")

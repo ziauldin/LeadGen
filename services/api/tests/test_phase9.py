@@ -15,6 +15,7 @@ def test_reply_notes_and_export():
             "name": "Notes test",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]
@@ -67,6 +68,7 @@ def test_unsubscribe_writes_audit_log():
             "name": "Audit test",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]
@@ -91,7 +93,7 @@ def test_unsubscribe_writes_audit_log():
     try:
         message = db.scalar(select(EmailMessage).where(EmailMessage.id == message_id))
         assert message and message.unsubscribe_token
-        client.get(f"/unsubscribe/{message.unsubscribe_token}")
+        client.post(f"/unsubscribe/{message.unsubscribe_token}")
         audit = db.scalar(
             select(AuditLog).where(
                 AuditLog.action == "unsubscribe",

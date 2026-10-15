@@ -59,9 +59,14 @@ class EmailMessageStatus(StrEnum):
     DRAFT = "draft"
     PENDING_APPROVAL = "pending_approval"
     APPROVED = "approved"
+    QUEUED = "queued"
+    SENDING = "sending"
     SENT = "sent"
     FAILED = "failed"
     BOUNCED = "bounced"
+    COMPLAINED = "complained"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
 
 
 class ReplyStatus(StrEnum):
