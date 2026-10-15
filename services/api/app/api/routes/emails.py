@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_current_workspace, get_verified_workspace
+from app.api.routes.approvals import approval_item
 from app.core.database import get_db
 from app.core.rate_limit import enforce
 from app.core.tenancy import WorkspaceContext
 from app.models.user import User
+from app.schemas.approval import ApprovalItem, EmailEditRequest, EmailRejectRequest
 from app.schemas.email import (
     EmailApproveRequest,
     EmailApproveResponse,
@@ -16,6 +18,12 @@ from app.schemas.email import (
     EmailPreviewResponse,
     EmailRegenerateRequest,
     EmailTemplateRead,
+)
+from app.services.approvals.service import (
+    campaign_names,
+    edit_message,
+    load_reviewable,
+    reject_message,
 )
 from app.services.email_generation.generator import (
     approve_email_message,
@@ -156,3 +164,57 @@ def approve_email(
         actor_id=ctx.user_id,
     )
     return EmailApproveResponse(message=EmailMessageRead.model_validate(message))
+
+
+def _review_item(db: Session, workspace_id: int, message_id: int) -> ApprovalItem:
+    message = load_reviewable(db, workspace_id, message_id)
+    names = campaign_names(db, {message.campaign_id} if message.campaign_id else set())
+    return approval_item(db, message, names.get(message.campaign_id or 0))
+
+
+@router.get("/{message_id}", response_model=ApprovalItem)
+def get_email(
+    message_id: int,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> ApprovalItem:
+    return _review_item(db, ctx.workspace_id, message_id)
+
+
+@router.patch("/{message_id}", response_model=ApprovalItem)
+def edit_email(
+    message_id: int,
+    payload: EmailEditRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> ApprovalItem:
+    edit_message(
+        db,
+        ctx.workspace_id,
+        message_id,
+        subject=payload.subject,
+        body=payload.body,
+        actor_id=ctx.user_id,
+    )
+    return _review_item(db, ctx.workspace_id, message_id)
+
+
+@router.post("/{message_id}/approve", response_model=ApprovalItem)
+def approve_email_by_id(
+    message_id: int,
+    ctx: WorkspaceContext = Depends(get_verified_workspace),
+    db: Session = Depends(get_db),
+) -> ApprovalItem:
+    approve_email_message(db, message_id, ctx.workspace_id, actor_id=ctx.user_id)
+    return _review_item(db, ctx.workspace_id, message_id)
+
+
+@router.post("/{message_id}/reject", response_model=ApprovalItem)
+def reject_email_by_id(
+    message_id: int,
+    payload: EmailRejectRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> ApprovalItem:
+    reject_message(db, ctx.workspace_id, message_id, reason=payload.reason, actor_id=ctx.user_id)
+    return _review_item(db, ctx.workspace_id, message_id)

@@ -1,20 +1,33 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import PlainTextResponse
-from sqlalchemy import func, or_, select
+from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_workspace, get_owned_lead
+from app.api.paging import PageParams, order_by, page_params
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.tenancy import WorkspaceContext
 from app.models.company import Company
+from app.models.email_contact import EmailContact
 from app.models.enums import LeadStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
-from app.schemas.lead import LeadCreate, LeadImportResult, LeadListResponse, LeadRead, LeadUpdate
+from app.schemas.common import BulkResult
+from app.schemas.lead import (
+    LeadBulkRequest,
+    LeadCreate,
+    LeadImportResult,
+    LeadListResponse,
+    LeadRead,
+    LeadStats,
+    LeadUpdate,
+)
 from app.schemas.outreach import OutreachReadiness
 from app.services.billing.usage import check_quota, record_usage
 from app.services.compliance.outreach import validate_lead_for_outreach
+from app.services.leads.bulk import delete_lead as remove_lead
+from app.services.leads.bulk import lead_stats, run_bulk_action
 from app.services.leads.csv_import import export_leads_to_csv, import_leads_from_csv
 from app.services.leads.serializers import serialize_lead
 from app.services.leads.status import validate_user_status_change
@@ -49,18 +62,38 @@ def _ensure_niche_in_workspace(db: Session, niche_id: int, workspace_id: int) ->
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")
 
 
+SORTABLE = {
+    "full_name": Lead.full_name,
+    "job_title": Lead.job_title,
+    "score": Lead.score,
+    "status": Lead.status,
+    "created_at": Lead.created_at,
+    "updated_at": Lead.updated_at,
+}
+
+
 @router.get("", response_model=LeadListResponse)
 def list_leads(
     niche_id: int | None = None,
+    company_id: int | None = None,
     status: LeadStatus | None = None,
     min_score: float | None = Query(default=None, ge=0),
+    has_email: bool | None = None,
     search: str | None = Query(default=None, max_length=255),
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=200),
+    page: PageParams = Depends(page_params),
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> LeadListResponse:
+    skip, limit = page.skip, page.limit
     conditions = [Lead.workspace_id == ctx.workspace_id]
+    if company_id is not None:
+        conditions.append(Lead.company_id == company_id)
+    if has_email is not None:
+        with_email = exists().where(
+            EmailContact.lead_id == Lead.id,
+            EmailContact.opted_out.is_(False),
+        )
+        conditions.append(with_email if has_email else ~with_email)
     if niche_id is not None:
         conditions.append(Lead.niche_id == niche_id)
     if status is not None:
@@ -69,14 +102,20 @@ def list_leads(
         conditions.append(Lead.score >= min_score)
     if search:
         pattern = f"%{search.strip()}%"
-        conditions.append(or_(Lead.full_name.ilike(pattern), Lead.job_title.ilike(pattern)))
+        conditions.append(
+            or_(
+                Lead.full_name.ilike(pattern),
+                Lead.job_title.ilike(pattern),
+                Lead.company.has(Company.name.ilike(pattern)),
+            ),
+        )
 
     total = db.scalar(select(func.count(Lead.id)).where(*conditions)) or 0
     leads = db.scalars(
         select(Lead)
         .where(*conditions)
         .options(selectinload(Lead.company), selectinload(Lead.email_contacts))
-        .order_by(Lead.updated_at.desc(), Lead.id.desc())
+        .order_by(*order_by(page.sort, SORTABLE, [Lead.updated_at.desc()], Lead.id))
         .offset(skip)
         .limit(limit),
     ).all()
@@ -87,6 +126,25 @@ def list_leads(
         skip=skip,
         limit=limit,
     )
+
+
+@router.get("/stats", response_model=LeadStats)
+def get_lead_stats(
+    niche_id: int | None = None,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> LeadStats:
+    return lead_stats(db, ctx.workspace_id, niche_id=niche_id)
+
+
+@router.post("/bulk", response_model=BulkResult)
+def bulk_leads(
+    payload: LeadBulkRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> BulkResult:
+    """Add to a campaign, enrich, change status, rescore or delete up to 500 leads at once."""
+    return run_bulk_action(db, ctx, payload)
 
 
 @router.post("", response_model=LeadRead, status_code=status.HTTP_201_CREATED)
@@ -192,5 +250,5 @@ def delete_lead(
     lead: Lead = Depends(get_owned_lead),
     db: Session = Depends(get_db),
 ) -> None:
-    db.delete(lead)
+    remove_lead(db, lead)
     db.commit()

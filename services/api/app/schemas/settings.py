@@ -25,3 +25,17 @@ class UserSettingsUpdate(BaseModel):
     tone_guidelines: str | None = Field(default=None, max_length=1000)
     # "assist": AI drafts and reply labelling are available on request; "off": templates only.
     ai_mode: AIMode | None = None
+
+
+class DeliverabilityCheck(BaseModel):
+    name: str
+    status: Literal["pass", "warn", "fail", "unknown"]
+    detail: str
+    records: list[str] = []
+
+
+class DeliverabilityReport(BaseModel):
+    domain: str
+    provider: str | None
+    overall: Literal["pass", "warn", "fail"]
+    checks: list[DeliverabilityCheck]

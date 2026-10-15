@@ -241,6 +241,7 @@ def stop_enrollment(
     """Stop a sequence and cancel its unsent emails. Returns the number cancelled."""
     if enrollment.status not in {EnrollmentStatus.ACTIVE, EnrollmentStatus.PAUSED}:
         return 0
+    db.flush()  # the session doesn't autoflush; see status changes made just before this call
     enrollment.status = status
     enrollment.stopped_reason = reason[:255]
     enrollment.next_step_number = None

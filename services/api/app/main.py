@@ -9,6 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import (
+    approvals,
     auth,
     billing,
     campaigns,
@@ -107,6 +108,7 @@ app.include_router(leads.router)
 app.include_router(companies.router)
 app.include_router(scoring.router)
 app.include_router(emails.router)
+app.include_router(approvals.router)
 app.include_router(templates.router)
 app.include_router(campaigns.router)
 app.include_router(replies.router)

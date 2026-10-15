@@ -1,15 +1,18 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_workspace
+from app.api.paging import PageParams, order_by, page_params
 from app.core.database import get_db
+from app.core.errors import AppError
 from app.core.tenancy import WorkspaceContext
 from app.models.company import Company
 from app.models.enums import EnrichmentStatus
+from app.schemas.common import BulkIds, BulkResult
 from app.schemas.company import (
     CompanyListResponse,
     CompanyRead,
@@ -19,7 +22,8 @@ from app.schemas.company import (
 from app.services.billing.usage import check_quota, record_usage
 from app.services.companies.helpers import extract_domain, normalize_website
 from app.services.enrichment.enricher import enrich_company_record
-from app.workers.enrichment_jobs import enrich_company
+from app.services.enrichment.queueing import queue_enrichment
+from app.services.workspaces.service import audit
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 logger = logging.getLogger(__name__)
@@ -36,24 +40,37 @@ def _get_company(db: Session, company_id: int, ctx: WorkspaceContext) -> Company
     return company
 
 
+SORTABLE = {
+    "name": Company.name,
+    "domain": Company.domain,
+    "industry": Company.industry,
+    "enrichment_status": Company.enrichment_status,
+    "created_at": Company.created_at,
+}
+
+
 @router.get("", response_model=CompanyListResponse)
 def list_companies(
     search: str | None = Query(default=None, max_length=255),
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=200),
+    enrichment_status: EnrichmentStatus | None = None,
+    page: PageParams = Depends(page_params),
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> CompanyListResponse:
+    skip, limit = page.skip, page.limit
     conditions = [Company.workspace_id == ctx.workspace_id]
     if search:
-        conditions.append(Company.name.ilike(f"%{search.strip()}%"))
+        pattern = f"%{search.strip()}%"
+        conditions.append(or_(Company.name.ilike(pattern), Company.domain.ilike(pattern)))
+    if enrichment_status is not None:
+        conditions.append(Company.enrichment_status == enrichment_status)
 
     total = db.scalar(select(func.count(Company.id)).where(*conditions)) or 0
     companies = db.scalars(
         select(Company)
         .where(*conditions)
         .options(selectinload(Company.email_contacts))
-        .order_by(Company.name)
+        .order_by(*order_by(page.sort, SORTABLE, [Company.name.asc()], Company.id))
         .offset(skip)
         .limit(limit),
     ).all()
@@ -120,10 +137,9 @@ def enrich_company_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Company has no website to enrich",
         )
-    check_quota(db, ctx.workspace, "daily_enrichments")
-    record_usage(db, ctx.workspace_id, "daily_enrichments")
-
     if sync:
+        check_quota(db, ctx.workspace, "daily_enrichments")
+        record_usage(db, ctx.workspace_id, "daily_enrichments")
         company = enrich_company_record(db, company.id)
         return EnrichCompanyResponse(
             company_id=company.id,
@@ -131,26 +147,54 @@ def enrich_company_endpoint(
             message=company.enrichment_message or "Enrichment completed",
         )
 
-    previous_status = company.enrichment_status
-    previous_message = company.enrichment_message
-    company.enrichment_status = EnrichmentStatus.IN_PROGRESS
-    company.enrichment_message = "Enrichment queued"
-    db.commit()
-
-    try:
-        enrich_company.delay(company.id)
-    except Exception as exc:
-        logger.warning("Could not queue enrichment for company %s: %s", company.id, exc)
-        company.enrichment_status = previous_status
-        company.enrichment_message = previous_message
-        db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Background workers are unavailable. Try again shortly, or run it inline.",
-        ) from None
+    queue_enrichment(db, ctx.workspace, company)
 
     return EnrichCompanyResponse(
         company_id=company.id,
         status="queued",
         message="Enrichment job queued",
     )
+
+
+@router.post("/bulk-enrich", response_model=BulkResult)
+def bulk_enrich_companies(
+    payload: BulkIds,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> BulkResult:
+    """Queue enrichment for many companies. Stops charging once the daily quota is used up."""
+    result = BulkResult()
+    companies = {
+        company.id: company
+        for company in db.scalars(
+            select(Company).where(
+                Company.workspace_id == ctx.workspace_id,
+                Company.id.in_(payload.ids),
+            ),
+        ).all()
+    }
+    for company_id in dict.fromkeys(payload.ids):
+        company = companies.get(company_id)
+        if company is None:
+            result.skip(company_id, "Company not found")
+            continue
+        if company.enrichment_status == EnrichmentStatus.IN_PROGRESS:
+            result.skip(company_id, "Enrichment is already in progress")
+            continue
+        try:
+            queue_enrichment(db, ctx.workspace, company)
+        except AppError as exc:
+            result.fail(company_id, exc.detail)
+            continue
+        result.ok(company_id, "queued")
+    audit(
+        db,
+        ctx.workspace_id,
+        ctx.user_id,
+        "company.bulk_enrich",
+        "company",
+        None,
+        {"succeeded": result.succeeded, "failed": result.failed, "skipped": result.skipped},
+    )
+    db.commit()
+    return result

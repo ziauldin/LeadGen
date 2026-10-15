@@ -1,8 +1,10 @@
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.enums import LeadStatus
+from app.schemas.common import MAX_BULK
 
 
 class CompanySummary(BaseModel):
@@ -85,3 +87,31 @@ class LeadImportResult(BaseModel):
     updated: int
     skipped: int
     errors: list[str]
+
+
+BulkLeadAction = Literal["add_to_campaign", "enrich", "set_status", "delete", "rescore"]
+
+
+class LeadBulkRequest(BaseModel):
+    lead_ids: list[int] = Field(min_length=1, max_length=MAX_BULK)
+    action: BulkLeadAction
+    campaign_id: int | None = None
+    status: LeadStatus | None = None
+
+    @model_validator(mode="after")
+    def needs_target(self) -> "LeadBulkRequest":
+        if self.action == "add_to_campaign" and self.campaign_id is None:
+            raise ValueError("campaign_id is required to add leads to a campaign")
+        if self.action == "set_status" and self.status is None:
+            raise ValueError("status is required to change lead status")
+        return self
+
+
+class LeadStats(BaseModel):
+    total: int
+    by_status: dict[str, int]
+    with_email: int
+    without_email: int
+    average_score: float
+    added_last_7_days: int
+    in_active_sequences: int

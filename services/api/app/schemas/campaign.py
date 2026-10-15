@@ -4,6 +4,7 @@ from zoneinfo import available_timezones
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import CampaignStatus
+from app.schemas.common import BulkItemResult
 
 _TIMEZONES = available_timezones()
 _HHMM = r"^([01]\d|2[0-3]):[0-5]\d$"
@@ -90,6 +91,17 @@ class CampaignUpdate(CampaignScheduleFields):
     daily_send_limit: int | None = Field(default=None, ge=1, le=10_000)
     sending_window_start: str | None = Field(default=None, pattern=_HHMM)
     sending_window_end: str | None = Field(default=None, pattern=_HHMM)
+    # The full list of steps. Edits apply to drafts created from now on.
+    steps: list[CampaignStepBase] | None = Field(default=None, min_length=1, max_length=20)
+
+    @field_validator("steps")
+    @classmethod
+    def unique_step_numbers(
+        cls, value: list[CampaignStepBase] | None
+    ) -> list[CampaignStepBase] | None:
+        if value is not None and len({s.step_number for s in value}) != len(value):
+            raise ValueError("Step numbers must be unique")
+        return value
 
 
 class CampaignRead(BaseModel):
@@ -113,6 +125,59 @@ class CampaignRead(BaseModel):
     steps: list[CampaignStepRead] = Field(default_factory=list)
 
 
+class CampaignStepMetrics(BaseModel):
+    step_number: int
+    drafts: int
+    awaiting_approval: int
+    sent: int
+    bounced: int
+    replies: int
+    reply_rate: float
+
+
+class CampaignMetrics(BaseModel):
+    campaign_id: int
+    status: str
+    enrolled: int
+    enrollments_by_status: dict[str, int]
+    messages_by_status: dict[str, int]
+    awaiting_approval: int
+    scheduled: int
+    sent: int
+    bounced: int
+    complained: int
+    replies: int
+    positive_replies: int
+    replies_by_classification: dict[str, int]
+    reply_rate: float
+    positive_rate: float
+    bounce_rate: float
+    complaint_rate: float
+    steps: list[CampaignStepMetrics]
+
+
+class CampaignMessageRead(BaseModel):
+    id: int
+    lead_id: int
+    lead_name: str | None
+    recipient_email: str
+    subject: str
+    status: str
+    step_number: int | None
+    scheduled_for: datetime | None
+    sent_at: datetime | None
+    failure_reason: str | None
+    reply_status: str | None
+    generation_mode: str | None
+
+
+class CampaignMessageList(BaseModel):
+    items: list[CampaignMessageRead]
+    total: int
+    skip: int
+    limit: int
+
+
 class CampaignListResponse(BaseModel):
     items: list[CampaignRead]
     total: int
@@ -129,6 +194,7 @@ class AddLeadsResponse(BaseModel):
     skipped: int
     errors: list[str]
     message_ids: list[int] = Field(default_factory=list)
+    results: list[BulkItemResult] = Field(default_factory=list)
 
 
 class CampaignActionResponse(BaseModel):

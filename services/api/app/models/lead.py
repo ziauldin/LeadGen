@@ -56,4 +56,8 @@ class Lead(Base, TenantScoped, TimestampUpdatedMixin):
         back_populates="lead",
         cascade="all, delete-orphan",
     )
-    email_messages: Mapped[list[EmailMessage]] = relationship(back_populates="lead")
+    # Drafts go with the lead (ON DELETE CASCADE); leads that were emailed can't be deleted.
+    email_messages: Mapped[list[EmailMessage]] = relationship(
+        back_populates="lead",
+        passive_deletes=True,
+    )

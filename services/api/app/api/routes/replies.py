@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import PlainTextResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_workspace
+from app.api.paging import PageParams, order_by, page_params
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.tenancy import WorkspaceContext
@@ -69,12 +70,25 @@ def _get_reply(db: Session, reply_id: int, ctx: WorkspaceContext) -> Reply:
 @router.get("", response_model=ReplyListResponse)
 def list_replies(
     classification: str | None = Query(default=None, max_length=50),
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=200),
+    campaign_id: int | None = None,
+    search: str | None = Query(default=None, max_length=255),
+    page: PageParams = Depends(page_params),
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> ReplyListResponse:
+    skip, limit = page.skip, page.limit
     conditions = [Reply.workspace_id == ctx.workspace_id]
+    if campaign_id is not None:
+        conditions.append(Reply.email_message.has(EmailMessage.campaign_id == campaign_id))
+    if search:
+        pattern = f"%{search.strip()}%"
+        conditions.append(
+            or_(
+                Reply.from_email.ilike(pattern),
+                Reply.subject.ilike(pattern),
+                Reply.body.ilike(pattern),
+            ),
+        )
     if classification == "unclassified":
         conditions.append(Reply.classification == "unknown")
     elif classification == "unmatched":
@@ -87,7 +101,14 @@ def list_replies(
         select(Reply)
         .where(*conditions)
         .options(selectinload(Reply.email_message).selectinload(EmailMessage.lead))
-        .order_by(Reply.received_at.desc(), Reply.id.desc())
+        .order_by(
+            *order_by(
+                page.sort,
+                {"received_at": Reply.received_at, "classification": Reply.classification},
+                [Reply.received_at.desc()],
+                Reply.id,
+            ),
+        )
         .offset(skip)
         .limit(limit),
     ).all()

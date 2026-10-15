@@ -82,7 +82,7 @@ def test_enrich_returns_503_when_broker_is_down(monkeypatch):
     def broken_delay(*_args, **_kwargs):
         raise ConnectionError("redis down")
 
-    monkeypatch.setattr("app.api.routes.companies.enrich_company.delay", broken_delay)
+    monkeypatch.setattr("app.workers.enrichment_jobs.enrich_company.delay", broken_delay)
     response = client.post(f"/companies/{company_id}/enrich", headers=headers)
     assert response.status_code == 503
     company = client.get(f"/companies/{company_id}", headers=headers).json()

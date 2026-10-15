@@ -10,6 +10,7 @@ from app.models.enums import CampaignStatus, LeadStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.user import User
+from app.schemas.common import BulkResult
 from app.services.billing.usage import check_campaign_limit
 from app.services.campaigns.sequences import StepRenderError, enroll_lead
 from app.services.email_generation.templates import DEFAULT_TEMPLATE_ID, get_template
@@ -31,14 +32,68 @@ def _ensure_sending_credential(db: Session, workspace_id: int, credential_id: in
         raise NotFoundError("Sending account not found")
 
 
+NOT_NULL_FIELDS = {"name", "daily_send_limit", "stop_on_reply"}
+
+
 def update_campaign(db: Session, campaign: Campaign, updates: dict) -> Campaign:
+    updates = dict(updates)
+    steps = updates.pop("steps", None)
     if updates.get("sender_credential_id") is not None:
         _ensure_sending_credential(db, campaign.workspace_id, updates["sender_credential_id"])
     for field, value in updates.items():
+        if value is None and field in NOT_NULL_FIELDS:
+            continue
         setattr(campaign, field, value)
+    if steps is not None:
+        replace_steps(db, campaign, steps)
     db.commit()
     db.refresh(campaign)
     return campaign
+
+
+def replace_steps(db: Session, campaign: Campaign, steps: list[dict]) -> None:
+    """Make the campaign's steps match ``steps``. Steps that already have emails stay."""
+    from app.models.email_message import EmailMessage
+
+    resolved = {
+        step["step_number"]: _resolve_step_content(db, campaign.workspace_id, step)
+        for step in steps
+    }
+    existing = {step.step_number: step for step in campaign.steps}
+    for number, step in existing.items():
+        if number in resolved:
+            continue
+        used = db.scalar(
+            select(EmailMessage.id).where(EmailMessage.campaign_step_id == step.id).limit(1),
+        )
+        if used is not None:
+            raise ValidationFailedError(
+                f"Step {number} already has emails, so it can't be removed",
+            )
+        campaign.steps.remove(step)
+        db.delete(step)
+    fields = (
+        "delay_days",
+        "subject_template",
+        "body_template",
+        "template_id",
+        "use_ai",
+        "ai_instructions",
+        "thread_with_previous",
+    )
+    for number, data in sorted(resolved.items()):
+        step = existing.get(number)
+        if step is None:
+            step = CampaignStep(
+                workspace_id=campaign.workspace_id,
+                campaign_id=campaign.id,
+                step_number=number,
+            )
+            campaign.steps.append(step)
+        for field in fields:
+            if field in data:
+                setattr(step, field, data[field])
+    db.flush()
 
 
 def get_campaign(db: Session, campaign_id: int, workspace_id: int) -> Campaign:
@@ -132,7 +187,7 @@ def add_leads_to_campaign(
     ctx: WorkspaceContext,
     campaign_id: int,
     lead_ids: list[int],
-) -> dict[str, int | list[str] | list[int]]:
+) -> dict:
     """Enroll leads and create each one's step-1 draft. Ineligible leads are reported."""
     campaign = get_campaign(db, campaign_id, ctx.workspace_id)
     if not campaign.steps:
@@ -146,6 +201,7 @@ def add_leads_to_campaign(
     skipped = 0
     errors: list[str] = []
     message_ids: list[int] = []
+    bulk = BulkResult()
 
     for lead_id in dict.fromkeys(lead_ids):
         lead = db.scalar(
@@ -159,10 +215,12 @@ def add_leads_to_campaign(
         )
         if lead is None:
             errors.append(f"Lead {lead_id} not found in campaign niche")
+            bulk.skip(lead_id, "Not found in the campaign's niche")
             skipped += 1
             continue
         if lead.status in {LeadStatus.DISQUALIFIED, LeadStatus.OPTED_OUT}:
             errors.append(f"Lead {lead_id}: lead is {lead.status}")
+            bulk.skip(lead_id, f"Lead is {lead.status}")
             skipped += 1
             continue
         already = db.scalar(
@@ -172,6 +230,7 @@ def add_leads_to_campaign(
             ),
         )
         if already:
+            bulk.skip(lead_id, "Already in this campaign")
             skipped += 1
             continue
 
@@ -184,13 +243,21 @@ def add_leads_to_campaign(
             )
         except StepRenderError as exc:
             errors.append(f"Lead {lead_id}: {exc}")
+            bulk.fail(lead_id, str(exc))
             skipped += 1
             continue
         message_ids.append(message.id)
+        bulk.ok(lead_id, f"Draft {message.id} created")
         created += 1
 
     db.commit()
-    return {"created": created, "skipped": skipped, "errors": errors, "message_ids": message_ids}
+    return {
+        "created": created,
+        "skipped": skipped,
+        "errors": errors,
+        "message_ids": message_ids,
+        "bulk": bulk,
+    }
 
 
 def start_campaign(db: Session, campaign_id: int, workspace_id: int) -> Campaign:
