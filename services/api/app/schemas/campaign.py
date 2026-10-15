@@ -1,7 +1,7 @@
 from datetime import datetime
 from zoneinfo import available_timezones
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import CampaignStatus
 
@@ -27,15 +27,35 @@ def _check_days(value: list[int] | None) -> list[int] | None:
 class CampaignStepBase(BaseModel):
     step_number: int = Field(ge=1, le=20)
     delay_days: int = Field(default=0, ge=0, le=365)
-    subject_template: str = Field(min_length=1, max_length=500)
-    body_template: str = Field(min_length=1, max_length=20_000)
+    # Either a saved template (copied into the step) or the step's own subject and body.
+    template_id: str | None = Field(default=None, max_length=100)
+    subject_template: str | None = Field(default=None, min_length=1, max_length=500)
+    body_template: str | None = Field(default=None, min_length=1, max_length=20_000)
+    # Draft this step with AI (the template is the fallback). People still approve every email.
+    use_ai: bool = False
+    ai_instructions: str | None = Field(default=None, max_length=2000)
+    thread_with_previous: bool = True
+
+    @model_validator(mode="after")
+    def needs_content(self) -> "CampaignStepBase":
+        if not self.template_id and not (self.subject_template and self.body_template):
+            raise ValueError("Give a template_id, or both subject_template and body_template")
+        return self
 
 
-class CampaignStepRead(CampaignStepBase):
+class CampaignStepRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     campaign_id: int
+    step_number: int
+    delay_days: int
+    template_id: str | None
+    subject_template: str
+    body_template: str
+    use_ai: bool
+    ai_instructions: str | None
+    thread_with_previous: bool
 
 
 class CampaignScheduleFields(BaseModel):

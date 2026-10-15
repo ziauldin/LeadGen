@@ -24,12 +24,13 @@ def derive_first_name(full_name: str) -> str:
 
 
 def default_pain_point(niche: Niche) -> str:
+    """A neutral topic line built from the niche: its first keywords, else its industry."""
+    keywords = [str(k).strip() for k in (niche.keywords or []) if str(k).strip()]
+    if keywords:
+        return " and ".join(keywords[:2]).lower()
     if niche.industry:
-        return (
-            "governance, operational pressure and evidence around team risk in "
-            f"{niche.industry.lower()}"
-        )
-    return "governance, operational pressure and evidence around team risk"
+        return f"the priorities {niche.industry.lower()} teams are working on this year"
+    return "the priorities teams like yours are working on this year"
 
 
 def unsubscribe_url(api_base_url: str, token: str) -> str:

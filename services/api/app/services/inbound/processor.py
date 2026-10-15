@@ -9,6 +9,7 @@ import re
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.campaign import Campaign
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
@@ -25,6 +26,7 @@ from app.models.inbound import EmailEvent
 from app.models.lead import Lead
 from app.models.reply import Reply
 from app.models.suppression import Suppression
+from app.models.workspace import WorkspaceSettings
 from app.services.campaigns.sequences import stop_enrollment, stop_enrollments_for_email
 from app.services.compliance.opt_out import (
     cancel_pending_messages,
@@ -35,6 +37,7 @@ from app.services.inbound import normalize
 from app.services.inbound.normalize import DeliveryEvent, InboundEmail
 from app.services.inbound.text import is_auto_reply, is_bounce_report, strip_quoted
 from app.services.replies.classification import classify_reply
+from app.services.replies.llm_classifier import RULE_CONFIDENCE_THRESHOLD, classify_with_llm
 from app.services.sending.state import InvalidTransitionError, transition
 
 logger = logging.getLogger(__name__)
@@ -46,6 +49,15 @@ MAX_COMPLAINT_RATE = 0.001
 _TOKEN_ADDRESS = re.compile(r"^(reply|unsubscribe)\+([A-Za-z0-9_\-]{8,128})@", re.IGNORECASE)
 
 SENT_LIKE = (EmailMessageStatus.SENT, EmailMessageStatus.BOUNCED, EmailMessageStatus.COMPLAINED)
+
+
+def _ai_labelling_on(db: Session, workspace_id: int) -> bool:
+    if not settings.feature_ai_emails:
+        return False
+    mode = db.scalar(
+        select(WorkspaceSettings.ai_mode).where(WorkspaceSettings.workspace_id == workspace_id),
+    )
+    return mode not in (None, "off")
 
 
 # --- matching ---------------------------------------------------------------------------------
@@ -358,6 +370,12 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
     auto = is_auto_reply(email.headers, email.subject)
     stripped = strip_quoted(email.text)
     classification, confidence = classify_reply(stripped, email.subject, is_auto_reply=auto)
+    classified_by = "rule"
+    if confidence < RULE_CONFIDENCE_THRESHOLD and not auto and _ai_labelling_on(db, workspace_id):
+        llm_result = classify_with_llm(db, workspace_id, stripped, email.subject)
+        if llm_result is not None:
+            classification, confidence = llm_result
+            classified_by = "llm"
 
     lead = db.get(Lead, message.lead_id) if message else None
     reply = Reply(
@@ -372,7 +390,7 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
         message_id_header=email.message_id,
         in_reply_to=email.in_reply_to,
         classification=classification,
-        classified_by="rule",
+        classified_by=classified_by,
         classification_confidence=confidence,
         match_method=method,
         is_auto_reply=auto

@@ -115,6 +115,13 @@ class Settings(BaseSettings):
     feature_imap: bool = False
     feature_inbound_webhooks: bool = False
 
+    # Platform-paid LLM, used when a workspace has no key of its own: groq | openai | gemini |
+    # mock | "" (off). Workspace keys are stored encrypted as "llm" provider credentials.
+    platform_llm_provider: str = ""
+    platform_llm_api_key: str = ""
+    platform_llm_model: str = ""
+    llm_timeout_seconds: float = 30.0
+
     email_discovery_provider: str = "none"
     hunter_api_key: str = ""
     hunter_daily_limit: int = 25
@@ -202,6 +209,8 @@ def production_config_errors(config: Settings) -> list[str]:
         errors.append("CORS_ORIGINS must list the https frontend origin(s) explicitly")
     if config.platform_email_provider == "console":
         errors.append("PLATFORM_EMAIL_PROVIDER must be resend or smtp in production")
+    if config.platform_llm_provider == "mock":
+        errors.append("PLATFORM_LLM_PROVIDER must not be mock in production")
     if config.celery_task_always_eager:
         errors.append("CELERY_TASK_ALWAYS_EAGER must not be enabled in production")
     if config.cors_origin_regex and any(

@@ -12,7 +12,7 @@ from app.models.niche import Niche
 from app.models.user import User
 from app.services.billing.usage import check_campaign_limit
 from app.services.campaigns.sequences import StepRenderError, enroll_lead
-from app.services.email_generation.templates import WELLPREDICT_TEMPLATE
+from app.services.email_generation.templates import DEFAULT_TEMPLATE_ID, get_template
 from app.services.workspaces.service import get_or_create_settings
 
 
@@ -52,6 +52,21 @@ def get_campaign(db: Session, campaign_id: int, workspace_id: int) -> Campaign:
     return campaign
 
 
+def _resolve_step_content(db: Session, workspace_id: int, step: dict) -> dict:
+    """Copy a saved template's text into the step, so later template edits don't change it."""
+    step = dict(step)
+    template_id = step.get("template_id")
+    if template_id:
+        try:
+            template = get_template(template_id, db, workspace_id)
+        except KeyError as exc:
+            raise ValidationFailedError(f"Unknown template: {template_id}") from exc
+        step["template_id"] = template.id
+        step["subject_template"] = step.get("subject_template") or template.subject
+        step["body_template"] = step.get("body_template") or template.body
+    return step
+
+
 def create_campaign(
     db: Session,
     ctx: WorkspaceContext,
@@ -71,14 +86,8 @@ def create_campaign(
     check_campaign_limit(db, ctx.workspace)
 
     if not steps:
-        steps = [
-            {
-                "step_number": 1,
-                "delay_days": 0,
-                "subject_template": WELLPREDICT_TEMPLATE.subject,
-                "body_template": WELLPREDICT_TEMPLATE.body,
-            },
-        ]
+        steps = [{"step_number": 1, "delay_days": 0, "template_id": DEFAULT_TEMPLATE_ID}]
+    steps = [_resolve_step_content(db, ctx.workspace_id, step) for step in steps]
 
     campaign = Campaign(
         workspace_id=ctx.workspace_id,
@@ -106,6 +115,10 @@ def create_campaign(
                 delay_days=step.get("delay_days", 0),
                 subject_template=step["subject_template"],
                 body_template=step["body_template"],
+                template_id=step.get("template_id"),
+                use_ai=bool(step.get("use_ai")),
+                ai_instructions=step.get("ai_instructions"),
+                thread_with_previous=step.get("thread_with_previous", True),
             ),
         )
 

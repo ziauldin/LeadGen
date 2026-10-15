@@ -14,7 +14,6 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.core.config import settings
 from app.core.tenancy import system_session
 from app.models.campaign import Campaign, CampaignStep
 from app.models.email_message import EmailMessage
@@ -24,8 +23,12 @@ from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.compliance.outreach import primary_recipient_email, validate_lead_for_outreach
-from app.services.email_generation.generator import has_opt_out_line
-from app.services.email_generation.personalisation import build_context, render_template
+from app.services.email_generation.generator import (
+    apply_content,
+    build_content,
+    has_opt_out_line,
+    link_llm_usage,
+)
 from app.services.sending.schedule import schedule_for
 from app.services.sending.state import CANCELLABLE, transition
 
@@ -102,21 +105,25 @@ def render_step_message(
     if niche is None:
         raise StepRenderError("Niche not found")
     token = secrets.token_urlsafe(32)
-    context = build_context(
-        lead,
-        niche,
-        _workspace_settings(db, campaign.workspace_id),
+    first = _first_subject(db, enrollment) if step.step_number > 1 else None
+    content = build_content(
+        db,
+        workspace_id=campaign.workspace_id,
+        lead=lead,
+        niche=niche,
         sender_fallback_name=sender_fallback_name,
-        api_base_url=settings.api_public_url.rstrip("/"),
         unsubscribe_token=token,
+        template_id=step.template_id,
+        subject_template=step.subject_template,
+        body_template=step.body_template,
+        mode="ai" if step.use_ai else "template",
+        instructions=step.ai_instructions,
+        step_number=step.step_number,
+        previous_subject=first,
     )
-    subject = render_template(step.subject_template, context)
-    if step.step_number > 1 and step.thread_with_previous:
-        first = _first_subject(db, enrollment)
-        if first:
-            subject = first if first.lower().startswith("re:") else f"Re: {first}"
-    body = render_template(step.body_template, context)
-    if not has_opt_out_line(body):
+    if step.step_number > 1 and step.thread_with_previous and first:
+        content.subject = first if first.lower().startswith("re:") else f"Re: {first}"
+    if not has_opt_out_line(content.body):
         raise StepRenderError("generated email missing opt-out line")
 
     recipient = primary_recipient_email(lead) or enrollment.recipient_email
@@ -129,16 +136,16 @@ def render_step_message(
         step_number=step.step_number,
         recipient_email=recipient,
         recipient_domain=recipient.rsplit("@", 1)[-1].lower() if "@" in recipient else None,
-        subject=subject,
-        body=body,
+        subject="",
+        body="",
         status=status,
         scheduled_for=scheduled_for,
         unsubscribe_token=token,
-        generation_mode="template",
-        template_id=step.template_id,
     )
+    apply_content(message, content)
     db.add(message)
     db.flush()
+    link_llm_usage(db, message)
     return message
 
 

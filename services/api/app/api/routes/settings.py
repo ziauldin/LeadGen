@@ -32,6 +32,8 @@ def update_settings(
 ) -> WorkspaceSettings:
     workspace_settings = get_or_create_settings(db, ctx.workspace_id)
     for field, value in payload.model_dump(exclude_unset=True).items():
+        if field == "ai_mode" and value is None:
+            continue
         setattr(workspace_settings, field, value)
     db.commit()
     db.refresh(workspace_settings)

@@ -57,7 +57,7 @@ ALLOWED_PROVIDERS: dict[ProviderType, set[ProviderName]] = {
     ProviderType.EMAIL: EMAIL_PROVIDERS,
     ProviderType.EMAIL_DISCOVERY: EMAIL_DISCOVERY_PROVIDERS,
     ProviderType.INBOX: INBOX_PROVIDERS,
-    ProviderType.LLM: LLM_PROVIDERS,
+    ProviderType.LLM: {*LLM_PROVIDERS, ProviderName.MOCK},
 }
 
 # Config fields holding webhook verification material, per sending provider.

@@ -24,6 +24,7 @@ from app.api.routes import (
     scoring,
     searches,
     settings,
+    templates,
     webhooks,
     workspaces,
 )
@@ -106,6 +107,7 @@ app.include_router(leads.router)
 app.include_router(companies.router)
 app.include_router(scoring.router)
 app.include_router(emails.router)
+app.include_router(templates.router)
 app.include_router(campaigns.router)
 app.include_router(replies.router)
 app.include_router(dashboard.router)

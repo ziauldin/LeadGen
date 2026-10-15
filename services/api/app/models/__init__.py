@@ -4,6 +4,7 @@ from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
+from app.models.email_template import EmailTemplateRecord
 from app.models.enrollment import CampaignEnrollment, EnrollmentStatus
 from app.models.enums import (
     BounceStatus,
@@ -23,6 +24,7 @@ from app.models.enums import (
 )
 from app.models.inbound import EmailEvent, InboxCursor, WebhookEvent
 from app.models.lead import Lead
+from app.models.llm_usage import LLMUsage
 from app.models.niche import Niche
 from app.models.provider_credential import ProviderCredential
 from app.models.reply import Reply
@@ -52,10 +54,12 @@ __all__ = [
     "EmailEvent",
     "EmailMessage",
     "EmailMessageStatus",
+    "EmailTemplateRecord",
     "EmailType",
     "EnrichmentStatus",
     "EnrollmentStatus",
     "InboxCursor",
+    "LLMUsage",
     "Lead",
     "LeadStatus",
     "Niche",

@@ -9,6 +9,8 @@ os.environ.setdefault("CELERY_TASK_ALWAYS_EAGER", "true")
 os.environ.setdefault("REFRESH_COOKIE_PATH", "/auth")
 os.environ.setdefault("FEATURE_INBOUND_WEBHOOKS", "true")
 os.environ.setdefault("FEATURE_IMAP", "true")
+os.environ.setdefault("FEATURE_AI_EMAILS", "true")
+os.environ.setdefault("PLATFORM_LLM_PROVIDER", "mock")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-for-hs256-signing")
 
 from fastapi.testclient import TestClient
@@ -20,6 +22,7 @@ from app.core import database as core_database
 from app.core.database import Base, get_db
 from app.core.rate_limit import reset_rate_limits
 from app.main import app
+from app.services.llm.mock import reset_mock_llm
 from app.services.platform_email.mailer import OUTBOX
 
 SQLALCHEMY_DATABASE_URL = "sqlite://"
@@ -98,4 +101,5 @@ def get_client() -> TestClient:
     setup_db()
     reset_rate_limits()
     OUTBOX.clear()
+    reset_mock_llm()
     return TestClient(app)

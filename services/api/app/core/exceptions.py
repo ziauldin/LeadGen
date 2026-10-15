@@ -1,6 +1,7 @@
 import logging
 
 from fastapi import Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -22,9 +23,11 @@ async def http_exception_handler(_request: Request, exc: Exception) -> JSONRespo
 
 async def validation_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)  # noqa: S101 - registered for this type only
+    # ``ctx`` can hold the raw exception from a validator, which isn't JSON serialisable.
+    errors = [{k: v for k, v in error.items() if k != "ctx"} for error in exc.errors()]
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors()},
+        content={"detail": jsonable_encoder(errors)},
     )
 
 

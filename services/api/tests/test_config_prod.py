@@ -13,6 +13,7 @@ GOOD = {
     "cors_origins": ["https://app.leadsgen.app"],
     "platform_email_provider": "resend",
     "celery_task_always_eager": False,
+    "platform_llm_provider": "groq",
 }
 
 
@@ -66,3 +67,8 @@ def test_key_rotation_decrypts_old_ciphertext(monkeypatch):
 
     monkeypatch.setattr(settings, "secret_encryption_keys", f"{new_key},{old_key}")
     assert security.decrypt_secret_payload(token) == "hello"
+
+
+def test_mock_llm_is_rejected_in_production():
+    errors = production_config_errors(Settings(**{**GOOD, "platform_llm_provider": "mock"}))
+    assert any("PLATFORM_LLM_PROVIDER" in e for e in errors)

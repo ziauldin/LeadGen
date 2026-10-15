@@ -15,7 +15,7 @@ def _create_lead_with_email(client, headers):
         },
     ).json()["id"]
 
-    client.post(
+    client.patch(
         "/settings",
         headers=headers,
         json={
@@ -52,7 +52,7 @@ def test_email_preview_generate_and_approve():
 
     templates = client.get("/emails/templates", headers=headers)
     assert templates.status_code == 200
-    assert any(t["id"] == "wellpredict" for t in templates.json())
+    assert any(t["id"] == "system:intro" for t in templates.json())
 
     preview = client.post(
         "/emails/preview",

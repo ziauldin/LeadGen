@@ -111,6 +111,7 @@ class EmailMessage(Base, TenantScoped, TimestampUpdatedMixin):
     template_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     llm_model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     prompt_version: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    generation_note: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     campaign: Mapped[Campaign | None] = relationship(back_populates="email_messages")
     lead: Mapped[Lead] = relationship(back_populates="email_messages")
