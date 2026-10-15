@@ -1,10 +1,18 @@
 import httpx
+
 from .base import DiscoveredEmail
 
-
 GENERIC_PREFIXES = {
-    "info", "contact", "hello", "admin", "support", "sales",
-    "enquiries", "reception", "office", "team"
+    "info",
+    "contact",
+    "hello",
+    "admin",
+    "support",
+    "sales",
+    "enquiries",
+    "reception",
+    "office",
+    "team",
 }
 
 

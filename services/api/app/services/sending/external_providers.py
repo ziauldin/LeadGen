@@ -44,7 +44,7 @@ class SmtpEmailSender(EmailSender):
                     server.login(self.username, self.password)
                 server.send_message(message)
             return SendResult(success=True, provider_message_id=f"smtp-{recipient_email}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SendResult(success=False, error=str(exc))
 
 
@@ -73,7 +73,7 @@ class ResendEmailSender(EmailSender):
             response.raise_for_status()
             message_id = response.json().get("id", f"resend-{recipient_email}")
             return SendResult(success=True, provider_message_id=str(message_id))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SendResult(success=False, error=str(exc))
 
 
@@ -103,8 +103,10 @@ class SendGridEmailSender(EmailSender):
                 timeout=20.0,
             )
             response.raise_for_status()
-            return SendResult(success=True, provider_message_id=response.headers.get("X-Message-Id", "sendgrid"))
-        except Exception as exc:  # noqa: BLE001
+            return SendResult(
+                success=True, provider_message_id=response.headers.get("X-Message-Id", "sendgrid")
+            )
+        except Exception as exc:
             return SendResult(success=False, error=str(exc))
 
 
@@ -134,5 +136,5 @@ class MailgunEmailSender(EmailSender):
             response.raise_for_status()
             message_id = response.json().get("id", f"mailgun-{recipient_email}")
             return SendResult(success=True, provider_message_id=str(message_id))
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return SendResult(success=False, error=str(exc))

@@ -75,7 +75,10 @@ def test_provider_settings_activate_and_test_mock():
 
 
 def test_google_cse_provider_requires_credentials():
-    from app.services.search.external_providers import GoogleCseSearchProvider, ProviderConfigurationError
+    from app.services.search.external_providers import (
+        GoogleCseSearchProvider,
+        ProviderConfigurationError,
+    )
 
     provider = GoogleCseSearchProvider(api_key="", search_engine_id="")
     try:

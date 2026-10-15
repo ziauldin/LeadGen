@@ -7,7 +7,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models.campaign import Campaign
 from app.models.email_message import EmailMessage
-from app.models.enums import CampaignStatus, EmailMessageStatus, LeadStatus, ReplyClassification
+from app.models.enums import CampaignStatus, LeadStatus, ReplyClassification
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.reply import Reply
@@ -45,56 +45,77 @@ def get_dashboard_summary(
             lead_status_counts={},
         )
 
-    total_leads = db.scalar(
-        select(func.count(Lead.id)).where(Lead.niche_id.in_(niche_ids)),
-    ) or 0
+    total_leads = (
+        db.scalar(
+            select(func.count(Lead.id)).where(Lead.niche_id.in_(niche_ids)),
+        )
+        or 0
+    )
 
-    qualified_leads = db.scalar(
-        select(func.count(Lead.id)).where(
-            Lead.niche_id.in_(niche_ids),
-            Lead.status.in_([LeadStatus.QUALIFIED, LeadStatus.READY_FOR_OUTREACH]),
-        ),
-    ) or 0
+    qualified_leads = (
+        db.scalar(
+            select(func.count(Lead.id)).where(
+                Lead.niche_id.in_(niche_ids),
+                Lead.status.in_([LeadStatus.QUALIFIED, LeadStatus.READY_FOR_OUTREACH]),
+            ),
+        )
+        or 0
+    )
 
-    contacted_leads = db.scalar(
-        select(func.count(Lead.id)).where(
-            Lead.niche_id.in_(niche_ids),
-            Lead.status == LeadStatus.CONTACTED,
-        ),
-    ) or 0
+    contacted_leads = (
+        db.scalar(
+            select(func.count(Lead.id)).where(
+                Lead.niche_id.in_(niche_ids),
+                Lead.status == LeadStatus.CONTACTED,
+            ),
+        )
+        or 0
+    )
 
-    replied_leads = db.scalar(
-        select(func.count(Lead.id)).where(
-            Lead.niche_id.in_(niche_ids),
-            Lead.status.in_([LeadStatus.REPLIED, LeadStatus.MEETING_BOOKED]),
-        ),
-    ) or 0
+    replied_leads = (
+        db.scalar(
+            select(func.count(Lead.id)).where(
+                Lead.niche_id.in_(niche_ids),
+                Lead.status.in_([LeadStatus.REPLIED, LeadStatus.MEETING_BOOKED]),
+            ),
+        )
+        or 0
+    )
 
-    active_campaigns = db.scalar(
-        select(func.count(Campaign.id))
-        .join(Niche, Campaign.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id, Campaign.status == CampaignStatus.ACTIVE),
-    ) or 0
+    active_campaigns = (
+        db.scalar(
+            select(func.count(Campaign.id))
+            .join(Niche, Campaign.niche_id == Niche.id)
+            .where(Niche.user_id == current_user.id, Campaign.status == CampaignStatus.ACTIVE),
+        )
+        or 0
+    )
 
-    pending_replies = db.scalar(
-        select(func.count(Reply.id))
-        .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
-        .join(Lead, EmailMessage.lead_id == Lead.id)
-        .where(
-            Lead.niche_id.in_(niche_ids),
-            Reply.classification == ReplyClassification.UNKNOWN,
-        ),
-    ) or 0
+    pending_replies = (
+        db.scalar(
+            select(func.count(Reply.id))
+            .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
+            .join(Lead, EmailMessage.lead_id == Lead.id)
+            .where(
+                Lead.niche_id.in_(niche_ids),
+                Reply.classification == ReplyClassification.UNKNOWN,
+            ),
+        )
+        or 0
+    )
 
-    positive_replies = db.scalar(
-        select(func.count(Reply.id))
-        .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
-        .join(Lead, EmailMessage.lead_id == Lead.id)
-        .where(
-            Lead.niche_id.in_(niche_ids),
-            Reply.classification == ReplyClassification.POSITIVE,
-        ),
-    ) or 0
+    positive_replies = (
+        db.scalar(
+            select(func.count(Reply.id))
+            .join(EmailMessage, Reply.email_message_id == EmailMessage.id)
+            .join(Lead, EmailMessage.lead_id == Lead.id)
+            .where(
+                Lead.niche_id.in_(niche_ids),
+                Reply.classification == ReplyClassification.POSITIVE,
+            ),
+        )
+        or 0
+    )
 
     status_rows = db.execute(
         select(Lead.status, func.count(Lead.id))

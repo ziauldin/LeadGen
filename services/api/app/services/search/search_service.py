@@ -8,7 +8,6 @@ from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.search_query import SearchQuery
 from app.services.search.base import SearchResult
-from app.models.niche import Niche
 from app.services.search.provider_factory import get_search_provider_for_user
 
 
@@ -58,7 +57,9 @@ def save_search_results(
     niche: Niche,
     selected_urls: list[str] | None = None,
 ) -> tuple[int, int]:
-    stored = [SearchResult.from_dict(item) for item in (search_query.results or []) if "url" in item]
+    stored = [
+        SearchResult.from_dict(item) for item in (search_query.results or []) if "url" in item
+    ]
     if selected_urls is not None:
         selected_set = set(selected_urls)
         stored = [item for item in stored if item.url in selected_set]

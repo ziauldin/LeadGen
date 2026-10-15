@@ -1,7 +1,7 @@
+import smtplib
 from datetime import UTC, datetime
 
 import httpx
-import smtplib
 
 from app.models.enums import ProviderName
 from app.models.provider_credential import ProviderCredential
@@ -38,7 +38,7 @@ def test_search_provider(credential: ProviderCredential) -> tuple[bool, str]:
         else:
             return False, f"Unsupported search provider: {_as_str(provider_name)}"
         return True, "Search connection successful"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return False, str(exc)
 
 
@@ -88,7 +88,7 @@ def test_email_provider(credential: ProviderCredential) -> tuple[bool, str]:
             response.raise_for_status()
             return True, "Mailgun API key and domain validated"
         return False, f"Unsupported email provider: {_as_str(provider_name)}"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return False, str(exc)
 
 

@@ -1,4 +1,3 @@
-import re
 import time
 from dataclasses import dataclass
 from urllib.parse import urlparse

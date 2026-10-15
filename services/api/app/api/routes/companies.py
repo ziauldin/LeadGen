@@ -9,7 +9,12 @@ from app.models.enums import EnrichmentStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.user import User
-from app.schemas.company import CompanyListResponse, CompanyRead, CompanyUpdate, EnrichCompanyResponse
+from app.schemas.company import (
+    CompanyListResponse,
+    CompanyRead,
+    CompanyUpdate,
+    EnrichCompanyResponse,
+)
 from app.services.companies.helpers import extract_domain, normalize_website
 from app.services.enrichment.enricher import enrich_company_record
 from app.workers.enrichment_jobs import enrich_company
@@ -93,10 +98,10 @@ def update_company(
     company = _get_owned_company(company_id, current_user, db)
 
     updates = payload.model_dump(exclude_unset=True)
-    if "website" in updates and updates["website"]:
+    if updates.get("website"):
         updates["website"] = normalize_website(updates["website"])
         updates["domain"] = extract_domain(updates["website"])
-    if "domain" in updates and updates["domain"]:
+    if updates.get("domain"):
         updates["domain"] = updates["domain"].lower()
 
     for field, value in updates.items():
@@ -110,7 +115,9 @@ def update_company(
 @router.post("/{company_id}/enrich", response_model=EnrichCompanyResponse)
 def enrich_company_endpoint(
     company_id: int,
-    sync: bool = Query(default=False, description="Run enrichment inline instead of queueing Celery"),
+    sync: bool = Query(
+        default=False, description="Run enrichment inline instead of queueing Celery"
+    ),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> EnrichCompanyResponse:

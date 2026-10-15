@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
+
 from app.core.config import settings
 from app.models.enums import ProviderType
-from app.services.provider_credentials.service import get_active_credential, decrypt_provider_config
+from app.services.provider_credentials.service import decrypt_provider_config, get_active_credential
+
 from .hunter_provider import HunterEmailDiscoveryProvider
 
 
@@ -18,7 +20,7 @@ def get_email_discovery_provider(db: Session, user_id: int | None = None):
     # 2. Try ENV fallback
     if not getattr(settings, "hunter_enabled", False):
         return None
-        
+
     if getattr(settings, "email_discovery_provider", "") != "hunter":
         return None
 

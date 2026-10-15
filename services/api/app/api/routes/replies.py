@@ -93,7 +93,9 @@ def patch_reply(
             notes=payload.notes,
         )
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reply not found") from None
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Reply not found"
+        ) from None
 
     db.refresh(reply, attribute_names=["email_message"])
     if reply.email_message:

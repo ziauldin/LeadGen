@@ -15,7 +15,14 @@ def classify_reply_body(body: str) -> ReplyClassification:
 
     if any(
         phrase in lowered
-        for phrase in ("yes", "interested", "happy to chat", "sounds good", "let's talk", "book a call")
+        for phrase in (
+            "yes",
+            "interested",
+            "happy to chat",
+            "sounds good",
+            "let's talk",
+            "book a call",
+        )
     ):
         return ReplyClassification.POSITIVE
 

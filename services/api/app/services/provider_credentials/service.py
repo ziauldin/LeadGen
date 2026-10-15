@@ -276,7 +276,8 @@ def activate_credential(db: Session, user: User, credential_id: int) -> Provider
     if credential is None:
         raise ValueError("Provider credential not found")
     if (
-        _as_str(credential.status) not in {
+        _as_str(credential.status)
+        not in {
             ProviderCredentialStatus.CONFIGURED.value,
             ProviderCredentialStatus.ERROR.value,
         }

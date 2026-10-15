@@ -1,9 +1,9 @@
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
+from app.core.celery_app import celery_app
 from app.core.database import SessionLocal
 from app.models.search_query import SearchQuery
 from app.services.search.search_service import run_search_query_record
-from app.core.celery_app import celery_app
 
 
 @celery_app.task(name="search.run_query")

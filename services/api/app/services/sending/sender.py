@@ -9,8 +9,8 @@ from app.models.email_message import EmailMessage
 from app.models.enums import CampaignStatus, EmailMessageStatus, LeadStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
-from app.services.sending.provider_factory import get_email_sender_for_user
 from app.services.sending.gate import evaluate_send_gate
+from app.services.sending.provider_factory import get_email_sender_for_user
 
 
 def _log_audit(

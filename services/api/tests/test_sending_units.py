@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
-from app.services.sending.gate import _within_sending_window
 from app.models.campaign import Campaign
+from app.services.sending.gate import _within_sending_window
 
 
 def test_within_sending_window_full_day():

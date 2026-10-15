@@ -29,7 +29,9 @@ class EmailContact(Base, TimestampMixin):
         nullable=True,
     )
     email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    email_type: Mapped[EmailType] = mapped_column(String(50), default=EmailType.GENERIC, nullable=False)
+    email_type: Mapped[EmailType] = mapped_column(
+        String(50), default=EmailType.GENERIC, nullable=False
+    )
     confidence: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_role_based: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

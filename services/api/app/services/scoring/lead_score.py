@@ -106,10 +106,7 @@ def _suggest_status(lead: Lead, total: float, contacts: list[EmailContact]) -> L
 
     has_email = _has_any_email(contacts)
     ready = (
-        total >= 80
-        and has_email
-        and bool(lead.source_url)
-        and bool(lead.compliance_source_note)
+        total >= 80 and has_email and bool(lead.source_url) and bool(lead.compliance_source_note)
     )
     if ready:
         return LeadStatus.READY_FOR_OUTREACH

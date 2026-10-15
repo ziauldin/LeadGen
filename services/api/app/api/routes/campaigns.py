@@ -72,7 +72,9 @@ def list_campaigns(
         count_query = count_query.where(Campaign.niche_id == niche_id)
 
     total = db.scalar(count_query) or 0
-    campaigns = db.scalars(query.order_by(Campaign.created_at.desc()).offset(skip).limit(limit)).all()
+    campaigns = db.scalars(
+        query.order_by(Campaign.created_at.desc()).offset(skip).limit(limit)
+    ).all()
     return CampaignListResponse(
         items=[_serialize_campaign(campaign) for campaign in campaigns],
         total=total,
@@ -159,7 +161,11 @@ def start_campaign_endpoint(
     try:
         campaign = start_campaign(db, campaign_id, current_user.id)
     except ValueError as exc:
-        status_code = status.HTTP_404_NOT_FOUND if "not found" in str(exc).lower() else status.HTTP_400_BAD_REQUEST
+        status_code = (
+            status.HTTP_404_NOT_FOUND
+            if "not found" in str(exc).lower()
+            else status.HTTP_400_BAD_REQUEST
+        )
         raise HTTPException(status_code=status_code, detail=str(exc)) from exc
 
     return CampaignActionResponse(

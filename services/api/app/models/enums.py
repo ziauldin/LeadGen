@@ -1,12 +1,12 @@
-import enum
+from enum import StrEnum
 
 
-class UserRole(str, enum.Enum):
+class UserRole(StrEnum):
     ADMIN = "admin"
     OPERATOR = "operator"
 
 
-class LeadStatus(str, enum.Enum):
+class LeadStatus(StrEnum):
     NEW = "new"
     ENRICHED = "enriched"
     QUALIFIED = "qualified"
@@ -19,14 +19,14 @@ class LeadStatus(str, enum.Enum):
     OPTED_OUT = "opted_out"
 
 
-class SearchStatus(str, enum.Enum):
+class SearchStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
 
 
-class SearchProvider(str, enum.Enum):
+class SearchProvider(StrEnum):
     MOCK = "mock"
     GOOGLE_CSE = "google_cse"
     BING = "bing"
@@ -34,28 +34,28 @@ class SearchProvider(str, enum.Enum):
     MANUAL = "manual"
 
 
-class EnrichmentStatus(str, enum.Enum):
+class EnrichmentStatus(StrEnum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     FAILED = "failed"
 
 
-class EmailType(str, enum.Enum):
+class EmailType(StrEnum):
     GENERIC = "generic"
     ROLE_BASED = "role_based"
     PERSONAL = "personal"
     NAMED = "named"
 
 
-class CampaignStatus(str, enum.Enum):
+class CampaignStatus(StrEnum):
     DRAFT = "draft"
     ACTIVE = "active"
     PAUSED = "paused"
     COMPLETED = "completed"
 
 
-class EmailMessageStatus(str, enum.Enum):
+class EmailMessageStatus(StrEnum):
     DRAFT = "draft"
     PENDING_APPROVAL = "pending_approval"
     APPROVED = "approved"
@@ -64,7 +64,7 @@ class EmailMessageStatus(str, enum.Enum):
     BOUNCED = "bounced"
 
 
-class ReplyStatus(str, enum.Enum):
+class ReplyStatus(StrEnum):
     NONE = "none"
     RECEIVED = "received"
     POSITIVE = "positive"
@@ -72,13 +72,13 @@ class ReplyStatus(str, enum.Enum):
     NEGATIVE = "negative"
 
 
-class BounceStatus(str, enum.Enum):
+class BounceStatus(StrEnum):
     NONE = "none"
     HARD = "hard"
     SOFT = "soft"
 
 
-class ReplyClassification(str, enum.Enum):
+class ReplyClassification(StrEnum):
     POSITIVE = "positive"
     NEUTRAL = "neutral"
     OBJECTION = "objection"
@@ -87,13 +87,13 @@ class ReplyClassification(str, enum.Enum):
     UNKNOWN = "unknown"
 
 
-class ProviderType(str, enum.Enum):
+class ProviderType(StrEnum):
     SEARCH = "search"
     EMAIL = "email"
     EMAIL_DISCOVERY = "email_discovery"
 
 
-class ProviderName(str, enum.Enum):
+class ProviderName(StrEnum):
     MOCK = "mock"
     GOOGLE_CSE = "google_cse"
     BING = "bing"
@@ -105,7 +105,7 @@ class ProviderName(str, enum.Enum):
     HUNTER = "hunter"
 
 
-class ProviderCredentialStatus(str, enum.Enum):
+class ProviderCredentialStatus(StrEnum):
     NOT_CONFIGURED = "not_configured"
     CONFIGURED = "configured"
     ERROR = "error"

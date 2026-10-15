@@ -37,7 +37,9 @@ class RenderedEmail:
     compliance_errors: list[str]
 
 
-def _load_lead_context(db: Session, lead_id: int, user_id: int) -> tuple[Lead, Niche, UserSettings | None]:
+def _load_lead_context(
+    db: Session, lead_id: int, user_id: int
+) -> tuple[Lead, Niche, UserSettings | None]:
     lead = db.scalar(
         select(Lead)
         .join(Niche, Lead.niche_id == Niche.id)
@@ -76,7 +78,8 @@ def render_email_for_lead(
 ) -> RenderedEmail:
     lead, niche, user_settings = _load_lead_context(db, lead_id, user_id)
     user = db.get(User, user_id)
-    assert user is not None
+    if user is None:
+        raise ValueError("User not found")
 
     compliance_errors = validate_lead_for_outreach(lead, db)
     recipient = primary_recipient_email(lead)

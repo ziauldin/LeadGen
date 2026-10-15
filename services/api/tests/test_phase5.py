@@ -92,7 +92,7 @@ def test_enrich_company_fails_when_robots_disallow():
     client = get_client()
     headers = auth_headers(client)
 
-    niche_id = client.post(
+    client.post(
         "/niches",
         headers=headers,
         json={

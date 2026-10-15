@@ -1,8 +1,9 @@
+from sqlalchemy import select
+
 from app.core.celery_app import celery_app
 from app.core.database import SessionLocal
 from app.models.user import User
 from app.services.replies.sync import sync_mock_replies
-from sqlalchemy import select
 
 
 @celery_app.task(name="replies.sync")

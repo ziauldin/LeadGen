@@ -42,6 +42,7 @@ __all__ = [
     "EnrichmentStatus",
     "Lead",
     "LeadStatus",
+    "Niche",
     "ProviderCredential",
     "ProviderCredentialStatus",
     "ProviderName",

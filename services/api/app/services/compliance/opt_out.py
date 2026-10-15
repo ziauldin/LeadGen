@@ -23,8 +23,12 @@ def process_unsubscribe_for_message(db: Session, token: str) -> EmailMessage | N
         lead.status = LeadStatus.OPTED_OUT
         lead.score = 0.0
 
-    domain = message.recipient_email.split("@")[-1].lower() if "@" in message.recipient_email else None
-    existing = db.scalar(select(Suppression).where(Suppression.email == message.recipient_email.lower()))
+    domain = (
+        message.recipient_email.split("@")[-1].lower() if "@" in message.recipient_email else None
+    )
+    existing = db.scalar(
+        select(Suppression).where(Suppression.email == message.recipient_email.lower())
+    )
     if existing is None:
         db.add(
             Suppression(

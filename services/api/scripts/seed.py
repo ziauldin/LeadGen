@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
+import os
 import secrets
 import sys
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
 from app.models.campaign import Campaign, CampaignStep
@@ -36,8 +38,13 @@ from app.models.user import User
 from app.models.user_settings import UserSettings
 from app.services.provider_credentials.service import ensure_default_mock_credentials
 
-DEMO_EMAIL = "demo@wellpredict.io"
-DEMO_PASSWORD = "demo1234"
+DEMO_EMAIL = "demo@leadsgen.local"
+
+
+def _demo_password() -> str:
+    """Use SEED_DEMO_PASSWORD if set, otherwise a fresh random password per run."""
+    return os.environ.get("SEED_DEMO_PASSWORD") or secrets.token_urlsafe(12)
+
 
 SAMPLE_LEADS = [
     {
@@ -205,6 +212,9 @@ def reset_demo_data(db) -> None:
 
 
 def seed(db, *, force: bool = False) -> None:
+    if settings.environment == "production":
+        raise RuntimeError("Refusing to seed demo data when ENVIRONMENT=production")
+
     existing = db.scalar(select(User).where(User.email == DEMO_EMAIL))
     if existing:
         if not force:
@@ -213,10 +223,11 @@ def seed(db, *, force: bool = False) -> None:
             return
         reset_demo_data(db)
 
+    demo_password = _demo_password()
     user = User(
         name="Demo Operator",
         email=DEMO_EMAIL,
-        hashed_password=get_password_hash(DEMO_PASSWORD),
+        hashed_password=get_password_hash(demo_password),
         role=UserRole.OPERATOR,
     )
     db.add(user)
@@ -330,9 +341,7 @@ def seed(db, *, force: bool = False) -> None:
                 company_id=company.id,
                 email=item["email"],
                 email_type=(
-                    EmailType.GENERIC
-                    if item["email"].startswith("info@")
-                    else EmailType.NAMED
+                    EmailType.GENERIC if item["email"].startswith("info@") else EmailType.NAMED
                 ),
                 confidence=0.85,
                 source_url=item["website"],
@@ -391,7 +400,7 @@ def seed(db, *, force: bool = False) -> None:
     )
 
     db.commit()
-    print(f"Seeded demo user: {DEMO_EMAIL} / {DEMO_PASSWORD}")
+    print(f"Seeded demo user: {DEMO_EMAIL} / {demo_password}")
     print(f"Niche: {niche.name} ({len(SAMPLE_LEADS)} leads, 2 campaigns, 1 search query)")
 
 

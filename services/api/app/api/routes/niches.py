@@ -18,9 +18,12 @@ def list_niches(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> NicheListResponse:
-    total = db.scalar(
-        select(func.count(Niche.id)).where(Niche.user_id == current_user.id),
-    ) or 0
+    total = (
+        db.scalar(
+            select(func.count(Niche.id)).where(Niche.user_id == current_user.id),
+        )
+        or 0
+    )
     niches = db.scalars(
         select(Niche)
         .where(Niche.user_id == current_user.id)

@@ -1,7 +1,4 @@
-from unittest.mock import patch
-
 from tests.conftest import auth_headers, get_client
-
 from tests.test_phase7 import WELLPREDICT_STEP
 
 
@@ -52,7 +49,10 @@ def test_celery_beat_schedule_configured():
 
 
 def test_google_cse_provider_requires_credentials():
-    from app.services.search.external_providers import GoogleCseSearchProvider, ProviderConfigurationError
+    from app.services.search.external_providers import (
+        GoogleCseSearchProvider,
+        ProviderConfigurationError,
+    )
 
     provider = GoogleCseSearchProvider(api_key="", search_engine_id="")
     try:

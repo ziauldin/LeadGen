@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import EnrichmentStatus, LeadStatus
+from app.models.enums import LeadStatus
 
 
 class CompanySummary(BaseModel):

@@ -243,12 +243,7 @@ The Next.js app lives in `apps/web`.
 
 ### 4. Demo login
 
-After `python scripts/seed.py` (use `python scripts/seed.py --reset` to refresh demo data):
-
-| Field    | Value                 |
-|----------|-----------------------|
-| Email    | `demo@wellpredict.io` |
-| Password | `demo1234`            |
+Run `python scripts/seed.py` in a local or staging database (use `--reset` to refresh demo data). The script refuses to run when `ENVIRONMENT=production`. It creates `demo@leadsgen.local` with a random password that it prints once; set `SEED_DEMO_PASSWORD` to choose your own.
 
 ## End-to-end demo workflow (UI)
 

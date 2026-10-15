@@ -26,7 +26,7 @@ class MockSearchProvider:
         for index in range(min(limit, 8)):
             name_seed = f"{role}-{keyword}-{country}-{index}"
             slug = _slugify(name_seed)
-            digest = hashlib.sha1(name_seed.encode()).hexdigest()[:8]
+            digest = hashlib.sha1(name_seed.encode(), usedforsecurity=False).hexdigest()[:8]
             url = f"https://www.linkedin.com/in/{slug}-{digest}"
             title = f"{role} at {keyword} — {country}"
             snippet = (

@@ -1,5 +1,4 @@
 from tests.conftest import auth_headers, get_client
-
 from tests.test_phase7 import WELLPREDICT_STEP, _create_lead_with_email
 
 

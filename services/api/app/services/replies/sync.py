@@ -11,7 +11,6 @@ from app.models.reply import Reply
 from app.services.compliance.opt_out import process_unsubscribe_for_message
 from app.services.replies.classification import classify_reply_body
 
-
 MOCK_REPLIES = [
     (
         "Thanks for reaching out — happy to chat next week if you have 15 minutes.",

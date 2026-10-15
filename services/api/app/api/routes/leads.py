@@ -99,7 +99,8 @@ def create_lead(
         .where(Lead.id == lead.id)
         .options(selectinload(Lead.company), selectinload(Lead.email_contacts)),
     )
-    assert lead is not None
+    if lead is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
     return serialize_lead(lead)
 
 
@@ -175,7 +176,8 @@ def update_lead(
         .where(Lead.id == lead.id)
         .options(selectinload(Lead.company), selectinload(Lead.email_contacts)),
     )
-    assert lead is not None
+    if lead is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lead not found")
     return serialize_lead(lead)
 
 

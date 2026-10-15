@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     database_url: str = DEFAULT_SQLITE_URL
     redis_url: str = "redis://localhost:6379/0"
 
-    secret_key: str = "change-me-to-a-long-random-string"
+    secret_key: str = "change-me-to-a-long-random-string"  # noqa: S105 - rejected in production
     secret_encryption_key: str = ""
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 1440

@@ -2,8 +2,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
+import jwt
 from cryptography.fernet import Fernet
-from jose import JWTError, jwt
 
 from app.core.config import settings
 
@@ -38,7 +38,7 @@ def get_token_subject(token: str) -> str | None:
         payload = decode_access_token(token)
         subject = payload.get("sub")
         return str(subject) if subject is not None else None
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 
@@ -56,7 +56,11 @@ def ensure_encryption_key_configured() -> None:
 
 def encrypt_secret_payload(payload: str) -> str:
     ensure_encryption_key_configured()
-    return Fernet(settings.secret_encryption_key.encode()).encrypt(payload.encode("utf-8")).decode("utf-8")
+    return (
+        Fernet(settings.secret_encryption_key.encode())
+        .encrypt(payload.encode("utf-8"))
+        .decode("utf-8")
+    )
 
 
 def decrypt_secret_payload(encrypted_payload: str) -> str:

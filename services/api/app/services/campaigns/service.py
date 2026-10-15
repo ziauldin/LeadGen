@@ -9,11 +9,11 @@ from app.models.email_message import EmailMessage
 from app.models.enums import CampaignStatus, EmailMessageStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
+from app.models.user import User
+from app.models.user_settings import UserSettings
 from app.services.compliance.outreach import primary_recipient_email, validate_lead_for_outreach
 from app.services.email_generation.generator import OPT_OUT_MARKERS
 from app.services.email_generation.personalisation import build_context, render_template
-from app.models.user import User
-from app.models.user_settings import UserSettings
 from app.services.email_generation.templates import WELLPREDICT_TEMPLATE
 
 
@@ -153,7 +153,8 @@ def add_leads_to_campaign(
 
         token = secrets.token_urlsafe(32)
         niche = db.get(Niche, campaign.niche_id)
-        assert niche is not None
+        if niche is None:
+            raise ValueError("Niche not found")
         subject, body, recipient = _render_campaign_step_email(
             db,
             lead,

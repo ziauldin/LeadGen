@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from urllib.parse import urljoin
 
-from app.models.company import Company
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.user import User
@@ -27,9 +26,7 @@ def derive_first_name(full_name: str) -> str:
 
 def default_pain_point(niche: Niche) -> str:
     if niche.industry:
-        return (
-            f"governance, operational pressure and evidence around team risk in {niche.industry.lower()}"
-        )
+        return f"governance, operational pressure and evidence around team risk in {niche.industry.lower()}"
     return "governance, operational pressure and evidence around team risk"
 
 
@@ -52,7 +49,9 @@ def build_context(
         industry=niche.industry,
         pain_point=default_pain_point(niche),
         sender_name=(settings.sender_name if settings and settings.sender_name else user.name),
-        sender_company=(settings.sender_company if settings and settings.sender_company else "WellPredict"),
+        sender_company=(
+            settings.sender_company if settings and settings.sender_company else "WellPredict"
+        ),
         unsubscribe_link=unsubscribe_link,
     )
 

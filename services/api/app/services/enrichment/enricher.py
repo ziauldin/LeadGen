@@ -4,6 +4,7 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.config import settings
 from app.models.company import Company
 from app.models.email_contact import EmailContact
 from app.models.enums import EnrichmentStatus, LeadStatus
@@ -12,9 +13,6 @@ from app.services.enrichment.email_extractor import extract_emails_from_html
 from app.services.enrichment.robots_checker import fetch_robots_parser
 from app.services.enrichment.website_crawler import crawl_company_site
 from app.services.enrichment.website_finder import resolve_website
-from app.core.config import settings
-
-import httpx
 
 
 def _pick_page_url(pages, keyword: str) -> str | None:
@@ -60,9 +58,7 @@ def _upsert_email_contact(
 
 def enrich_company_record(db: Session, company_id: int) -> Company:
     company = db.scalar(
-        select(Company)
-        .where(Company.id == company_id)
-        .options(selectinload(Company.leads)),
+        select(Company).where(Company.id == company_id).options(selectinload(Company.leads)),
     )
     if company is None:
         raise ValueError(f"Company {company_id} not found")
@@ -83,7 +79,7 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
     headers = {"User-Agent": settings.enrichment_user_agent}
     try:
         with httpx.Client(headers=headers, follow_redirects=True) as client:
-            parser, fetched = fetch_robots_parser(website, client)
+            _parser, fetched = fetch_robots_parser(website, client)
             company.robots_checked = fetched or True
 
         pages, crawl_error = crawl_company_site(website)
@@ -101,7 +97,9 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
 
         company.contact_page_url = _pick_page_url(pages, "contact") or company.contact_page_url
         company.about_page_url = (
-            _pick_page_url(pages, "about") or _pick_page_url(pages, "team") or company.about_page_url
+            _pick_page_url(pages, "about")
+            or _pick_page_url(pages, "team")
+            or company.about_page_url
         )
 
         extracted_emails = []
@@ -129,7 +127,7 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
     try:
         from app.models.lead import Lead
         from app.models.niche import Niche
-        
+
         user_id = None
         if company.leads:
             user_id = db.scalar(
@@ -140,7 +138,7 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
 
         from app.services.enrichment.email_discovery.factory import get_email_discovery_provider
         from app.services.enrichment.email_discovery.utils import extract_company_domain
-        
+
         domain_for_hunter = extract_company_domain(company.website or company.domain)
         if domain_for_hunter:
             provider = get_email_discovery_provider(db, user_id)
@@ -154,7 +152,7 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
                 hunter_skipped_msg = "Hunter not configured or disabled"
         else:
             hunter_skipped_msg = "Invalid or excluded domain for Hunter"
-            
+
     except Exception as exc:
         # Hunter errors should not break the pipeline
         hunter_skipped_msg = f"Hunter lookup skipped or failed: {str(exc).split(':')[-1].strip()}"
@@ -176,7 +174,7 @@ def enrich_company_record(db: Session, company_id: int) -> Company:
         if hunter_skipped_msg:
             msg += f". {hunter_skipped_msg}"
         company.enrichment_message = msg
-        
+
         for lead in leads:
             if lead.status == LeadStatus.NEW:
                 lead.status = LeadStatus.ENRICHED

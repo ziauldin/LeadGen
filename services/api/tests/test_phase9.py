@@ -1,5 +1,4 @@
 from tests.conftest import auth_headers, get_client
-
 from tests.test_phase7 import WELLPREDICT_STEP, _create_lead_with_email
 
 
@@ -84,9 +83,9 @@ def test_unsubscribe_writes_audit_log():
 
     from sqlalchemy import select
 
-    from tests.conftest import TestingSessionLocal
     from app.models.audit_log import AuditLog
     from app.models.email_message import EmailMessage
+    from tests.conftest import TestingSessionLocal
 
     db = TestingSessionLocal()
     try:

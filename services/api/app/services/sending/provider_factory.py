@@ -1,7 +1,11 @@
 from sqlalchemy.orm import Session
 
 from app.models.enums import ProviderName, ProviderType
-from app.services.provider_credentials.service import _as_str, decrypt_provider_config, get_active_credential
+from app.services.provider_credentials.service import (
+    _as_str,
+    decrypt_provider_config,
+    get_active_credential,
+)
 from app.services.sending.external_providers import (
     MailgunEmailSender,
     ResendEmailSender,
@@ -54,4 +58,6 @@ def get_email_sender_for_user(db: Session, user_id: int):
 
 def is_mock_email_provider_active(db: Session, user_id: int) -> bool:
     credential = get_active_credential(db, user_id, ProviderType.EMAIL)
-    return credential is None or ProviderName(_as_str(credential.provider_name)) == ProviderName.MOCK
+    return (
+        credential is None or ProviderName(_as_str(credential.provider_name)) == ProviderName.MOCK
+    )

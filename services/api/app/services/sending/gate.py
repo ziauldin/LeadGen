@@ -98,7 +98,10 @@ def evaluate_send_gate(
 
     if message.recipient_email and "@" in message.recipient_email:
         domain = message.recipient_email.split("@", 1)[1].lower()
-        if _count_domain_sends_today(db, campaign.id, domain, now) >= settings.default_per_domain_limit:
+        if (
+            _count_domain_sends_today(db, campaign.id, domain, now)
+            >= settings.default_per_domain_limit
+        ):
             reasons.append(f"Per-domain daily limit reached for {domain}")
 
     return SendGateResult(allowed=not reasons, reasons=reasons)

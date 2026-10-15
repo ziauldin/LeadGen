@@ -8,7 +8,6 @@ from app.models.enums import SearchProvider, SearchStatus
 from app.models.niche import Niche
 from app.models.search_query import SearchQuery
 from app.models.user import User
-from app.services.search.provider_factory import get_active_search_provider_name
 from app.schemas.search import (
     GenerateQueriesRequest,
     GenerateQueriesResponse,
@@ -18,6 +17,7 @@ from app.schemas.search import (
     SearchQueryRead,
     SearchResultItem,
 )
+from app.services.search.provider_factory import get_active_search_provider_name
 from app.services.search.query_generator import generate_search_queries
 from app.services.search.search_service import run_search_query_record, save_search_results
 
@@ -128,7 +128,8 @@ def save_results(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search not found")
 
     niche = db.get(Niche, search.niche_id)
-    assert niche is not None
+    if niche is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")
 
     created, skipped = save_search_results(
         db,
