@@ -1,219 +1,199 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Globe, Play, Search, Tag, Target, Users } from "lucide-react";
+import { ArrowLeft, Globe, Search, Tag, Target, Trash2, Users } from "lucide-react";
 import { NicheForm } from "@/components/niches/niche-form";
+import { DeleteNicheDialog } from "@/components/niches/delete-niche-dialog";
 import { PageHeader } from "@/components/layout/page-header";
-import { LoadingState } from "@/components/shared/loading-error";
+import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
+import { ErrorState, LoadingState } from "@/components/shared/loading-error";
 import { nichesApi } from "@/lib/api/endpoints";
+import type { NicheCreate } from "@/lib/api/types";
+
+function Chips({
+  items,
+  empty,
+  tone = "neutral",
+}: {
+  items: string[];
+  empty: string;
+  tone?: "primary" | "neutral" | "error";
+}) {
+  if (items.length === 0) {
+    return <p className="text-[12px] text-[var(--on-surface-variant)] italic">{empty}</p>;
+  }
+  const toneClass =
+    tone === "primary"
+      ? "bg-[var(--primary-fixed)] text-[var(--on-primary-fixed)]"
+      : tone === "error"
+        ? "bg-[var(--error-container)] text-[var(--on-error-container)]"
+        : "bg-[var(--surface-container)] text-[var(--on-surface-variant)]";
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <li
+          key={item}
+          className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium ${toneClass}`}
+        >
+          {tone === "neutral" ? <Tag className="size-2.5" aria-hidden /> : null}
+          {item}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default function NicheDetailPage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const id = Number(params.id);
+  const valid = Number.isFinite(id) && id > 0;
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const { data: niche, isLoading } = useQuery({
-    queryKey: ["niches", id],
+  const niche = useQuery({
+    queryKey: ["niches", "detail", id],
     queryFn: () => nichesApi.get(id),
-    enabled: Number.isFinite(id),
+    enabled: valid,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (payload: Parameters<typeof nichesApi.update>[1]) => nichesApi.update(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["niches", id] });
+  const update = useMutation({
+    mutationFn: (payload: NicheCreate) => nichesApi.update(id, payload),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["niches", "detail", id], updated);
       queryClient.invalidateQueries({ queryKey: ["niches"] });
-      toast.success("Niche updated successfully");
+      toast.success("Niche saved");
     },
-    onError: () => toast.error("Failed to update niche"),
   });
 
-  if (isLoading) return <LoadingState />;
-  if (!niche) return <p className="text-sm text-destructive font-semibold">Niche not found.</p>;
+  if (!valid) return <ErrorState message="This niche link isn't valid." />;
+  if (niche.isLoading) return <LoadingState message="Loading niche…" />;
+  if (niche.error || !niche.data) {
+    return (
+      <div className="space-y-4">
+        <ButtonLink variant="ghost" size="sm" href="/niches">
+          <ArrowLeft aria-hidden />
+          All niches
+        </ButtonLink>
+        <ErrorState error={niche.error} onRetry={() => niche.refetch()} />
+      </div>
+    );
+  }
+
+  const data = niche.data;
+  const size =
+    data.company_size_min || data.company_size_max
+      ? `${data.company_size_min ?? 1} – ${data.company_size_max ?? "any"} people`
+      : "Any size";
 
   return (
     <div>
+      <div className="mb-2">
+        <ButtonLink variant="ghost" size="sm" href="/niches">
+          <ArrowLeft aria-hidden />
+          All niches
+        </ButtonLink>
+      </div>
       <PageHeader
-        title={niche.name}
-        description={`Target market targeting ${niche.industry} in ${niche.country}.`}
+        title={data.name}
+        description={`${data.industry} in ${data.country}`}
         actions={
           <>
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 px-4 py-2 border rounded text-[13px] font-medium transition-colors"
-              style={{
-                background: "var(--surface-container-lowest)",
-                borderColor: "var(--outline-variant)",
-                color: "var(--on-surface)",
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
-            <Link
-              href={`/search?niche_id=${niche.id}`}
-              className="flex items-center gap-2 px-5 py-2 border rounded text-[13px] font-medium transition-colors hover:shadow-sm"
-              style={{
-                borderColor: "var(--primary)",
-                color: "var(--primary)",
-                background: "var(--primary-fixed)",
-              }}
-            >
-              <Search className="w-4 h-4" />
-              Run Search
-            </Link>
-            <Link
-              href={`/leads?niche_id=${niche.id}`}
-              className="flex items-center gap-2 px-5 py-2 rounded text-[13px] font-medium text-white transition-colors active:scale-95 shadow-sm"
-              style={{ background: "var(--primary)" }}
-            >
-              <Play className="w-4 h-4" />
-              View Leads
-            </Link>
+            <ButtonLink variant="outline" href={`/search?niche_id=${data.id}`}>
+              <Search aria-hidden />
+              Run a search
+            </ButtonLink>
+            <ButtonLink href={`/leads?niche_id=${data.id}`}>
+              <Users aria-hidden />
+              View leads
+            </ButtonLink>
+            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 aria-hidden />
+              Delete
+            </Button>
           </>
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        {/* Left: Edit Form */}
-        <div
-          className="bg-white border rounded-lg p-6 shadow-sm"
-          style={{ borderColor: "var(--outline-variant)" }}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <section
+          aria-labelledby="niche-edit-title"
+          className="rounded-lg border border-[var(--outline-variant)] bg-white p-5 shadow-sm"
         >
           <h3
-            className="text-[16px] font-semibold mb-6 flex items-center gap-2 pb-3 border-b"
-            style={{ color: "var(--on-surface)", borderColor: "var(--outline-variant)" }}
+            id="niche-edit-title"
+            className="mb-5 flex items-center gap-2 border-b border-[var(--outline-variant)] pb-3 text-[15px] font-semibold text-[var(--on-surface)]"
           >
-            <Target className="w-5 h-5 text-indigo-600" />
-            Edit Niche Targeting Criteria
+            <Target className="size-4 text-[var(--primary)]" aria-hidden />
+            Targeting
           </h3>
           <NicheForm
-            niche={niche}
-            submitLabel="Save Changes"
-            loading={updateMutation.isPending}
-            onSubmit={(payload) => updateMutation.mutate(payload)}
+            niche={data}
+            submitLabel="Save changes"
+            loading={update.isPending}
+            onSubmit={(payload) => update.mutate(payload)}
           />
-        </div>
+        </section>
 
-        {/* Right: Current targeting stats */}
-        <div className="flex flex-col gap-6">
-          <div
-            className="bg-white border rounded-lg p-6 shadow-sm"
-            style={{ borderColor: "var(--outline-variant)" }}
+        <aside
+          aria-labelledby="niche-summary-title"
+          className="h-fit rounded-lg border border-[var(--outline-variant)] bg-white p-5 shadow-sm"
+        >
+          <h3
+            id="niche-summary-title"
+            className="mb-4 text-[15px] font-semibold text-[var(--on-surface)]"
           >
-            <h3
-              className="text-[15px] font-semibold mb-4"
-              style={{ color: "var(--on-surface)" }}
-            >
-              Current Parameters
-            </h3>
-
-            <div className="space-y-4">
-              {/* Country & Industry */}
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded flex items-center justify-center shrink-0"
-                  style={{ background: "var(--surface-container-low)" }}
-                >
-                  <Globe className="w-4 h-4 text-slate-600" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Geography &amp; Sector</p>
-                  <p className="text-[13px] font-medium" style={{ color: "var(--on-surface)" }}>
-                    {niche.industry} · {niche.country}
-                  </p>
-                </div>
+            Summary
+          </h3>
+          <dl className="space-y-4 text-[13px]">
+            <div className="flex items-start gap-3">
+              <Globe className="mt-0.5 size-4 text-[var(--on-surface-variant)]" aria-hidden />
+              <div>
+                <dt className="text-[12px] text-[var(--on-surface-variant)]">Market</dt>
+                <dd className="font-medium text-[var(--on-surface)]">
+                  {data.industry} · {data.country}
+                </dd>
               </div>
-
-              {/* Company size */}
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded flex items-center justify-center shrink-0"
-                  style={{ background: "var(--surface-container-low)" }}
-                >
-                  <Users className="w-4 h-4 text-slate-600" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Employee Range</p>
-                  <p className="text-[13px] font-medium" style={{ color: "var(--on-surface)" }}>
-                    {niche.company_size_min ?? "0"} – {niche.company_size_max ?? "∞"} employees
-                  </p>
-                </div>
-              </div>
-
-              {/* Target Roles */}
-              <div className="border-t pt-3" style={{ borderColor: "var(--outline-variant)" }}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Target Roles</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {niche.target_roles.map((role) => (
-                    <span
-                      key={role}
-                      className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium"
-                      style={{
-                        background: "var(--primary-fixed)",
-                        color: "var(--on-primary-fixed)",
-                      }}
-                    >
-                      {role}
-                    </span>
-                  ))}
-                  {niche.target_roles.length === 0 && (
-                    <span className="text-[12px] italic text-slate-400">No specific roles defined.</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Keywords */}
-              <div className="border-t pt-3" style={{ borderColor: "var(--outline-variant)" }}>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Matching Keywords</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {niche.keywords.map((kw) => (
-                    <span
-                      key={kw}
-                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px]"
-                      style={{
-                        background: "var(--surface-container)",
-                        color: "var(--on-surface-variant)",
-                      }}
-                    >
-                      <Tag className="w-2.5 h-2.5" />
-                      {kw}
-                    </span>
-                  ))}
-                  {niche.keywords.length === 0 && (
-                    <span className="text-[12px] italic text-slate-400">No keywords defined.</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Exclusion Keywords */}
-              {niche.exclusion_keywords.length > 0 && (
-                <div className="border-t pt-3" style={{ borderColor: "var(--outline-variant)" }}>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Exclusion Keywords</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {niche.exclusion_keywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="inline-flex items-center px-2 py-0.5 rounded text-[11px]"
-                        style={{
-                          background: "var(--error-container)",
-                          color: "var(--on-error-container)",
-                        }}
-                      >
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
-        </div>
+            <div className="flex items-start gap-3">
+              <Users className="mt-0.5 size-4 text-[var(--on-surface-variant)]" aria-hidden />
+              <div>
+                <dt className="text-[12px] text-[var(--on-surface-variant)]">Company size</dt>
+                <dd className="font-medium text-[var(--on-surface)]">{size}</dd>
+              </div>
+            </div>
+            <div className="border-t border-[var(--outline-variant)] pt-3">
+              <dt className="mb-2 text-[12px] text-[var(--on-surface-variant)]">Target roles</dt>
+              <dd>
+                <Chips items={data.target_roles} empty="Any role" tone="primary" />
+              </dd>
+            </div>
+            <div className="border-t border-[var(--outline-variant)] pt-3">
+              <dt className="mb-2 text-[12px] text-[var(--on-surface-variant)]">Keywords</dt>
+              <dd>
+                <Chips items={data.keywords} empty="No keywords yet" />
+              </dd>
+            </div>
+            <div className="border-t border-[var(--outline-variant)] pt-3">
+              <dt className="mb-2 text-[12px] text-[var(--on-surface-variant)]">Excluded</dt>
+              <dd>
+                <Chips items={data.exclusion_keywords} empty="Nothing excluded" tone="error" />
+              </dd>
+            </div>
+          </dl>
+        </aside>
       </div>
+
+      <DeleteNicheDialog
+        niche={data}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => router.push("/niches")}
+      />
     </div>
   );
 }

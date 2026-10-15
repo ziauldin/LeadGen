@@ -1,596 +1,412 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  ExternalLink,
-  Filter,
-  MoreVertical,
-  Pencil,
-  Search,
-  Upload,
-  UserPlus,
-  XCircle,
-} from "lucide-react";
+import { ChevronDown, Download, Gauge, Plus, Search, Upload } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { DataTable, type DataTableColumn } from "@/components/data-table/data-table";
+import { KpiCard } from "@/components/shared/kpi-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ScoreBadge } from "@/components/shared/score-badge";
-import { KpiCard } from "@/components/shared/kpi-card";
-import { leadsApi } from "@/lib/api/endpoints";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { EmptyState } from "@/components/shared/empty-state";
+import { LoadingState } from "@/components/shared/loading-error";
+import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  DebouncedSearchInput,
+  FilterBar,
+  SelectField,
+} from "@/components/leads/filter-controls";
+import { LeadBulkActions } from "@/components/leads/lead-bulk-actions";
+import { LeadRowActions } from "@/components/leads/lead-row-actions";
+import { ImportCsvDialog } from "@/components/leads/import-csv-dialog";
+import {
+  ALL_LEAD_STATUSES,
+  formatDateTime,
+  formatRelativeDate,
+  leadStatusLabel,
+} from "@/components/leads/lead-status";
+import { useTableState } from "@/hooks/use-table-state";
+import { getErrorMessage } from "@/lib/api/client";
+import { leadsApi, nichesApi } from "@/lib/api/endpoints";
 import type { Lead } from "@/lib/api/types";
 
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase();
-}
-
-function isOutreachReady(lead: Lead) {
-  return (
-    !!lead.primary_email &&
-    lead.status !== "opted_out" &&
-    lead.status !== "disqualified" &&
-    !!lead.source_url &&
-    !!lead.compliance_source_note
-  );
-}
-
-const STATUS_FILTER_OPTIONS = [
-  "All",
-  "new",
-  "enriched",
-  "qualified",
-  "ready_for_outreach",
-  "contacted",
-  "replied",
-  "disqualified",
-  "opted_out",
+const STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  ...ALL_LEAD_STATUSES.map((status) => ({ value: status, label: leadStatusLabel(status) })),
+];
+const EMAIL_OPTIONS = [
+  { value: "any", label: "Any" },
+  { value: "true", label: "Has email" },
+  { value: "false", label: "No email" },
+];
+const SCORE_OPTIONS = [
+  { value: "any", label: "Any score" },
+  { value: "40", label: "40 or more" },
+  { value: "60", label: "60 or more" },
+  { value: "80", label: "80 or more" },
 ];
 
 export default function LeadsPage() {
-  const searchParams = useSearchParams();
-  const nicheId = searchParams.get("niche_id");
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [search, setSearch] = useState("");
+  return (
+    <Suspense fallback={<LoadingState message="Loading leads…" />}>
+      <LeadsView />
+    </Suspense>
+  );
+}
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["leads", nicheId, statusFilter],
-    queryFn: () =>
-      leadsApi.list(
-        Object.assign(
-          {},
-          nicheId ? { niche_id: Number(nicheId) } : {},
-          statusFilter !== "All" ? { status: statusFilter } : {},
-        ),
-      ),
+function LeadsView() {
+  const queryClient = useQueryClient();
+  const table = useTableState({ sort: "-updated_at" });
+  const { filters } = table;
+  const nicheId = filters.niche_id ? Number(filters.niche_id) : undefined;
+  const hasFilters = Object.keys(filters).length > 0;
+
+  const [importOpen, setImportOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const leads = useQuery({
+    queryKey: ["leads", "list", table.apiParams],
+    queryFn: () => leadsApi.list(table.apiParams),
+    placeholderData: keepPreviousData,
+  });
+  const stats = useQuery({
+    queryKey: ["leads", "stats", nicheId ?? null],
+    queryFn: () => leadsApi.stats(nicheId),
+  });
+  const niches = useQuery({
+    queryKey: ["niches", { limit: 200 }],
+    queryFn: () => nichesApi.list({ limit: 200 }),
   });
 
-  const recalcMutation = useMutation({
-    mutationFn: () => leadsApi.recalculateScores(nicheId ? Number(nicheId) : undefined),
+  const nicheOptions = useMemo(
+    () => [
+      { value: "all", label: "All niches" },
+      ...(niches.data?.items ?? []).map((niche) => ({
+        value: String(niche.id),
+        label: niche.name,
+      })),
+    ],
+    [niches.data],
+  );
+
+  const recalc = useMutation({
+    mutationFn: () => leadsApi.recalculateScores(nicheId),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success(`Updated scores for ${result.updated} leads`);
+      toast.success(`Recalculated scores for ${result.updated.toLocaleString()} leads`);
+    },
+  });
+  const exportCsv = useMutation({
+    mutationFn: () => leadsApi.exportCsv(nicheId),
+    onSuccess: () => toast.success("Export downloaded"),
+  });
+  const remove = useMutation({
+    mutationFn: (lead: Lead) => leadsApi.delete(lead.id),
+    // The API explains refusals (e.g. the lead was already emailed); show that in the dialog.
+    onError: (error) => setDeleteError(getErrorMessage(error)),
+    onSuccess: (_data, lead) => {
+      toast.success(`Deleted ${lead.full_name}`);
+      setDeleteTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 
-  async function handleImport(file: File) {
-    setImporting(true);
-    try {
-      const result = await leadsApi.importCsv(file);
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-      toast.success(`Imported ${result.created} leads (${result.skipped} skipped)`);
-      if (result.errors.length > 0) {
-        toast.warning(`${result.errors.length} rows had errors`);
-      }
-    } catch {
-      toast.error("CSV import failed");
-    } finally {
-      setImporting(false);
-    }
-  }
+  const columns = useMemo<DataTableColumn<Lead>[]>(
+    () => [
+      {
+        id: "name",
+        header: "Name",
+        sortKey: "full_name",
+        className: "min-w-[180px]",
+        cell: ({ row }) => (
+          <div className="min-w-0">
+            <Link
+              href={`/leads/${row.original.id}`}
+              className="font-semibold text-[var(--on-surface)] hover:text-[var(--primary)] hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:outline-none"
+            >
+              {row.original.full_name}
+            </Link>
+            <p className="truncate text-[12px] text-[var(--on-surface-variant)]">
+              {row.original.job_title || "No job title"}
+            </p>
+          </div>
+        ),
+      },
+      {
+        id: "company",
+        header: "Company",
+        cell: ({ row }) =>
+          row.original.company ? (
+            <Link
+              href={`/companies/${row.original.company.id}`}
+              className="text-[var(--on-surface)] hover:text-[var(--primary)] hover:underline"
+            >
+              {row.original.company.name}
+            </Link>
+          ) : (
+            <span className="text-[var(--on-surface-variant)]">—</span>
+          ),
+      },
+      {
+        id: "email",
+        header: "Email",
+        cell: ({ row }) =>
+          row.original.primary_email ? (
+            <span className="text-[var(--on-surface)]">{row.original.primary_email}</span>
+          ) : (
+            <span className="text-[12px] text-[var(--on-surface-variant)] italic">No email</span>
+          ),
+      },
+      {
+        id: "status",
+        header: "Status",
+        sortKey: "status",
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        id: "score",
+        header: "Score",
+        sortKey: "score",
+        cell: ({ row }) => <ScoreBadge score={Math.round(row.original.score)} />,
+      },
+      {
+        id: "updated",
+        header: "Updated",
+        sortKey: "updated_at",
+        cell: ({ row }) => (
+          <time
+            dateTime={row.original.updated_at}
+            title={formatDateTime(row.original.updated_at)}
+            className="whitespace-nowrap text-[var(--on-surface-variant)]"
+          >
+            {formatRelativeDate(row.original.updated_at)}
+          </time>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">Actions</span>,
+        className: "w-12 text-right",
+        cell: ({ row }) => (
+          <LeadRowActions
+            lead={row.original}
+            onDelete={(lead) => {
+              setDeleteError(null);
+              setDeleteTarget(lead);
+            }}
+          />
+        ),
+      },
+    ],
+    [],
+  );
 
-  const leads = data?.items ?? [];
-  const filtered = search
-    ? leads.filter(
-        (l) =>
-          l.full_name.toLowerCase().includes(search.toLowerCase()) ||
-          l.company?.name?.toLowerCase().includes(search.toLowerCase()),
-      )
-    : leads;
-
-  const totalLeads = data?.total ?? 0;
-  const enriched = leads.filter((l) => l.status !== "new").length;
-  const qualified = leads.filter((l) => l.score >= 75).length;
-  const outreachReady = leads.filter(isOutreachReady).length;
+  const s = stats.data;
 
   return (
     <div>
       <PageHeader
         title="Leads"
-        description="Manage and segment your raw and enriched contacts."
+        description="Everyone you've found or imported. Filter, enrich, score and add them to campaigns."
         actions={
           <>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleImport(file);
-                e.target.value = "";
-              }}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={importing}
-              className="flex items-center gap-2 px-4 py-2 border rounded text-[13px] font-medium transition-colors active:scale-95 shadow-sm"
-              style={{
-                background: "var(--surface-container-lowest)",
-                borderColor: "var(--outline-variant)",
-                color: "var(--on-surface)",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "var(--surface-container-low)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "var(--surface-container-lowest)")
-              }
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload aria-hidden />
+              Import CSV
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => exportCsv.mutate()}
+              disabled={exportCsv.isPending}
             >
-              <Upload className="w-4 h-4" />
-              {importing ? "Importing…" : "Import CSV"}
-            </button>
-            <button
-              onClick={() => void leadsApi.exportCsv(nicheId ? Number(nicheId) : undefined)}
-              className="flex items-center gap-2 px-4 py-2 border rounded text-[13px] font-medium transition-colors active:scale-95 shadow-sm"
-              style={{
-                background: "var(--surface-container-lowest)",
-                borderColor: "var(--outline-variant)",
-                color: "var(--on-surface)",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "var(--surface-container-low)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "var(--surface-container-lowest)")
-              }
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
-            <button
-              onClick={() => recalcMutation.mutate()}
-              disabled={recalcMutation.isPending}
-              className="flex items-center gap-2 px-5 py-2 rounded text-[13px] font-medium transition-colors active:scale-95 shadow-sm text-white"
-              style={{ background: "var(--primary)" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "var(--surface-tint)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "var(--primary)")
-              }
-            >
-              <UserPlus className="w-4 h-4" />
-              Recalculate Scores
-            </button>
+              <Download aria-hidden />
+              {exportCsv.isPending ? "Exporting…" : "Export CSV"}
+            </Button>
+            <Button variant="outline" onClick={() => recalc.mutate()} disabled={recalc.isPending}>
+              <Gauge aria-hidden />
+              {recalc.isPending ? "Recalculating…" : "Recalculate scores"}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button />}>
+                <Plus aria-hidden />
+                Add leads
+                <ChevronDown aria-hidden />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem render={<Link href={nicheId ? `/search?niche_id=${nicheId}` : "/search"} />}>
+                  <Search aria-hidden />
+                  Find leads with search
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                  <Upload aria-hidden />
+                  Import from CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         }
       />
 
-      {/* Stats Bento */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <KpiCard
-          label="Total Leads"
-          value={totalLeads}
-          trend={
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>
-                In pipeline
-              </span>
-            </div>
-          }
-        />
-        <div
-          className="bg-white border rounded-lg p-4 shadow-sm"
-          style={{ borderColor: "var(--outline-variant)" }}
-        >
-          <p className="text-[13px] font-medium" style={{ color: "var(--on-surface-variant)" }}>
-            Enriched
-          </p>
-          <p
-            className="text-[20px] font-semibold leading-[28px] mt-2"
-            style={{ color: "var(--on-surface)" }}
-          >
-            {enriched.toLocaleString()}
-          </p>
-          {totalLeads > 0 && (
-            <>
-              <div
-                className="w-full h-1.5 rounded-full overflow-hidden mt-2"
-                style={{ background: "var(--surface-container-high)" }}
-              >
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.round((enriched / totalLeads) * 100)}%`,
-                    background: "var(--primary)",
-                  }}
-                />
-              </div>
-              <p
-                className="text-[11px] text-right mt-1"
-                style={{ color: "var(--on-surface-variant)" }}
-              >
-                {Math.round((enriched / totalLeads) * 100)}% match rate
-              </p>
-            </>
-          )}
-        </div>
-        <KpiCard
-          label="Qualified"
-          value={qualified}
-          trend={
-            <p className="text-[11px] mt-1" style={{ color: "var(--on-surface-variant)" }}>
-              Score ≥ 75
-            </p>
-          }
-        />
-        <KpiCard
-          label="Outreach Ready"
-          value={outreachReady}
-          dot="green"
-          trend={
-            <div className="flex items-center gap-1 mt-1">
-              <CheckCircle2 className="w-3 h-3" style={{ color: "var(--secondary)" }} />
-              <span className="text-[11px]" style={{ color: "var(--on-surface-variant)" }}>
-                Emails verified
-              </span>
-            </div>
-          }
-        />
-      </div>
-
-      {/* Filter Bar */}
-      <div
-        className="bg-white border rounded-lg shadow-sm p-4 flex flex-wrap items-center gap-4 mb-4"
-        style={{ borderColor: "var(--outline-variant)" }}
+      <section
+        aria-label="Lead summary"
+        className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
       >
-        <div
-          className="flex items-center gap-2 pr-4 border-r"
-          style={{ borderColor: "var(--outline-variant)", color: "var(--on-surface-variant)" }}
-        >
-          <Filter className="w-4 h-4" />
-          <span className="text-[13px]">Filters</span>
-        </div>
-
-        {/* Status dropdown */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="flex items-center gap-2 px-3 py-1.5 border rounded text-[13px] cursor-pointer outline-none"
-          style={{
-            borderColor: "var(--outline-variant)",
-            color: "var(--on-surface)",
-            background: "var(--surface)",
-          }}
-        >
-          {STATUS_FILTER_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              Status: {s === "All" ? "All" : s.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
-
-        {/* Search */}
-        <div className="relative ml-auto">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-            style={{ color: "var(--on-surface-variant)" }}
-          />
-          <input
-            type="text"
-            placeholder="Search leads…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 border rounded text-[13px] outline-none w-64"
-            style={{
-              borderColor: "var(--outline-variant)",
-              background: "var(--surface)",
-              color: "var(--on-surface)",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "var(--primary)";
-              e.target.style.boxShadow = "0 0 0 1px var(--primary)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "var(--outline-variant)";
-              e.target.style.boxShadow = "none";
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div
-        className="bg-white border rounded-lg shadow-sm overflow-hidden"
-        style={{ borderColor: "var(--outline-variant)" }}
-      >
-        {isLoading ? (
-          <div className="p-8 text-center">
-            <div
-              className="inline-block w-5 h-5 border-2 rounded-full animate-spin"
-              style={{
-                borderColor: "var(--primary-container)",
-                borderTopColor: "var(--primary)",
-              }}
-            />
-            <p className="text-[13px] mt-3" style={{ color: "var(--on-surface-variant)" }}>
-              Loading leads…
-            </p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-16 text-center">
-            <UserPlus className="w-10 h-10 mx-auto mb-3" style={{ color: "var(--outline)" }} />
-            <p
-              className="text-[16px] font-semibold mb-1"
-              style={{ color: "var(--on-surface)" }}
-            >
-              No leads found
-            </p>
-            <p className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
-              Import a CSV or run a search to populate your pipeline.
-            </p>
-          </div>
+        {stats.isError ? (
+          <p className="col-span-full text-[13px] text-destructive" role="alert">
+            Couldn&apos;t load lead stats: {getErrorMessage(stats.error)}{" "}
+            <button type="button" className="underline" onClick={() => stats.refetch()}>
+              Try again
+            </button>
+          </p>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse whitespace-nowrap">
-                <thead>
-                  <tr
-                    className="border-b"
-                    style={{
-                      background: "var(--surface)",
-                      borderColor: "var(--outline-variant)",
-                    }}
-                  >
-                    <th className="py-3 px-4 w-10">
-                      <input type="checkbox" className="rounded" />
-                    </th>
-                    <th
-                      className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider"
-                      style={{ color: "var(--on-surface-variant)" }}
-                    >
-                      Lead
-                    </th>
-                    <th
-                      className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider"
-                      style={{ color: "var(--on-surface-variant)" }}
-                    >
-                      Company &amp; Niche
-                    </th>
-                    <th
-                      className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider"
-                      style={{ color: "var(--on-surface-variant)" }}
-                    >
-                      Score
-                    </th>
-                    <th
-                      className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider"
-                      style={{ color: "var(--on-surface-variant)" }}
-                    >
-                      Status
-                    </th>
-                    <th
-                      className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-center"
-                      style={{ color: "var(--on-surface-variant)" }}
-                    >
-                      Ready
-                    </th>
-                    <th
-                      className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-right"
-                      style={{ color: "var(--on-surface-variant)" }}
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((lead) => {
-                    const ready = isOutreachReady(lead);
-                    return (
-                      <tr
-                        key={lead.id}
-                        className="border-b group transition-colors"
-                        style={{ borderColor: "var(--outline-variant)" }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.background = "var(--surface-container-low)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.background = "transparent")
-                        }
-                      >
-                        {/* Checkbox */}
-                        <td className="py-4 px-4">
-                          <input type="checkbox" className="rounded" />
-                        </td>
-                        {/* Lead name + role */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                              style={{ background: "var(--primary)" }}
-                            >
-                              {getInitials(lead.full_name)}
-                            </div>
-                            <div>
-                              <Link
-                                href={`/leads/${lead.id}`}
-                                className="text-[13px] font-semibold transition-colors hover:underline"
-                                style={{ color: "var(--on-surface)" }}
-                              >
-                                {lead.full_name}
-                              </Link>
-                              <div
-                                className="text-[12px]"
-                                style={{ color: "var(--on-surface-variant)" }}
-                              >
-                                {lead.job_title ?? "—"}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        {/* Company + industry */}
-                        <td className="py-4 px-4">
-                          <div
-                            className="text-[13px] font-medium"
-                            style={{ color: "var(--on-surface)" }}
-                          >
-                            {lead.company?.name ?? "—"}
-                          </div>
-                          <div
-                            className="text-[12px]"
-                            style={{ color: "var(--on-surface-variant)" }}
-                          >
-                            {lead.primary_email ?? "No email"}
-                          </div>
-                        </td>
-                        {/* Score */}
-                        <td className="py-4 px-4">
-                          <ScoreBadge score={lead.score} />
-                        </td>
-                        {/* Status */}
-                        <td className="py-4 px-4">
-                          <StatusBadge status={lead.status} />
-                        </td>
-                        {/* Readiness */}
-                        <td className="py-4 px-4 text-center">
-                          {ready ? (
-                            <CheckCircle2
-                              className="w-5 h-5 mx-auto"
-                              style={{ color: "var(--secondary)" }}
-                            />
-                          ) : (
-                            <XCircle
-                              className="w-5 h-5 mx-auto"
-                              style={{ color: "var(--error)" }}
-                            />
-                          )}
-                        </td>
-                        {/* Actions */}
-                        <td className="py-4 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {lead.source_url && (
-                              <a
-                                href={lead.source_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1.5 rounded transition-colors"
-                                title="Source URL"
-                                style={{ color: "var(--on-surface-variant)" }}
-                                onMouseEnter={(e) =>
-                                  (e.currentTarget.style.color = "var(--primary)")
-                                }
-                                onMouseLeave={(e) =>
-                                  (e.currentTarget.style.color = "var(--on-surface-variant)")
-                                }
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            )}
-                            <Link
-                              href={`/leads/${lead.id}`}
-                              className="p-1.5 rounded transition-colors"
-                              title="Edit"
-                              style={{ color: "var(--on-surface-variant)" }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.color = "var(--primary)")
-                              }
-                              onMouseLeave={(e) =>
-                                (e.currentTarget.style.color = "var(--on-surface-variant)")
-                              }
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Link>
-                            <button
-                              className="p-1.5 rounded transition-colors"
-                              title="More"
-                              style={{ color: "var(--on-surface-variant)" }}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.color = "var(--error)")
-                              }
-                              onMouseLeave={(e) =>
-                                (e.currentTarget.style.color = "var(--on-surface-variant)")
-                              }
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {/* Pagination */}
-            <div
-              className="border-t px-5 py-3 flex items-center justify-between"
-              style={{
-                borderColor: "var(--outline-variant)",
-                background: "var(--surface)",
-              }}
-            >
-              <p className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
-                Showing{" "}
-                <span className="font-medium" style={{ color: "var(--on-surface)" }}>
-                  {filtered.length}
-                </span>{" "}
-                of{" "}
-                <span className="font-medium" style={{ color: "var(--on-surface)" }}>
-                  {totalLeads.toLocaleString()}
-                </span>{" "}
-                results
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled
-                  className="flex items-center gap-1 px-3 py-1 border rounded text-[12px] font-medium disabled:opacity-50"
-                  style={{
-                    borderColor: "var(--outline-variant)",
-                    color: "var(--on-surface-variant)",
-                  }}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </button>
-                <button
-                  className="flex items-center gap-1 px-3 py-1 border rounded text-[12px] font-medium"
-                  style={{
-                    borderColor: "var(--outline-variant)",
-                    color: "var(--on-surface)",
-                  }}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            <KpiCard label="Total leads" value={s ? s.total : "—"} />
+            <KpiCard
+              label="With email"
+              value={s ? s.with_email : "—"}
+              dot="green"
+              trend={
+                s && s.total > 0 ? (
+                  <span className="text-[11px] text-[var(--on-surface-variant)]">
+                    {Math.round((s.with_email / s.total) * 100)}% of leads
+                  </span>
+                ) : null
+              }
+            />
+            <KpiCard label="Average score" value={s ? Math.round(s.average_score) : "—"} />
+            <KpiCard label="Added last 7 days" value={s ? s.added_last_7_days : "—"} dot="blue" />
+            <KpiCard
+              label="In active sequences"
+              value={s ? s.in_active_sequences : "—"}
+              highlight
+            />
           </>
         )}
-      </div>
+      </section>
+
+      <FilterBar>
+        <DebouncedSearchInput
+          label="Search"
+          placeholder="Name, job title or company"
+          value={filters.search ?? ""}
+          onChange={(value) => table.setFilter("search", value || undefined)}
+          className="sm:col-span-2 lg:w-72"
+        />
+        <SelectField
+          label="Niche"
+          value={filters.niche_id ?? "all"}
+          onChange={(value) => table.setFilter("niche_id", value === "all" ? undefined : value)}
+          options={nicheOptions}
+          className="lg:w-48"
+        />
+        <SelectField
+          label="Status"
+          value={filters.status ?? "all"}
+          onChange={(value) => table.setFilter("status", value === "all" ? undefined : value)}
+          options={STATUS_OPTIONS}
+          className="lg:w-44"
+        />
+        <SelectField
+          label="Email"
+          value={filters.has_email ?? "any"}
+          onChange={(value) => table.setFilter("has_email", value === "any" ? undefined : value)}
+          options={EMAIL_OPTIONS}
+          className="lg:w-36"
+        />
+        <SelectField
+          label="Minimum score"
+          value={filters.min_score ?? "any"}
+          onChange={(value) => table.setFilter("min_score", value === "any" ? undefined : value)}
+          options={SCORE_OPTIONS}
+          className="lg:w-36"
+        />
+        {hasFilters ? (
+          <Button variant="ghost" className="h-9 self-end" onClick={table.clearFilters}>
+            Clear filters
+          </Button>
+        ) : null}
+      </FilterBar>
+
+      <DataTable<Lead>
+        caption="Leads"
+        columns={columns}
+        data={leads.data?.items}
+        total={leads.data?.total ?? 0}
+        page={table.page}
+        pageSize={table.pageSize}
+        sort={table.sort}
+        onPageChange={table.setPage}
+        onSortChange={table.setSort}
+        isLoading={leads.isLoading || leads.isPlaceholderData}
+        error={leads.error}
+        onRetry={() => leads.refetch()}
+        bulkActions={(ids, clear) => (
+          <LeadBulkActions selectedIds={ids} clear={clear} nicheId={nicheId} />
+        )}
+        emptyState={
+          hasFilters ? (
+            <EmptyState
+              title="No leads match these filters"
+              description="Try a different search or clear the filters to see everyone."
+              action={
+                <Button variant="outline" onClick={table.clearFilters}>
+                  Clear filters
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              title="No leads yet"
+              description="Run a search for your niche to find people, or import a CSV you already have."
+              action={
+                <div className="flex flex-wrap justify-center gap-2">
+                  <ButtonLink href="/search">
+                    <Search aria-hidden />
+                    Find leads
+                  </ButtonLink>
+                  <Button variant="outline" onClick={() => setImportOpen(true)}>
+                    <Upload aria-hidden />
+                    Import CSV
+                  </Button>
+                </div>
+              }
+            />
+          )
+        }
+      />
+
+      <ImportCsvDialog open={importOpen} onOpenChange={setImportOpen} />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={`Delete ${deleteTarget?.full_name ?? "this lead"}?`}
+        description="This removes the lead, its contacts and any unsent drafts. Leads that have already been emailed can't be deleted; disqualify them instead."
+        confirmLabel="Delete lead"
+        destructive
+        loading={remove.isPending}
+        onConfirm={() => deleteTarget && remove.mutate(deleteTarget)}
+      >
+        {deleteError ? (
+          <p role="alert" className="rounded-lg bg-destructive/5 p-3 text-[13px] text-destructive">
+            {deleteError}
+          </p>
+        ) : null}
+      </ConfirmDialog>
     </div>
   );
 }

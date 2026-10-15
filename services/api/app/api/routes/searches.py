@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_workspace
 from app.core.database import get_db
+from app.core.errors import ValidationFailedError
 from app.core.tenancy import WorkspaceContext
-from app.models.enums import SearchProvider, SearchStatus
+from app.models.enums import ProviderName, SearchProvider, SearchStatus
 from app.models.niche import Niche
 from app.models.search_query import SearchQuery
 from app.schemas.search import (
@@ -17,7 +18,10 @@ from app.schemas.search import (
     SearchQueryRead,
     SearchResultItem,
 )
-from app.services.search.provider_factory import get_active_search_provider_name
+from app.services.search.provider_factory import (
+    find_search_credential,
+    get_active_search_provider_name,
+)
 from app.services.search.query_generator import generate_search_queries
 from app.services.search.search_service import run_search_query_record, save_search_results
 
@@ -83,7 +87,13 @@ def run_search(
 ) -> SearchQueryRead:
     niche = _get_niche(db, payload.niche_id, ctx)
 
-    provider_key = get_active_search_provider_name(db, ctx.workspace_id)
+    if payload.provider and payload.provider != ProviderName.MOCK.value:
+        valid = payload.provider in {name.value for name in ProviderName}
+        if not valid or find_search_credential(db, ctx.workspace_id, payload.provider) is None:
+            raise ValidationFailedError(
+                f"No {payload.provider} search account is set up. Add it in Settings → Providers.",
+            )
+    provider_key = payload.provider or get_active_search_provider_name(db, ctx.workspace_id)
     try:
         provider = SearchProvider(provider_key)
     except ValueError:
@@ -101,7 +111,9 @@ def run_search(
     db.commit()
     db.refresh(search_query)
 
-    search_query = run_search_query_record(db, search_query, limit=payload.limit)
+    search_query = run_search_query_record(
+        db, search_query, limit=payload.limit, provider_name=payload.provider
+    )
     return _serialize_search(search_query)
 
 

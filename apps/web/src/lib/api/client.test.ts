@@ -63,7 +63,9 @@ describe("apiFetch", () => {
         );
       }),
     );
-    const error = await apiFetch("/campaigns", { method: "POST", body: "{}" }).catch((e) => e);
+    const error = (await apiFetch("/campaigns", { method: "POST", body: "{}" }).catch(
+      (e: unknown) => e,
+    )) as ApiError;
     expect(error).toBeInstanceOf(ApiError);
     expect(error.status).toBe(402);
     expect(error.message).toBe("You've reached your plan's limit");

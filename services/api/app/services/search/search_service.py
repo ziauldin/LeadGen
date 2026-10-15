@@ -28,12 +28,17 @@ def _public_search_error(exc: Exception) -> str:
     return "The search provider request failed. Try again later."
 
 
-def run_search_query_record(db: Session, search_query: SearchQuery, limit: int = 10) -> SearchQuery:
+def run_search_query_record(
+    db: Session,
+    search_query: SearchQuery,
+    limit: int = 10,
+    provider_name: str | None = None,
+) -> SearchQuery:
     search_query.status = SearchStatus.RUNNING
     db.commit()
 
     try:
-        provider = get_search_provider_for_workspace(db, search_query.workspace_id)
+        provider = get_search_provider_for_workspace(db, search_query.workspace_id, provider_name)
         raw_results = provider.search(search_query.query, limit=limit)
         search_query.results = [item.to_dict() for item in raw_results]
         search_query.result_count = len(raw_results)

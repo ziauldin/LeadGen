@@ -670,7 +670,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health Check */
+        /**
+         * Health Check
+         * @description Liveness: the process is up. Used by the platform's health check.
+         */
         get: operations["health_check_health_get"];
         put?: never;
         post?: never;
@@ -687,7 +690,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Readiness Check */
+        /**
+         * Readiness Check
+         * @description Readiness.
+         *
+         *     ``ready`` (200): everything is up. ``degraded`` (200): the API works but background
+         *     workers aren't running, so emails won't send. ``not_ready`` (503): the database, Redis or
+         *     migrations are broken.
+         */
         get: operations["readiness_check_health_ready_get"];
         put?: never;
         post?: never;
@@ -3012,6 +3022,8 @@ export interface components {
             limit?: number;
             /** Niche Id */
             niche_id: number;
+            /** Provider */
+            provider?: string | null;
             /** Query */
             query: string;
         };

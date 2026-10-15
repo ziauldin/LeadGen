@@ -1,4 +1,6 @@
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { ExternalLink } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -7,13 +9,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { components } from "@/lib/api/schema";
 
-export type SearchResultRow = {
-  index: number;
-  title: string;
-  url: string;
-  snippet?: string;
-};
+export type SearchResultRow = components["schemas"]["SearchResultItem"];
+
+/** Normalises the API's loosely typed result list into the documented SearchResultItem shape. */
+export function toResultRows(results: unknown[] | undefined, fallbackProvider: string): SearchResultRow[] {
+  return (results ?? [])
+    .map((raw) => {
+      const item = (raw ?? {}) as Record<string, unknown>;
+      const text = (key: string) => (typeof item[key] === "string" ? (item[key] as string) : "");
+      return {
+        title: text("title") || text("url") || "Untitled result",
+        url: text("url"),
+        snippet: text("snippet"),
+        provider: text("provider") || fallbackProvider,
+      };
+    })
+    .filter((row) => row.url);
+}
+
+function hostname(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
 
 export function SearchResultsTable({
   results,
@@ -22,49 +44,85 @@ export function SearchResultsTable({
   onToggleAll,
 }: {
   results: SearchResultRow[];
-  selected: Set<number>;
-  onToggle: (index: number) => void;
+  selected: Set<string>;
+  onToggle: (url: string) => void;
   onToggleAll: () => void;
 }) {
-  if (results.length === 0) {
-    return <p className="text-sm text-muted-foreground">No results to display.</p>;
-  }
-
-  const allSelected = selected.size === results.length;
+  const allSelected = results.length > 0 && results.every((row) => selected.has(row.url));
+  const someSelected = !allSelected && results.some((row) => selected.has(row.url));
 
   return (
-    <div className="rounded-lg border">
-      <div className="flex items-center justify-between border-b px-4 py-2">
-        <p className="text-sm font-medium">{results.length} results</p>
-        <Button size="sm" variant="outline" onClick={onToggleAll}>
-          {allSelected ? "Deselect all" : "Select all"}
-        </Button>
-      </div>
+    <div className="overflow-x-auto">
       <Table>
+        <caption className="sr-only">Search results</caption>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12">Save</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>URL</TableHead>
+            <TableHead className="w-10">
+              <input
+                type="checkbox"
+                aria-label="Select all results"
+                className="size-4 cursor-pointer accent-[var(--primary)]"
+                checked={allSelected}
+                ref={(el) => {
+                  if (el) el.indeterminate = someSelected;
+                }}
+                onChange={onToggleAll}
+              />
+            </TableHead>
+            <TableHead>Result</TableHead>
+            <TableHead className="hidden md:table-cell">Snippet</TableHead>
+            <TableHead>Provider</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {results.map((row) => (
-            <TableRow key={row.index}>
-              <TableCell>
-                <input
-                  type="checkbox"
-                  checked={selected.has(row.index)}
-                  onChange={() => onToggle(row.index)}
-                  className="size-4"
-                />
-              </TableCell>
-              <TableCell className="font-medium">{row.title}</TableCell>
-              <TableCell className="max-w-md truncate text-sm text-muted-foreground">
-                {row.url}
-              </TableCell>
-            </TableRow>
-          ))}
+          {results.map((row, index) => {
+            const checked = selected.has(row.url);
+            const checkboxId = `search-result-${index}`;
+            return (
+              <TableRow key={row.url} data-state={checked ? "selected" : undefined}>
+                <TableCell className="align-top">
+                  <input
+                    id={checkboxId}
+                    type="checkbox"
+                    className="mt-0.5 size-4 cursor-pointer accent-[var(--primary)]"
+                    checked={checked}
+                    onChange={() => onToggle(row.url)}
+                  />
+                </TableCell>
+                <TableCell className="max-w-[340px] min-w-[220px] align-top whitespace-normal">
+                  <label
+                    htmlFor={checkboxId}
+                    className="block cursor-pointer text-[13px] font-medium text-[var(--on-surface)]"
+                  >
+                    {row.title}
+                  </label>
+                  <a
+                    href={row.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-0.5 inline-flex max-w-full items-center gap-1 text-[12px] text-[var(--primary)] hover:underline"
+                  >
+                    <span className="truncate">{hostname(row.url)}</span>
+                    <ExternalLink className="size-3 shrink-0" aria-hidden />
+                    <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                  {row.snippet ? (
+                    <p className="mt-1 line-clamp-2 text-[12px] text-[var(--on-surface-variant)] md:hidden">
+                      {row.snippet}
+                    </p>
+                  ) : null}
+                </TableCell>
+                <TableCell className="hidden max-w-[420px] align-top text-[12px] whitespace-normal text-[var(--on-surface-variant)] md:table-cell">
+                  <p className="line-clamp-3">{row.snippet || "—"}</p>
+                </TableCell>
+                <TableCell className="align-top">
+                  <span className="rounded-full border border-[var(--outline-variant)] bg-white px-2 py-0.5 text-[11px] text-[var(--on-surface-variant)]">
+                    {row.provider}
+                  </span>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

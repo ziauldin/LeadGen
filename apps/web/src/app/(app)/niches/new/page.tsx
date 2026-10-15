@@ -1,66 +1,59 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Target } from "lucide-react";
-import Link from "next/link";
 import { NicheForm } from "@/components/niches/niche-form";
 import { PageHeader } from "@/components/layout/page-header";
+import { ButtonLink } from "@/components/ui/button-link";
 import { nichesApi } from "@/lib/api/endpoints";
+import type { NicheCreate } from "@/lib/api/types";
 
 export default function NewNichePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const mutation = useMutation({
-    mutationFn: nichesApi.create,
+  const create = useMutation({
+    mutationFn: (payload: NicheCreate) => nichesApi.create(payload),
     onSuccess: (niche) => {
-      toast.success("Niche created successfully");
+      queryClient.invalidateQueries({ queryKey: ["niches"] });
+      queryClient.invalidateQueries({ queryKey: ["onboarding"] });
+      toast.success(`Created ${niche.name}`);
       router.push(`/niches/${niche.id}`);
     },
-    onError: () => toast.error("Failed to create niche"),
   });
 
   return (
     <div>
+      <div className="mb-2">
+        <ButtonLink variant="ghost" size="sm" href="/niches">
+          <ArrowLeft aria-hidden />
+          All niches
+        </ButtonLink>
+      </div>
       <PageHeader
-        title="New Niche"
-        description="Define geography, industry sector, target roles, and search queries for a target market segment."
-        actions={
-          <Link
-            href="/niches"
-            className="flex items-center gap-2 px-4 py-2 border rounded text-[13px] font-medium transition-colors"
-            style={{
-              background: "var(--surface-container-lowest)",
-              borderColor: "var(--outline-variant)",
-              color: "var(--on-surface)",
-            }}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Niches
-          </Link>
-        }
+        title="New niche"
+        description="Describe one market: where it is, which industry, who you want to reach and the words that describe them."
       />
 
-      <div className="max-w-[640px]">
-        <div
-          className="bg-white border rounded-lg p-6 shadow-sm"
-          style={{ borderColor: "var(--outline-variant)" }}
+      <section
+        aria-labelledby="new-niche-title"
+        className="max-w-[640px] rounded-lg border border-[var(--outline-variant)] bg-white p-5 shadow-sm"
+      >
+        <h3
+          id="new-niche-title"
+          className="mb-5 flex items-center gap-2 border-b border-[var(--outline-variant)] pb-3 text-[15px] font-semibold text-[var(--on-surface)]"
         >
-          <h3
-            className="text-[16px] font-semibold mb-6 flex items-center gap-2 pb-3 border-b"
-            style={{ color: "var(--on-surface)", borderColor: "var(--outline-variant)" }}
-          >
-            <Target className="w-5 h-5 text-indigo-600" />
-            Define Target Niche
-          </h3>
-          <NicheForm
-            submitLabel="Create Niche"
-            loading={mutation.isPending}
-            onSubmit={(payload) => mutation.mutate(payload)}
-          />
-        </div>
-      </div>
+          <Target className="size-4 text-[var(--primary)]" aria-hidden />
+          Targeting
+        </h3>
+        <NicheForm
+          submitLabel="Create niche"
+          loading={create.isPending}
+          onSubmit={(payload) => create.mutate(payload)}
+        />
+      </section>
     </div>
   );
 }

@@ -265,3 +265,27 @@ def test_leads_that_were_emailed_cannot_be_deleted():
     assert client.delete(f"/leads/{sent_lead}", headers=headers).status_code == 400
     result = _bulk(client, headers, lead_ids=lead_ids, action="delete").json()
     assert result["failed"] == 2  # both were sent by the dispatcher
+
+
+def test_search_can_pick_a_configured_provider_or_mock():
+    client = get_client()
+    headers = auth_headers(client)
+    niche_id = client.post(
+        "/niches",
+        headers=headers,
+        json={"name": "N", "country": "UK", "industry": "Food", "target_roles": ["QM"]},
+    ).json()["id"]
+    run = client.post(
+        "/searches/run",
+        headers=headers,
+        json={"niche_id": niche_id, "query": "food quality manager", "provider": "mock"},
+    )
+    assert run.status_code == 201, run.text
+    assert run.json()["provider"] == "mock"
+    missing = client.post(
+        "/searches/run",
+        headers=headers,
+        json={"niche_id": niche_id, "query": "x", "provider": "serpapi"},
+    )
+    assert missing.status_code == 400
+    assert "serpapi" in missing.json()["detail"]

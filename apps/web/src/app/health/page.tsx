@@ -1,263 +1,244 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api/client";
 import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
+  Cog,
   Database,
   RefreshCw,
   Server,
   XCircle,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { api, ApiError } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 
-type DependencyStatus = { name: string; status: string; detail?: string | null };
+type Readiness = Awaited<ReturnType<typeof api.healthReady>>;
+type Dependency = Readiness["dependencies"][number];
 
-function StatusPill({ status }: { status: string }) {
-  const ok = status === "ok" || status === "ready";
+const DEPENDENCIES: Record<string, { label: string; about: string; icon: LucideIcon }> = {
+  database: { label: "Database", about: "Stores workspaces, leads, campaigns and emails.", icon: Database },
+  redis: { label: "Queue", about: "Hands work such as sending and enrichment to the workers.", icon: Zap },
+  worker: { label: "Background worker", about: "Sends approved emails and processes replies.", icon: Cog },
+  scheduler: { label: "Scheduler", about: "Starts timed jobs like follow-ups and inbox checks.", icon: Cog },
+};
+
+function describe(dependency: Dependency) {
+  const key = dependency.name.toLowerCase();
+  const known =
+    DEPENDENCIES[key] ??
+    Object.entries(DEPENDENCIES).find(([name]) => key.includes(name))?.[1];
+  return known ?? { label: dependency.name.replaceAll("_", " "), about: "", icon: Server };
+}
+
+const isOk = (status: string | undefined) => status === "ok" || status === "ready";
+
+/** The readiness endpoint answers 503 with the same body when something is down. */
+async function fetchReadiness(): Promise<Readiness> {
+  try {
+    return await api.healthReady();
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      error.status === 503 &&
+      error.detail &&
+      typeof error.detail === "object" &&
+      "dependencies" in error.detail
+    ) {
+      return error.detail as Readiness;
+    }
+    throw error;
+  }
+}
+
+function Pill({ ok, label }: { ok: boolean; label: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold"
-      style={{
-        background: ok ? "var(--secondary-fixed)" : "var(--error-container)",
-        color: ok ? "var(--on-secondary-fixed)" : "var(--on-error-container)",
-      }}
-    >
-      {ok ? (
-        <CheckCircle2 className="w-3.5 h-3.5" />
-      ) : (
-        <XCircle className="w-3.5 h-3.5" />
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[12px] font-semibold",
+        ok
+          ? "bg-[var(--secondary-fixed)] text-[var(--on-secondary-fixed)]"
+          : "bg-[var(--error-container)] text-[var(--on-error-container)]",
       )}
-      {ok ? "Healthy" : status}
+    >
+      {ok ? <CheckCircle2 className="size-3.5" aria-hidden /> : <XCircle className="size-3.5" aria-hidden />}
+      {label}
     </span>
   );
 }
 
-const DEP_ICONS: Record<string, typeof Server> = {
-  database: Database,
-  redis: Zap,
-};
-
-export default function HealthCheckPage() {
+export default function HealthPage() {
   const liveness = useQuery({
     queryKey: ["health"],
     queryFn: api.health,
     refetchInterval: 30_000,
+    retry: false,
   });
-
   const readiness = useQuery({
     queryKey: ["health", "ready"],
-    queryFn: api.healthReady,
-    enabled: liveness.isSuccess,
-    retry: false,
+    queryFn: fetchReadiness,
     refetchInterval: 30_000,
+    retry: false,
   });
 
-  const dependencies: DependencyStatus[] = readiness.data?.dependencies ?? [];
-  const lastChecked = new Date().toLocaleTimeString();
+  const apiUp = liveness.isSuccess;
+  const ready = readiness.data;
+  const failing = ready?.dependencies.filter((dep) => !isOk(dep.status)) ?? [];
+  const loading = liveness.isLoading || readiness.isLoading;
+
+  let overall: { tone: "ok" | "warn" | "down"; title: string; text: string };
+  if (liveness.isError) {
+    overall = {
+      tone: "down",
+      title: "API unreachable",
+      text: "We can't reach the API right now, so the app won't work. Please try again in a few minutes.",
+    };
+  } else if (ready && ready.status !== "ready") {
+    overall = {
+      tone: "warn",
+      title: "Degraded",
+      text: `The API is up, but ${failing.length ? failing.map((dep) => describe(dep).label.toLowerCase()).join(", ") : "a dependency"} ${failing.length === 1 ? "isn't" : "aren't"} responding. Some things, like sending or background jobs, may be delayed.`,
+    };
+  } else if (readiness.isError) {
+    overall = {
+      tone: "warn",
+      title: "Status unknown",
+      text: "The API is up, but the readiness check didn't answer.",
+    };
+  } else {
+    overall = { tone: "ok", title: "All systems operational", text: "Everything is up and responding." };
+  }
+
+  const checkedAt = Math.max(liveness.dataUpdatedAt, readiness.dataUpdatedAt, liveness.errorUpdatedAt);
+  const refreshing = liveness.isFetching || readiness.isFetching;
 
   return (
-    <main
-      className="min-h-screen flex items-center justify-center p-6"
-      style={{ background: "var(--background)" }}
-    >
-      <div className="w-full max-w-xl">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ background: "var(--primary-fixed)" }}
+    <main className="min-h-screen bg-[var(--background)] px-4 py-10 sm:py-16">
+      <div className="mx-auto w-full max-w-2xl space-y-5">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-[var(--primary-fixed)]">
+              <Activity className="size-5 text-[var(--primary)]" aria-hidden />
+            </div>
+            <div>
+              <h1 className="text-[22px] font-semibold text-[var(--on-surface)]">System status</h1>
+              <p className="text-[13px] text-[var(--on-surface-variant)]">
+                Live health of the API and the services it depends on.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <span className="text-[12px] text-[var(--on-surface-variant)]" aria-live="polite">
+              {checkedAt ? `Checked ${new Date(checkedAt).toLocaleTimeString()}` : "Checking…"}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void liveness.refetch();
+                void readiness.refetch();
+              }}
+              disabled={refreshing}
+            >
+              <RefreshCw className={cn(refreshing && "animate-spin")} aria-hidden />
+              Refresh
+            </Button>
+          </div>
+        </header>
+
+        {loading ? (
+          <div className="h-20 animate-pulse rounded-lg bg-[var(--surface-container-high)]" role="status" aria-label="Checking status" />
+        ) : (
+          <section
+            aria-live="polite"
+            className={cn(
+              "flex items-start gap-3 rounded-lg border p-4",
+              overall.tone === "ok" && "border-[var(--secondary)]/30 bg-[var(--secondary-fixed)]/40",
+              overall.tone === "warn" && "border-[var(--tertiary-fixed-dim)] bg-[var(--tertiary-fixed)]/50",
+              overall.tone === "down" && "border-[var(--error)]/30 bg-[var(--error-container)]/60",
+            )}
           >
-            <Server className="w-5 h-5" style={{ color: "var(--primary)" }} />
-          </div>
-          <div>
-            <h1
-              className="text-[20px] font-semibold"
-              style={{ color: "var(--on-surface)" }}
-            >
-              System Status
-            </h1>
-            <p className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
-              LeadsGen API infrastructure
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5 text-[12px]" style={{ color: "var(--on-surface-variant)" }}>
-            <RefreshCw className="w-3.5 h-3.5" />
-            Auto-refreshes every 30s · last {lastChecked}
-          </div>
-        </div>
-
-        {/* Liveness */}
-        <div
-          className="bg-white border rounded-lg p-5 shadow-sm mb-4"
-          style={{ borderColor: "var(--outline-variant)" }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2
-              className="text-[14px] font-semibold"
-              style={{ color: "var(--on-surface)" }}
-            >
-              API Liveness
-            </h2>
-            {liveness.isLoading ? (
-              <div
-                className="w-4 h-4 border-2 rounded-full animate-spin"
-                style={{
-                  borderColor: "var(--primary-container)",
-                  borderTopColor: "var(--primary)",
-                }}
-              />
-            ) : liveness.isError ? (
-              <StatusPill status="error" />
-            ) : liveness.data ? (
-              <StatusPill status={liveness.data.status} />
-            ) : null}
-          </div>
-          {liveness.isError && (
-            <div
-              className="flex items-start gap-2 p-3 rounded"
-              style={{ background: "var(--error-container)" }}
-            >
-              <AlertTriangle
-                className="w-4 h-4 mt-0.5 shrink-0"
-                style={{ color: "var(--on-error-container)" }}
-              />
-              <p className="text-[13px]" style={{ color: "var(--on-error-container)" }}>
-                API is unreachable. Make sure the backend is running on port 8000 and CORS is
-                configured.
-              </p>
+            {overall.tone === "ok" ? (
+              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[var(--secondary)]" aria-hidden />
+            ) : overall.tone === "warn" ? (
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-[var(--tertiary)]" aria-hidden />
+            ) : (
+              <XCircle className="mt-0.5 size-5 shrink-0 text-[var(--error)]" aria-hidden />
+            )}
+            <div>
+              <h2 className="text-[15px] font-semibold text-[var(--on-surface)]">{overall.title}</h2>
+              <p className="text-[13px] text-[var(--on-surface-variant)]">{overall.text}</p>
             </div>
-          )}
-          {liveness.data && (
-            <div className="flex items-center justify-between">
-              <span className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
-                Environment
-              </span>
-              <span
-                className="px-2 py-0.5 rounded text-[12px] font-mono"
-                style={{
-                  background: "var(--surface-container)",
-                  color: "var(--on-surface)",
-                }}
-              >
-                {liveness.data.environment}
-              </span>
-            </div>
-          )}
-        </div>
+          </section>
+        )}
 
-        {/* Readiness + dependencies */}
-        <div
-          className="bg-white border rounded-lg p-5 shadow-sm"
-          style={{ borderColor: "var(--outline-variant)" }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2
-              className="text-[14px] font-semibold"
-              style={{ color: "var(--on-surface)" }}
-            >
-              Dependencies
-            </h2>
-            {readiness.isLoading && liveness.isSuccess ? (
-              <div
-                className="w-4 h-4 border-2 rounded-full animate-spin"
-                style={{
-                  borderColor: "var(--primary-container)",
-                  borderTopColor: "var(--primary)",
-                }}
-              />
-            ) : readiness.data ? (
-              <StatusPill status={readiness.data.status} />
-            ) : null}
-          </div>
-
-          {readiness.isError && (
-            <div
-              className="flex items-start gap-2 p-3 rounded mb-4"
-              style={{ background: "var(--error-container)" }}
-            >
-              <AlertTriangle
-                className="w-4 h-4 mt-0.5 shrink-0"
-                style={{ color: "var(--on-error-container)" }}
-              />
-              <p className="text-[13px]" style={{ color: "var(--on-error-container)" }}>
-                Readiness check failed — database or Redis may be down.
-              </p>
-            </div>
-          )}
-
-          {dependencies.length > 0 && (
-            <div className="space-y-3">
-              {dependencies.map((dep) => {
-                const Icon = DEP_ICONS[dep.name.toLowerCase()] ?? Server;
-                const ok = dep.status === "ok" || dep.status === "ready";
-                return (
-                  <div
-                    key={dep.name}
-                    className="flex items-start justify-between p-3 rounded"
-                    style={{
-                      background: ok
-                        ? "var(--surface-container-low)"
-                        : "var(--error-container)",
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className="w-4 h-4"
-                        style={{ color: ok ? "var(--primary)" : "var(--on-error-container)" }}
-                      />
-                      <div>
-                        <p
-                          className="text-[13px] font-semibold capitalize"
-                          style={{
-                            color: ok
-                              ? "var(--on-surface)"
-                              : "var(--on-error-container)",
-                          }}
-                        >
-                          {dep.name}
-                        </p>
-                        {dep.detail && (
-                          <p
-                            className="text-[12px] mt-0.5"
-                            style={{
-                              color: ok
-                                ? "var(--on-surface-variant)"
-                                : "var(--on-error-container)",
-                            }}
-                          >
-                            {dep.detail}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {ok ? (
-                      <CheckCircle2
-                        className="w-4 h-4 shrink-0"
-                        style={{ color: "var(--secondary)" }}
-                      />
-                    ) : (
-                      <XCircle
-                        className="w-4 h-4 shrink-0"
-                        style={{ color: "var(--on-error-container)" }}
-                      />
-                    )}
+        <section className="rounded-lg border border-[var(--outline-variant)] bg-white shadow-sm" aria-labelledby="components-heading">
+          <h2 id="components-heading" className="border-b border-[var(--outline-variant)] px-4 py-3 text-[14px] font-semibold text-[var(--on-surface)]">
+            Components
+          </h2>
+          <ul className="divide-y divide-[var(--outline-variant)]">
+            <li className="flex items-start gap-3 px-4 py-3">
+              <Server className="mt-0.5 size-4 shrink-0 text-[var(--primary)]" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold text-[var(--on-surface)]">API</p>
+                <p className="text-[12px] text-[var(--on-surface-variant)]">
+                  {liveness.data ? (
+                    <>
+                      Environment{" "}
+                      <span className="rounded bg-[var(--surface-container)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--on-surface)]">
+                        {liveness.data.environment}
+                      </span>
+                    </>
+                  ) : (
+                    "Handles every request from the app."
+                  )}
+                </p>
+              </div>
+              {liveness.isLoading ? null : <Pill ok={apiUp} label={apiUp ? "Operational" : "Down"} />}
+            </li>
+            {(ready?.dependencies ?? []).map((dependency) => {
+              const info = describe(dependency);
+              const Icon = info.icon;
+              const ok = isOk(dependency.status);
+              return (
+                <li key={dependency.name} className="flex items-start gap-3 px-4 py-3">
+                  <Icon className={cn("mt-0.5 size-4 shrink-0", ok ? "text-[var(--primary)]" : "text-[var(--error)]")} aria-hidden />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold capitalize text-[var(--on-surface)]">{info.label}</p>
+                    {info.about ? (
+                      <p className="text-[12px] text-[var(--on-surface-variant)]">{info.about}</p>
+                    ) : null}
+                    {dependency.detail ? (
+                      <p className={cn("mt-1 break-words font-mono text-[11px]", ok ? "text-[var(--outline)]" : "text-[var(--error)]")}>
+                        {dependency.detail}
+                      </p>
+                    ) : null}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <Pill ok={ok} label={ok ? "Operational" : dependency.status === "missing" ? "Missing" : "Not responding"} />
+                </li>
+              );
+            })}
+            {!ready && !readiness.isLoading ? (
+              <li className="px-4 py-3 text-[13px] text-[var(--on-surface-variant)]">
+                {liveness.isError
+                  ? "Dependencies can't be checked while the API is unreachable."
+                  : "The readiness check didn't return any details."}
+              </li>
+            ) : null}
+          </ul>
+        </section>
 
-          {!readiness.data && !readiness.isLoading && !readiness.isError && liveness.isError && (
-            <p
-              className="text-[13px] text-center"
-              style={{ color: "var(--on-surface-variant)" }}
-            >
-              Connect the API first to check dependencies.
-            </p>
-          )}
-        </div>
+        <p className="text-center text-[12px] text-[var(--on-surface-variant)]">
+          Refreshes every 30 seconds.{" "}
+          <Link href="/dashboard" className="text-[var(--primary)] hover:underline">
+            Back to the app
+          </Link>
+        </p>
       </div>
     </main>
   );

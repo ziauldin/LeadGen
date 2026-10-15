@@ -1,356 +1,358 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useState } from "react";
+import Link from "next/link";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  AlertTriangle,
   ArrowLeft,
-  Calendar,
-  Clock,
-  Megaphone,
+  CheckCircle2,
+  OctagonAlert,
   Pause,
+  Pencil,
   Play,
   Send,
-  Users,
+  ShieldCheck,
+  UserPlus,
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { PageHeader } from "@/components/layout/page-header";
-import { campaignsApi, leadsApi } from "@/lib/api/endpoints";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { ErrorState } from "@/components/shared/loading-error";
+import { AddLeadsDialog } from "@/components/campaigns/add-leads-dialog";
+import { CampaignEnrollmentsTable } from "@/components/campaigns/campaign-enrollments-table";
+import { CampaignMessagesTable } from "@/components/campaigns/campaign-messages-table";
+import { CampaignOverview } from "@/components/campaigns/campaign-overview";
+import { CampaignSequenceView } from "@/components/campaigns/campaign-sequence-view";
+import { CampaignStatusBadge } from "@/components/campaigns/campaign-status-badge";
+import { formatDate, formatDateTime, formatSendingDays } from "@/components/campaigns/format";
+import { useWorkspace } from "@/hooks/use-workspace";
+import { ApiError } from "@/lib/api/client";
+import { campaignsApi, nichesApi } from "@/lib/api/endpoints";
+import type { Campaign } from "@/lib/api/types";
 
-export default function CampaignDetailPage() {
-  const params = useParams();
+const TABS = [
+  { value: "overview", label: "Overview" },
+  { value: "sequence", label: "Sequence" },
+  { value: "enrollments", label: "Leads" },
+  { value: "messages", label: "Emails" },
+] as const;
+type TabValue = (typeof TABS)[number]["value"];
+
+function isTab(value: string | null): value is TabValue {
+  return TABS.some((tab) => tab.value === value);
+}
+
+function scheduleSummary(campaign: Campaign): string {
+  const window =
+    campaign.sending_window_start && campaign.sending_window_end
+      ? `${campaign.sending_window_start}–${campaign.sending_window_end}`
+      : "the default window";
+  return `${formatSendingDays(campaign.sending_days)}, ${window}${campaign.timezone ? ` (${campaign.timezone})` : ""}, up to ${campaign.daily_send_limit} a day`;
+}
+
+function BackLink() {
+  return (
+    <Link
+      href="/campaigns"
+      className="mb-3 inline-flex items-center gap-1.5 rounded text-[13px] font-medium text-[var(--on-surface-variant)] outline-none hover:text-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+    >
+      <ArrowLeft className="size-4" aria-hidden />
+      All campaigns
+    </Link>
+  );
+}
+
+function CampaignDetail() {
+  const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
-  const [confirmSend, setConfirmSend] = useState(false);
+  const { hasRole } = useWorkspace();
+  const isAdmin = hasRole("admin");
 
-  const { data: campaign, isLoading } = useQuery({
-    queryKey: ["campaigns", id],
+  const tabParam = searchParams.get("tab");
+  const tab: TabValue = isTab(tabParam) ? tabParam : "overview";
+  const [confirm, setConfirm] = useState<"start" | "pause" | "send" | null>(null);
+  const [addLeadsOpen, setAddLeadsOpen] = useState(false);
+
+  const campaignQuery = useQuery({
+    queryKey: ["campaign", id],
     queryFn: () => campaignsApi.get(id),
     enabled: Number.isFinite(id),
   });
-
-  const { data: leads } = useQuery({
-    queryKey: ["leads", campaign?.niche_id],
-    queryFn: () => leadsApi.list({ niche_id: campaign!.niche_id }),
+  const campaign = campaignQuery.data;
+  const niche = useQuery({
+    queryKey: ["niche", campaign?.niche_id],
+    queryFn: () => nichesApi.get(campaign!.niche_id),
     enabled: Boolean(campaign?.niche_id),
   });
 
-  const eligibleLeads = useMemo(
-    () =>
-      leads?.items.filter(
-        (lead) =>
-          lead.primary_email &&
-          lead.status !== "opted_out" &&
-          lead.source_url &&
-          lead.compliance_source_note,
-      ) ?? [],
-    [leads?.items],
-  );
+  function refresh(updated?: Campaign) {
+    if (updated) queryClient.setQueryData(["campaign", id], updated);
+    queryClient.invalidateQueries({ queryKey: ["campaign", id] });
+    queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+  }
 
-  const startMutation = useMutation({
+  const start = useMutation({
     mutationFn: () => campaignsApi.start(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaigns", id] });
-      toast.success("Campaign started");
+    onSuccess: ({ campaign: updated }) => {
+      refresh(updated);
+      setConfirm(null);
+      toast.success("Campaign started", {
+        description: "Approved emails will send inside the sending window.",
+      });
     },
-    onError: () => toast.error("Failed to start campaign"),
   });
-
-  const pauseMutation = useMutation({
+  const pause = useMutation({
     mutationFn: () => campaignsApi.pause(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaigns", id] });
-      toast.success("Campaign paused");
+    onSuccess: ({ campaign: updated }) => {
+      refresh(updated);
+      setConfirm(null);
+      toast.success("Campaign paused", { description: "No emails will send until you start it again." });
     },
-    onError: () => toast.error("Failed to pause campaign"),
   });
-
-  const addLeadsMutation = useMutation({
-    mutationFn: () => campaignsApi.addLeads(id, selectedLeadIds),
-    onSuccess: (result) => {
-      toast.success(`Added ${result.created} leads to campaign`);
-      setSelectedLeadIds([]);
-      queryClient.invalidateQueries({ queryKey: ["campaigns", id] });
-    },
-    onError: () => toast.error("Failed to add leads"),
-  });
-
-  const sendMutation = useMutation({
+  const sendNow = useMutation({
     mutationFn: () => campaignsApi.processSends(id),
     onSuccess: (result) => {
-      toast.success(`Queued ${result.sent}, skipped ${result.skipped}, failed ${result.failed}`);
-      setConfirmSend(false);
-      queryClient.invalidateQueries({ queryKey: ["campaigns", id] });
+      refresh();
+      queryClient.invalidateQueries({ queryKey: ["approvals"] });
+      setConfirm(null);
+      const summary = `${result.sent} sent, ${result.skipped} skipped, ${result.failed} failed`;
+      if (result.failed > 0) toast.warning("Some emails failed to send", { description: summary });
+      else if (result.sent === 0) toast.info("Nothing was due to send", { description: summary });
+      else toast.success(`${result.sent} ${result.sent === 1 ? "email" : "emails"} sent`, { description: summary });
     },
-    onError: () => toast.error("Sending failed"),
   });
 
-  function toggleLead(leadId: number) {
-    setSelectedLeadIds((current) =>
-      current.includes(leadId) ? current.filter((x) => x !== leadId) : [...current, leadId]
-    );
+  function changeTab(value: unknown) {
+    const next = String(value);
+    // Each tab has its own filters and paging, so start from a clean URL.
+    router.replace(next === "overview" ? pathname : `${pathname}?tab=${next}`, { scroll: false });
   }
 
-  if (isLoading) {
+  if (!Number.isFinite(id)) {
+    return <ErrorState message="This campaign link isn't valid." />;
+  }
+
+  if (campaignQuery.isLoading) {
     return (
-      <div className="p-8 text-center">
-        <div
-          className="inline-block w-5 h-5 border-2 rounded-full animate-spin mb-3"
-          style={{ borderColor: "var(--primary-container)", borderTopColor: "var(--primary)" }}
-        />
-        <p className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
-          Loading campaign…
-        </p>
+      <div role="status" aria-label="Loading campaign" className="space-y-4">
+        <div className="h-10 w-2/3 max-w-md animate-pulse rounded bg-[var(--surface-container-high)]" />
+        <div className="h-5 w-1/2 max-w-sm animate-pulse rounded bg-[var(--surface-container-high)]" />
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-24 animate-pulse rounded-lg bg-[var(--surface-container-high)]" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (!campaign) return <p className="text-sm text-destructive">Campaign not found.</p>;
-
-  return (
-    <div>
-      <PageHeader
-        title={campaign.name}
-        description={`Manage sequence steps, add leads, and process outreach sends under compliant rate limits.`}
-        actions={
-          <>
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-2 px-4 py-2 border rounded text-[13px] font-medium transition-colors"
-              style={{
-                background: "var(--surface-container-lowest)",
-                borderColor: "var(--outline-variant)",
-                color: "var(--on-surface)",
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
-            {campaign.status !== "active" ? (
-              <button
-                onClick={() => startMutation.mutate()}
-                disabled={startMutation.isPending}
-                className="flex items-center gap-2 px-5 py-2 rounded text-[13px] font-medium text-white transition-colors"
-                style={{ background: "var(--primary)" }}
-              >
-                <Play className="w-4 h-4" />
-                Start Campaign
-              </button>
-            ) : (
-              <button
-                onClick={() => pauseMutation.mutate()}
-                disabled={pauseMutation.isPending}
-                className="flex items-center gap-2 px-5 py-2 border rounded text-[13px] font-medium transition-colors"
-                style={{
-                  background: "var(--surface-container-lowest)",
-                  borderColor: "var(--outline-variant)",
-                  color: "var(--on-surface)",
-                }}
-              >
-                <Pause className="w-4 h-4" />
-                Pause Campaign
-              </button>
-            )}
-            <button
-              onClick={() => setConfirmSend(true)}
-              disabled={campaign.status !== "active" || sendMutation.isPending}
-              className="flex items-center gap-2 px-5 py-2 rounded text-[13px] font-medium text-white transition-colors disabled:opacity-50"
-              style={{ background: "var(--secondary)" }}
-            >
-              <Send className="w-4 h-4" />
-              Process Sends
-            </button>
-          </>
+  if (campaignQuery.error || !campaign) {
+    const notFound = campaignQuery.error instanceof ApiError && campaignQuery.error.status === 404;
+    return (
+      <ErrorState
+        message={notFound ? "We couldn't find this campaign. It may have been deleted." : undefined}
+        error={campaignQuery.error}
+        onRetry={notFound ? undefined : () => campaignQuery.refetch()}
+        action={
+          notFound ? (
+            <ButtonLink variant="outline" size="sm" href="/campaigns">
+              Back to campaigns
+            </ButtonLink>
+          ) : null
         }
       />
+    );
+  }
 
-      {/* Campaign settings summary banner */}
-      <div
-        className="flex flex-wrap items-center gap-6 px-5 py-4 border rounded-lg mb-6 shadow-sm bg-white"
-        style={{ borderColor: "var(--outline-variant)" }}
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-[13px]" style={{ color: "var(--on-surface-variant)" }}>
-            Campaign Status:
-          </span>
-          <StatusBadge status={campaign.status} />
-        </div>
-        <div className="flex items-center gap-2 text-[13px]" style={{ color: "var(--on-surface)" }}>
-          <Clock className="w-4 h-4" style={{ color: "var(--primary)" }} />
-          <strong>Daily limit:</strong> {campaign.daily_send_limit} sends
-        </div>
-        {campaign.sending_window_start && (
-          <div className="flex items-center gap-2 text-[13px]" style={{ color: "var(--on-surface)" }}>
-            <Calendar className="w-4 h-4" style={{ color: "var(--primary)" }} />
-            <strong>Sending Window:</strong> {campaign.sending_window_start} – {campaign.sending_window_end}
+  const steps = campaign.steps.length;
+  const canStart = campaign.status === "draft" || campaign.status === "paused";
+  const canPause = campaign.status === "active";
+  const autoPaused = Boolean(campaign.auto_paused_reason) && campaign.status === "paused";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="break-words text-[28px] leading-[36px] font-bold tracking-[-0.02em] text-[var(--on-surface)] sm:text-[36px] sm:leading-[44px]">
+              {campaign.name}
+            </h2>
+            <CampaignStatusBadge status={campaign.status} />
           </div>
-        )}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-        {/* Left: Sequence Steps */}
-        <div
-          className="bg-white border rounded-lg p-6 shadow-sm"
-          style={{ borderColor: "var(--outline-variant)" }}
-        >
-          <div className="flex items-center gap-2 mb-6">
-            <Megaphone className="w-5 h-5" style={{ color: "var(--primary)" }} />
-            <h3
-              className="text-[16px] font-semibold"
-              style={{ color: "var(--on-surface)" }}
-            >
-              Outreach Sequence Steps
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-            {campaign.steps.map((step) => (
-              <div
-                key={step.id}
-                className="border rounded-lg p-4 transition-colors"
-                style={{ borderColor: "var(--outline-variant)", background: "var(--surface-container-lowest)" }}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider"
-                    style={{
-                      background: "var(--primary-fixed)",
-                      color: "var(--on-primary-fixed)",
-                    }}
-                  >
-                    Step {step.step_number}
-                  </span>
-                  <span
-                    className="text-[12px] flex items-center gap-1 font-medium"
-                    style={{ color: "var(--on-surface-variant)" }}
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    +{step.delay_days} days delay
-                  </span>
-                </div>
-                <h4
-                  className="text-[14px] font-semibold mb-2"
-                  style={{ color: "var(--on-surface)" }}
-                >
-                  Subject: {step.subject_template}
-                </h4>
-                <div
-                  className="p-3 rounded text-[13px] leading-[20px] font-sans whitespace-pre-wrap"
-                  style={{
-                    background: "var(--surface-container-low)",
-                    color: "var(--on-surface)",
-                  }}
-                >
-                  {step.body_template}
-                </div>
-              </div>
-            ))}
-
-            {campaign.steps.length === 0 && (
-              <p className="text-[13px] text-center py-10" style={{ color: "var(--on-surface-variant)" }}>
-                No steps defined in this campaign sequence.
-              </p>
+          <p className="mt-1 text-[13px] text-[var(--on-surface-variant)]">
+            {niche.data ? (
+              <Link href={`/niches/${campaign.niche_id}`} className="font-medium text-[var(--primary)] hover:underline">
+                {niche.data.name}
+              </Link>
+            ) : (
+              "Niche"
             )}
-          </div>
+            {" · "}
+            {steps} {steps === 1 ? "step" : "steps"} · Created {formatDate(campaign.created_at)}
+          </p>
+          <p className="mt-0.5 text-[12px] text-[var(--on-surface-variant)]">Sends {scheduleSummary(campaign)}</p>
         </div>
-
-        {/* Right: Add eligible leads */}
-        <div className="flex flex-col gap-6">
-          <div
-            className="bg-white border rounded-lg p-5 shadow-sm"
-            style={{ borderColor: "var(--outline-variant)" }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-4.5 h-4.5" style={{ color: "var(--primary)" }} />
-                <h3
-                  className="text-[14px] font-semibold"
-                  style={{ color: "var(--on-surface)" }}
-                >
-                  Eligible Leads
-                </h3>
-              </div>
-              <button
-                onClick={() => addLeadsMutation.mutate()}
-                disabled={selectedLeadIds.length === 0 || addLeadsMutation.isPending}
-                className="px-3 py-1.5 rounded text-[12px] font-medium text-white transition-colors disabled:opacity-50"
-                style={{ background: "var(--primary)" }}
-              >
-                Add Selected ({selectedLeadIds.length})
-              </button>
-            </div>
-
-            <p className="text-[12px] mb-4" style={{ color: "var(--on-surface-variant)" }}>
-              Leads from the target niche that meet compliance conditions (Email, Source URL, and
-              Compliance Source Note recorded).
-            </p>
-
-            <div className="max-h-[360px] overflow-y-auto space-y-2 pr-1">
-              {eligibleLeads.map((lead) => (
-                <div
-                  key={lead.id}
-                  onClick={() => toggleLead(lead.id)}
-                  className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors"
-                  style={{
-                    borderColor: selectedLeadIds.includes(lead.id)
-                      ? "var(--primary)"
-                      : "var(--outline-variant)",
-                    background: selectedLeadIds.includes(lead.id)
-                      ? "var(--primary-fixed)"
-                      : "var(--surface-container-lowest)",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedLeadIds.includes(lead.id)}
-                    onChange={() => {}}
-                    className="mt-1 rounded shrink-0 pointer-events-none"
-                  />
-                  <div className="min-w-0">
-                    <p
-                      className="text-[13px] font-semibold truncate"
-                      style={{ color: "var(--on-surface)" }}
-                    >
-                      {lead.full_name}
-                    </p>
-                    <p className="text-[12px] truncate" style={{ color: "var(--on-surface-variant)" }}>
-                      {lead.primary_email}
-                    </p>
-                  </div>
-                </div>
-              ))}
-
-              {eligibleLeads.length === 0 && (
-                <div
-                  className="p-4 rounded border text-center"
-                  style={{ borderColor: "var(--outline-variant)", background: "var(--surface-container-low)" }}
-                >
-                  <AlertTriangle className="w-5 h-5 mx-auto mb-2" style={{ color: "var(--outline)" }} />
-                  <p className="text-[12px]" style={{ color: "var(--on-surface-variant)" }}>
-                    No outreach-ready leads in this niche. Ensure leads have email, source URL, and
-                    compliance notes set first.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {canStart ? (
+            <Button onClick={() => setConfirm("start")} disabled={steps === 0}>
+              <Play aria-hidden />
+              {campaign.status === "paused" ? "Resume" : "Start"}
+            </Button>
+          ) : null}
+          {canPause ? (
+            <Button variant="outline" onClick={() => setConfirm("pause")}>
+              <Pause aria-hidden />
+              Pause
+            </Button>
+          ) : null}
+          <Button variant="outline" onClick={() => setAddLeadsOpen(true)}>
+            <UserPlus aria-hidden />
+            Add leads
+          </Button>
+          <ButtonLink variant="outline" href={`/campaigns/${id}/edit`}>
+            <Pencil aria-hidden />
+            Edit
+          </ButtonLink>
+          {isAdmin ? (
+            <Button
+              variant="secondary"
+              onClick={() => setConfirm("send")}
+              disabled={campaign.status !== "active"}
+              title={campaign.status !== "active" ? "Start the campaign first" : undefined}
+            >
+              <Send aria-hidden />
+              Send due emails now
+            </Button>
+          ) : null}
         </div>
       </div>
+
+      {campaign.auto_paused_reason ? (
+        <Alert variant="destructive" className="border-[var(--error)] bg-[var(--error-container)]/40 px-4 py-3">
+          <OctagonAlert aria-hidden />
+          <AlertTitle className="text-[14px] font-semibold">
+            {autoPaused ? "Sending was paused automatically" : "This campaign was paused automatically earlier"}
+          </AlertTitle>
+          <AlertDescription className="text-[13px] text-[var(--on-error-container)]">
+            <p>{campaign.auto_paused_reason}.</p>
+            <p>
+              Too many bounces or spam complaints can damage your sending reputation. Check the{" "}
+              <button
+                type="button"
+                className="font-semibold underline"
+                onClick={() => router.replace(`${pathname}?tab=messages&status=bounced`, { scroll: false })}
+              >
+                bounced emails
+              </button>
+              , clean your lead list, then {autoPaused ? "resume the campaign" : "keep an eye on the rates"}.
+            </p>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {campaign.completed_at ? (
+        <Alert className="border-[var(--primary)]/30 bg-[var(--primary-fixed)]/40 px-4 py-3">
+          <CheckCircle2 aria-hidden className="text-[var(--primary)]" />
+          <AlertTitle className="text-[14px] font-semibold">Completed on {formatDateTime(campaign.completed_at)}</AlertTitle>
+          <AlertDescription className="text-[13px]">
+            Every lead has finished the sequence or was stopped. Add more leads to keep it going.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {campaign.status === "draft" ? (
+        <Alert className="px-4 py-3">
+          <ShieldCheck aria-hidden className="text-[var(--secondary)]" />
+          <AlertTitle className="text-[14px] font-semibold">This campaign is a draft</AlertTitle>
+          <AlertDescription className="text-[13px]">
+            Add leads to create step 1 drafts, approve them in{" "}
+            <Link href={`/approvals?campaign_id=${id}`}>Approvals</Link>, then start the campaign. Approved
+            emails only send while it&apos;s active.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      <Tabs value={tab} onValueChange={changeTab}>
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <TabsList variant="line" className="border-b border-[var(--outline-variant)] pb-1">
+            {TABS.map((item) => (
+              <TabsTrigger key={item.value} value={item.value} className="px-3 text-[13px]">
+                {item.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        <TabsContent value="overview" className="pt-4">
+          <CampaignOverview campaignId={id} />
+        </TabsContent>
+        <TabsContent value="sequence" className="pt-4">
+          <CampaignSequenceView campaign={campaign} />
+        </TabsContent>
+        <TabsContent value="enrollments" className="pt-4">
+          <CampaignEnrollmentsTable campaignId={id} totalSteps={steps} onAddLeads={() => setAddLeadsOpen(true)} />
+        </TabsContent>
+        <TabsContent value="messages" className="pt-4">
+          <CampaignMessagesTable campaignId={id} totalSteps={steps} />
+        </TabsContent>
+      </Tabs>
+
+      <AddLeadsDialog campaign={campaign} open={addLeadsOpen} onOpenChange={setAddLeadsOpen} />
 
       <ConfirmDialog
-        open={confirmSend}
-        onOpenChange={setConfirmSend}
-        title="Process campaign sends?"
-        description="This will scan approved email drafts and trigger sends through configured providers. Only approved messages that pass compliance checks will be sent. Daily limits and per-domain throttles will be enforced."
-        confirmLabel="Process Sends"
-        onConfirm={() => sendMutation.mutate()}
-        loading={sendMutation.isPending}
+        open={confirm === "start"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title={campaign.status === "paused" ? "Resume this campaign?" : "Start this campaign?"}
+        description={`Approved emails will send ${scheduleSummary(campaign)}. Every email still needs approval in Approvals before it can send.`}
+        confirmLabel={campaign.status === "paused" ? "Resume campaign" : "Start campaign"}
+        loading={start.isPending}
+        onConfirm={() => start.mutate()}
+      >
+        {autoPaused ? (
+          <p className="rounded-md bg-[var(--error-container)]/50 px-3 py-2 text-[13px] text-[var(--on-error-container)]">
+            This campaign was paused because of high bounce or complaint rates. Make sure you&apos;ve fixed
+            the cause before resuming.
+          </p>
+        ) : null}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={confirm === "pause"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title="Pause this campaign?"
+        description="No emails will send while it's paused. Drafts stay in Approvals, and you can resume at any time."
+        confirmLabel="Pause campaign"
+        loading={pause.isPending}
+        onConfirm={() => pause.mutate()}
       />
+
+      <ConfirmDialog
+        open={confirm === "send"}
+        onOpenChange={(open) => !open && setConfirm(null)}
+        title="Send due emails now?"
+        description="This sends the campaign's approved emails that are due, without waiting for the scheduler. Only approved emails are sent, and sending limits still apply."
+        confirmLabel="Send due emails"
+        loading={sendNow.isPending}
+        onConfirm={() => sendNow.mutate()}
+      />
+    </div>
+  );
+}
+
+export default function CampaignDetailPage() {
+  return (
+    <div>
+      <BackLink />
+      <Suspense fallback={<div role="status" className="h-40 animate-pulse rounded-lg bg-[var(--surface-container-high)]" />}>
+        <CampaignDetail />
+      </Suspense>
     </div>
   );
 }

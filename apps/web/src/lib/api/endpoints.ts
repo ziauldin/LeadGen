@@ -142,6 +142,8 @@ export const leadsApi = {
   list: (params?: ListParams) => apiFetch<Paginated<Lead>>(`/leads${queryString(params)}`),
   stats: (nicheId?: number) => apiFetch<LeadStats>(`/leads/stats${queryString({ niche_id: nicheId })}`),
   get: (id: number) => apiFetch<Lead>(`/leads/${id}`),
+  create: (data: components["schemas"]["LeadCreate"]) =>
+    apiFetch<Lead>("/leads", { method: "POST", body: json(data) }),
   update: (id: number, data: LeadUpdate) =>
     apiFetch<Lead>(`/leads/${id}`, { method: "PATCH", body: json(data) }),
   delete: (id: number) => apiFetch<void>(`/leads/${id}`, { method: "DELETE" }),
@@ -190,10 +192,11 @@ export const searchesApi = {
       body: json({ niche_id: nicheId, query: queryText, ...(provider ? { provider } : {}) }),
     }),
   get: (id: number) => apiFetch<SearchQuery>(`/searches/${id}`),
-  saveResults: (id: number, resultIndexes: number[]) =>
-    apiFetch<{ created: number }>(`/searches/${id}/save-results`, {
+  /** Save the chosen results (by URL) as leads and companies. */
+  saveResults: (id: number, selectedUrls: string[]) =>
+    apiFetch<{ created: number; skipped: number }>(`/searches/${id}/save-results`, {
       method: "POST",
-      body: json({ result_indexes: resultIndexes }),
+      body: json({ selected_urls: selectedUrls }),
     }),
 };
 

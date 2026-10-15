@@ -1,13 +1,17 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useId } from "react";
+import { useForm, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   nicheFormToPayload,
   nicheSchema,
   type NicheFormValues,
 } from "@/lib/validations/forms";
-import type { Niche } from "@/lib/api/types";
+import type { Niche, NicheCreate } from "@/lib/api/types";
 
 function nicheToDefaults(niche?: Niche): NicheFormValues {
   return {
@@ -22,6 +26,63 @@ function nicheToDefaults(niche?: Niche): NicheFormValues {
   };
 }
 
+function FormField({
+  id,
+  label,
+  hint,
+  error,
+  multiline,
+  rows = 3,
+  registration,
+  ...inputProps
+}: {
+  id: string;
+  label: string;
+  hint?: string;
+  error?: string;
+  multiline?: boolean;
+  rows?: number;
+  registration: UseFormRegisterReturn;
+} & Omit<React.ComponentProps<"input">, "id">) {
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-[13px] font-medium text-[var(--on-surface)]">
+        {label}
+      </label>
+      {multiline ? (
+        <Textarea
+          id={id}
+          rows={rows}
+          placeholder={inputProps.placeholder}
+          aria-invalid={Boolean(error)}
+          aria-describedby={describedBy}
+          className="text-[13px]"
+          {...registration}
+        />
+      ) : (
+        <Input
+          id={id}
+          aria-invalid={Boolean(error)}
+          aria-describedby={describedBy}
+          className="h-9 text-[13px]"
+          {...inputProps}
+          {...registration}
+        />
+      )}
+      {error ? (
+        <p id={`${id}-error`} className="text-[12px] text-destructive">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={`${id}-hint`} className="text-[12px] text-[var(--on-surface-variant)]">
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export function NicheForm({
   niche,
   submitLabel,
@@ -30,175 +91,104 @@ export function NicheForm({
 }: {
   niche?: Niche;
   submitLabel: string;
-  onSubmit: (payload: ReturnType<typeof nicheFormToPayload>) => void | Promise<void>;
+  onSubmit: (payload: NicheCreate) => void | Promise<void>;
   loading?: boolean;
 }) {
+  const uid = useId();
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<NicheFormValues>({
     resolver: zodResolver(nicheSchema),
-    defaultValues: nicheToDefaults(niche),
+    // Editing follows the saved niche (resetting after a save); creating starts blank.
+    ...(niche ? { values: nicheToDefaults(niche) } : { defaultValues: nicheToDefaults() }),
   });
-
-  const labelClass = "block text-[13px] font-semibold mb-1.5";
-  const inputClass = "w-full px-3 py-2.5 border rounded text-[13px] outline-none transition-all";
-  const errorClass = "text-[12px] mt-1 text-red-500";
-
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    e.target.style.borderColor = "var(--primary)";
-    e.target.style.boxShadow = "0 0 0 1px var(--primary)";
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    e.target.style.borderColor = "var(--outline-variant)";
-    e.target.style.boxShadow = "none";
-  };
-
-  const inputStyle: React.CSSProperties = {
-    borderColor: "var(--outline-variant)",
-    color: "var(--on-surface)",
-    background: "var(--surface-container-lowest)",
-  };
+  const fid = (name: string) => `${uid}-${name}`;
 
   return (
     <form
       onSubmit={handleSubmit((values) => onSubmit(nicheFormToPayload(values)))}
+      noValidate
       className="flex flex-col gap-5"
     >
-      <div>
-        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-          Niche Name
-        </label>
-        <input
-          {...register("name")}
-          className={inputClass}
-          style={inputStyle}
-          placeholder="e.g. UK Tech Founders"
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+      <FormField
+        id={fid("name")}
+        label="Niche name"
+        placeholder="e.g. UK SaaS founders"
+        error={errors.name?.message}
+        registration={register("name")}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FormField
+          id={fid("country")}
+          label="Country"
+          placeholder="e.g. UK"
+          error={errors.country?.message}
+          registration={register("country")}
         />
-        {errors.name && <p className={errorClass}>{errors.name.message}</p>}
+        <FormField
+          id={fid("industry")}
+          label="Industry"
+          placeholder="e.g. Software"
+          error={errors.industry?.message}
+          registration={register("industry")}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-            Country
-          </label>
-          <input
-            {...register("country")}
-            className={inputClass}
-            style={inputStyle}
-            placeholder="e.g. UK"
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-          />
-          {errors.country && <p className={errorClass}>{errors.country.message}</p>}
-        </div>
-        <div>
-          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-            Industry
-          </label>
-          <input
-            {...register("industry")}
-            className={inputClass}
-            style={inputStyle}
-            placeholder="e.g. Software, E-commerce"
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-          />
-          {errors.industry && <p className={errorClass}>{errors.industry.message}</p>}
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-            Min Company Size
-          </label>
-          <input
-            type="number"
-            min={0}
-            {...register("company_size_min")}
-            className={inputClass}
-            style={inputStyle}
-            placeholder="e.g. 10"
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-          />
-        </div>
-        <div>
-          <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-            Max Company Size
-          </label>
-          <input
-            type="number"
-            min={0}
-            {...register("company_size_max")}
-            className={inputClass}
-            style={inputStyle}
-            placeholder="e.g. 200"
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-          Target Roles (comma-separated)
-        </label>
-        <input
-          {...register("target_roles")}
-          className={inputClass}
-          style={inputStyle}
-          placeholder="e.g. CEO, Founder, VP Sales"
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+        <FormField
+          id={fid("size-min")}
+          label="Smallest company (people)"
+          type="number"
+          min={0}
+          inputMode="numeric"
+          placeholder="e.g. 10"
+          registration={register("company_size_min")}
+        />
+        <FormField
+          id={fid("size-max")}
+          label="Largest company (people)"
+          type="number"
+          min={0}
+          inputMode="numeric"
+          placeholder="e.g. 200"
+          registration={register("company_size_max")}
         />
       </div>
 
-      <div>
-        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-          Keywords (comma-separated)
-        </label>
-        <textarea
-          rows={3}
-          {...register("keywords")}
-          className="w-full px-3 py-2 border rounded text-[13px] outline-none transition-all"
-          style={inputStyle}
-          placeholder="e.g. artificial intelligence, machinery, logistics"
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-        />
-        {errors.keywords && <p className={errorClass}>{errors.keywords.message}</p>}
-      </div>
+      <FormField
+        id={fid("roles")}
+        label="Target roles"
+        hint="Separate with commas."
+        placeholder="e.g. CEO, Founder, Head of Sales"
+        registration={register("target_roles")}
+      />
 
-      <div>
-        <label className={labelClass} style={{ color: "var(--on-surface)" }}>
-          Exclusion Keywords (comma-separated)
-        </label>
-        <textarea
-          rows={2}
-          {...register("exclusion_keywords")}
-          className="w-full px-3 py-2 border rounded text-[13px] outline-none transition-all"
-          style={inputStyle}
-          placeholder="e.g. agency, consultant, recruitment"
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-        />
-      </div>
+      <FormField
+        id={fid("keywords")}
+        label="Keywords"
+        hint="Separate with commas. Used to build search queries and score leads."
+        placeholder="e.g. B2B SaaS, workflow automation"
+        multiline
+        error={errors.keywords?.message}
+        registration={register("keywords")}
+      />
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="self-start flex items-center justify-center px-6 py-2.5 rounded text-[13px] font-medium text-white transition-opacity disabled:opacity-60 active:scale-[0.98] shadow-sm"
-        style={{ background: "var(--primary)" }}
-      >
-        {loading ? "Saving niche…" : submitLabel}
-      </button>
+      <FormField
+        id={fid("exclusions")}
+        label="Exclude keywords"
+        hint="Separate with commas. Results mentioning these are left out."
+        placeholder="e.g. agency, recruitment"
+        multiline
+        rows={2}
+        registration={register("exclusion_keywords")}
+      />
+
+      <Button type="submit" disabled={loading || (Boolean(niche) && !isDirty)} className="self-start">
+        {loading ? "Saving…" : submitLabel}
+      </Button>
     </form>
   );
 }

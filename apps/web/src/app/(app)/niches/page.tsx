@@ -1,202 +1,242 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Globe, Plus, Tag, Target, Users } from "lucide-react";
+import {
+  Globe,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Tag,
+  Target,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ErrorState } from "@/components/shared/loading-error";
+import { DeleteNicheDialog } from "@/components/niches/delete-niche-dialog";
 import { nichesApi } from "@/lib/api/endpoints";
 import type { Niche } from "@/lib/api/types";
 
-function NicheCard({ niche }: { niche: Niche }) {
+function sizeRange(niche: Niche) {
+  if (!niche.company_size_min && !niche.company_size_max) return null;
+  if (niche.company_size_min && niche.company_size_max)
+    return `${niche.company_size_min}–${niche.company_size_max} people`;
+  if (niche.company_size_min) return `${niche.company_size_min}+ people`;
+  return `Up to ${niche.company_size_max} people`;
+}
+
+function NicheCard({ niche, onDelete }: { niche: Niche; onDelete: (niche: Niche) => void }) {
+  const size = sizeRange(niche);
   return (
-    <div
-      className="bg-white border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow group"
-      style={{ borderColor: "var(--outline-variant)" }}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center"
-          style={{ background: "var(--primary-fixed)" }}
+    <article className="flex flex-col rounded-lg border border-[var(--outline-variant)] bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <span
+          className="flex size-10 items-center justify-center rounded-lg bg-[var(--primary-fixed)]"
+          aria-hidden
         >
-          <Target className="w-5 h-5" style={{ color: "var(--primary)" }} />
-        </div>
-        <Link
-          href={`/niches/${niche.id}`}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded"
-          style={{ color: "var(--on-surface-variant)" }}
-        >
-          <ArrowRight className="w-4 h-4" />
-        </Link>
+          <Target className="size-5 text-[var(--primary)]" />
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="ghost" size="icon-sm" aria-label={`Actions for ${niche.name}`} />
+            }
+          >
+            <MoreHorizontal aria-hidden />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem render={<Link href={`/niches/${niche.id}`} />}>
+              <Pencil aria-hidden />
+              Edit niche
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href={`/leads?niche_id=${niche.id}`} />}>
+              <Users aria-hidden />
+              View leads
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href={`/search?niche_id=${niche.id}`} />}>
+              <Search aria-hidden />
+              Run a search
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => onDelete(niche)}>
+              <Trash2 aria-hidden />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      <h3 className="text-[16px] font-semibold mb-1" style={{ color: "var(--on-surface)" }}>
+      <h3 className="text-[16px] font-semibold text-[var(--on-surface)]">
         <Link
           href={`/niches/${niche.id}`}
-          className="hover:underline"
-          style={{ color: "inherit" }}
+          className="hover:text-[var(--primary)] hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:outline-none"
         >
           {niche.name}
         </Link>
       </h3>
-      <p className="text-[13px] mb-4" style={{ color: "var(--on-surface-variant)" }}>
-        {niche.industry}
-      </p>
+      <p className="mb-3 text-[13px] text-[var(--on-surface-variant)]">{niche.industry}</p>
 
-      <div className="flex items-center gap-3 text-[12px] mb-4" style={{ color: "var(--on-surface-variant)" }}>
-        <div className="flex items-center gap-1">
-          <Globe className="w-3.5 h-3.5" />
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[var(--on-surface-variant)]">
+        <span className="inline-flex items-center gap-1">
+          <Globe className="size-3.5" aria-hidden />
           {niche.country}
-        </div>
-        {niche.company_size_min || niche.company_size_max ? (
-          <div className="flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" />
-            {niche.company_size_min ?? "?"} – {niche.company_size_max ?? "?"} employees
-          </div>
+        </span>
+        {size ? (
+          <span className="inline-flex items-center gap-1">
+            <Users className="size-3.5" aria-hidden />
+            {size}
+          </span>
         ) : null}
       </div>
 
-      {/* Target roles */}
-      {niche.target_roles.length > 0 && (
+      {niche.target_roles.length > 0 ? (
         <div className="mb-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--on-surface-variant)" }}>
-            Target Roles
+          <p className="mb-1.5 text-[11px] font-semibold tracking-wider text-[var(--on-surface-variant)] uppercase">
+            Target roles
           </p>
-          <div className="flex flex-wrap gap-1.5">
+          <ul className="flex flex-wrap gap-1.5">
             {niche.target_roles.slice(0, 4).map((role) => (
-              <span
+              <li
                 key={role}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium"
-                style={{
-                  background: "var(--primary-fixed)",
-                  color: "var(--on-primary-fixed)",
-                }}
+                className="rounded bg-[var(--primary-fixed)] px-2 py-0.5 text-[11px] font-medium text-[var(--on-primary-fixed)]"
               >
                 {role}
-              </span>
+              </li>
             ))}
-          </div>
+            {niche.target_roles.length > 4 ? (
+              <li className="px-1 text-[11px] text-[var(--on-surface-variant)]">
+                +{niche.target_roles.length - 4} more
+              </li>
+            ) : null}
+          </ul>
         </div>
-      )}
+      ) : null}
 
-      {/* Keywords */}
-      {niche.keywords.length > 0 && (
+      {niche.keywords.length > 0 ? (
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: "var(--on-surface-variant)" }}>
+          <p className="mb-1.5 text-[11px] font-semibold tracking-wider text-[var(--on-surface-variant)] uppercase">
             Keywords
           </p>
-          <div className="flex flex-wrap gap-1.5">
-            {niche.keywords.slice(0, 5).map((kw) => (
-              <span
-                key={kw}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px]"
-                style={{
-                  background: "var(--surface-container)",
-                  color: "var(--on-surface-variant)",
-                }}
+          <ul className="flex flex-wrap gap-1.5">
+            {niche.keywords.slice(0, 5).map((keyword) => (
+              <li
+                key={keyword}
+                className="inline-flex items-center gap-1 rounded bg-[var(--surface-container)] px-2 py-0.5 text-[11px] text-[var(--on-surface-variant)]"
               >
-                <Tag className="w-2.5 h-2.5" />
-                {kw}
-              </span>
+                <Tag className="size-2.5" aria-hidden />
+                {keyword}
+              </li>
             ))}
-          </div>
+            {niche.keywords.length > 5 ? (
+              <li className="px-1 text-[11px] text-[var(--on-surface-variant)]">
+                +{niche.keywords.length - 5} more
+              </li>
+            ) : null}
+          </ul>
         </div>
-      )}
+      ) : null}
 
-      <div className="mt-4 pt-4 border-t flex items-center justify-between" style={{ borderColor: "var(--outline-variant)" }}>
+      <div className="flex-1" />
+      <div className="mt-4 flex items-center justify-between border-t border-[var(--outline-variant)] pt-4">
         <Link
           href={`/leads?niche_id=${niche.id}`}
-          className="text-[12px] font-medium"
-          style={{ color: "var(--primary)" }}
+          className="text-[12px] font-medium text-[var(--primary)] hover:underline"
         >
           View leads →
         </Link>
         <Link
           href={`/search?niche_id=${niche.id}`}
-          className="text-[12px] font-medium"
-          style={{ color: "var(--on-surface-variant)" }}
+          className="text-[12px] font-medium text-[var(--on-surface-variant)] hover:text-[var(--on-surface)] hover:underline"
         >
           Run search
         </Link>
       </div>
-    </div>
+    </article>
   );
 }
 
 export default function NichesPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["niches"],
-    queryFn: () => nichesApi.list(),
+  const [deleteTarget, setDeleteTarget] = useState<Niche | null>(null);
+  const niches = useQuery({
+    queryKey: ["niches", { limit: 200 }],
+    queryFn: () => nichesApi.list({ limit: 200 }),
   });
+  const items = niches.data?.items ?? [];
 
   return (
     <div>
       <PageHeader
         title="Niches"
-        description="Target market segments with qualification criteria and outreach scope."
+        description="The markets you target: who they are, where they are and which keywords describe them."
         actions={
-          <Link
-            href="/niches/new"
-            className="flex items-center gap-2 px-5 py-2 rounded text-[13px] font-medium text-white transition-colors active:scale-95 shadow-sm"
-            style={{ background: "var(--primary)" }}
-            onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) =>
-              (e.currentTarget.style.background = "var(--surface-tint)")
-            }
-            onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) =>
-              (e.currentTarget.style.background = "var(--primary)")
-            }
-          >
-            <Plus className="w-4 h-4" />
-            New Niche
-          </Link>
+          <ButtonLink href="/niches/new">
+            <Plus aria-hidden />
+            New niche
+          </ButtonLink>
         }
       />
 
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {niches.isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" aria-busy="true">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="bg-white border rounded-lg p-5 h-56 animate-pulse"
-              style={{ borderColor: "var(--outline-variant)" }}
+              className="h-56 animate-pulse rounded-lg border border-[var(--outline-variant)] bg-white"
             />
           ))}
         </div>
-      ) : (data?.items ?? []).length === 0 ? (
-        <div
-          className="flex flex-col items-center justify-center py-24 rounded-lg border"
-          style={{
-            background: "var(--surface-container-low)",
-            borderColor: "var(--outline-variant)",
-          }}
-        >
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-            style={{ background: "var(--primary-fixed)" }}
+      ) : niches.error ? (
+        <ErrorState error={niches.error} onRetry={() => niches.refetch()} />
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-low)] px-6 py-20 text-center">
+          <span
+            className="mb-4 flex size-14 items-center justify-center rounded-full bg-[var(--primary-fixed)]"
+            aria-hidden
           >
-            <Target className="w-8 h-8" style={{ color: "var(--primary)" }} />
-          </div>
-          <h3 className="text-[18px] font-semibold mb-2" style={{ color: "var(--on-surface)" }}>
-            No niches yet
-          </h3>
-          <p className="text-[14px] mb-6" style={{ color: "var(--on-surface-variant)" }}>
-            Create a niche to define your target market and start generating leads.
+            <Target className="size-7 text-[var(--primary)]" />
+          </span>
+          <h3 className="mb-1 text-[18px] font-semibold text-[var(--on-surface)]">No niches yet</h3>
+          <p className="mb-6 max-w-md text-[14px] text-[var(--on-surface-variant)]">
+            A niche describes one market you want to reach. Create one to generate search queries
+            and start finding leads.
           </p>
-          <Link
-            href="/niches/new"
-            className="flex items-center gap-2 px-5 py-2 rounded text-[13px] font-medium text-white"
-            style={{ background: "var(--primary)" }}
-          >
-            <Plus className="w-4 h-4" />
-            Create first niche
-          </Link>
+          <ButtonLink href="/niches/new">
+            <Plus aria-hidden />
+            Create your first niche
+          </ButtonLink>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {(data?.items ?? []).map((niche) => (
-            <NicheCard key={niche.id} niche={niche} />
-          ))}
-        </div>
+        <>
+          <p className="mb-3 text-[13px] text-[var(--on-surface-variant)]" aria-live="polite">
+            {niches.data?.total.toLocaleString()} niche{niches.data?.total === 1 ? "" : "s"}
+          </p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {items.map((niche) => (
+              <NicheCard key={niche.id} niche={niche} onDelete={setDeleteTarget} />
+            ))}
+          </div>
+        </>
       )}
+
+      <DeleteNicheDialog
+        niche={deleteTarget}
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

@@ -4729,6 +4729,18 @@
             "title": "Niche Id",
             "type": "integer"
           },
+          "provider": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
           "query": {
             "title": "Query",
             "type": "string"
@@ -8775,6 +8787,7 @@
     },
     "/health": {
       "get": {
+        "description": "Liveness: the process is up. Used by the platform's health check.",
         "operationId": "health_check_health_get",
         "responses": {
           "200": {
@@ -8800,6 +8813,7 @@
     },
     "/health/ready": {
       "get": {
+        "description": "Readiness.\n\n``ready`` (200): everything is up. ``degraded`` (200): the API works but background\nworkers aren't running, so emails won't send. ``not_ready`` (503): the database, Redis or\nmigrations are broken.",
         "operationId": "readiness_check_health_ready_get",
         "responses": {
           "200": {
