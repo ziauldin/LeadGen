@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from collections.abc import Sequence
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -80,7 +81,7 @@ def _store(
     credential: ProviderCredential,
     provider: str,
     kind: str,
-    items: list[tuple[str, str | None, dict[str, Any]]],
+    items: Sequence[tuple[str, str | None, dict[str, Any]]],
 ) -> dict[str, int]:
     stored: list[int] = []
     for event_id, event_type, payload in items:

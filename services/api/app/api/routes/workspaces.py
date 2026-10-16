@@ -49,7 +49,10 @@ def list_workspaces(
     rows = workspaces.list_user_workspaces(db, current_user.id)
     return WorkspaceListResponse(
         items=[
-            WorkspaceWithRole(**WorkspaceRead.model_validate(ws).model_dump(), role=role)
+            WorkspaceWithRole(
+                **WorkspaceRead.model_validate(ws).model_dump(),
+                role=WorkspaceRole(role),
+            )
             for ws, role in rows
         ],
         current_workspace_id=current_user.last_workspace_id,

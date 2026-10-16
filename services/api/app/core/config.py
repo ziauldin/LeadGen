@@ -41,9 +41,14 @@ PLACEHOLDER_SECRET_KEY = "change-me-to-a-long-random-string"  # noqa: S105 - rej
 
 
 def normalize_database_url(url: str) -> str:
-    """Railway/Heroku style ``postgres://`` URLs are not accepted by SQLAlchemy 2."""
-    if url.startswith("postgres://"):
-        return "postgresql://" + url.removeprefix("postgres://")
+    """Pin PostgreSQL URLs to the psycopg 3 driver.
+
+    Railway/Heroku hand out ``postgres://`` or driver-less ``postgresql://`` URLs; SQLAlchemy's
+    default driver for those differs between versions, so name the one we install.
+    """
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url.removeprefix(prefix)
     return url
 
 

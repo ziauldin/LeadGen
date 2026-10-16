@@ -11,31 +11,47 @@ def test_health_liveness():
     assert "environment" in body
 
 
-def test_health_ready_when_dependencies_ok(monkeypatch):
+def _healthy(monkeypatch, *, worker=True):
+    monkeypatch.setattr("app.api.routes.health.check_redis", lambda: (True, None))
+    monkeypatch.setattr("app.api.routes.health.check_migrations", lambda _db: (True, None))
     monkeypatch.setattr(
-        "app.api.routes.health.check_redis",
-        lambda: (True, None),
+        "app.api.routes.health.check_worker_heartbeat",
+        lambda: (True, None) if worker else (False, "No worker heartbeat yet"),
     )
-    client = get_client()
-    response = client.get("/health/ready")
+
+
+def test_health_ready_when_dependencies_ok(monkeypatch):
+    _healthy(monkeypatch)
+    response = get_client().get("/health/ready")
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ready"
     assert {d["name"]: d["status"] for d in body["dependencies"]} == {
         "database": "ok",
         "redis": "ok",
+        "migrations": "ok",
+        "worker": "ok",
     }
 
 
+def test_health_ready_is_degraded_without_workers(monkeypatch):
+    _healthy(monkeypatch, worker=False)
+    response = get_client().get("/health/ready")
+    assert response.status_code == 200
+    assert response.json()["status"] == "degraded"
+
+
 def test_health_ready_returns_503_when_redis_down(monkeypatch):
+    _healthy(monkeypatch)
     monkeypatch.setattr(
         "app.api.routes.health.check_redis",
-        lambda: (False, "connection refused"),
+        lambda: (False, "ConnectionError"),
     )
-    client = get_client()
-    response = client.get("/health/ready")
+    response = get_client().get("/health/ready")
     assert response.status_code == 503
-    assert response.json()["status"] == "degraded"
+    body = response.json()
+    assert body["status"] == "not_ready"
+    assert {d["name"]: d["status"] for d in body["dependencies"]}["worker"] == "missing"
 
 
 def test_celery_beat_schedule_configured():
@@ -47,6 +63,7 @@ def test_celery_beat_schedule_configured():
     # The mock reply simulator must never run on a schedule.
     assert all(entry["task"] != "replies.sync" for entry in schedule.values())
     assert schedule["poll-inboxes"]["task"] == "inbox.poll"
+    assert schedule["worker-heartbeat"]["task"] == "ops.heartbeat"
 
 
 def test_google_cse_provider_requires_credentials():

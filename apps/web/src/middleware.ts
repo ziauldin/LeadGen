@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/verify-email",
   "/invite",
   "/health",
+  "/healthz",
 ];
 
 const SESSION_HINT = "lg_session";

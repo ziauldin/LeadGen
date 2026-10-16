@@ -313,6 +313,10 @@ def advance_sequences(db: Session, *, now: datetime | None = None) -> dict[str, 
                 .where(Campaign.id == enrollment.campaign_id)
                 .options(selectinload(Campaign.steps)),
             )
+            if campaign is None:
+                stop_enrollment(db, enrollment, EnrollmentStatus.STOPPED, "Campaign removed")
+                stopped += 1
+                continue
             step = next(
                 (s for s in campaign.steps if s.step_number == enrollment.next_step_number),
                 None,

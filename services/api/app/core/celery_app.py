@@ -14,6 +14,7 @@ celery_app = Celery(
         "app.workers.reply_jobs",
         "app.workers.platform_email_jobs",
         "app.workers.inbound_jobs",
+        "app.workers.ops_jobs",
     ],
 )
 
@@ -71,6 +72,10 @@ celery_app.conf.update(
         "retry-webhooks": {
             "task": "webhooks.retry_failed",
             "schedule": 600.0,
+        },
+        "worker-heartbeat": {
+            "task": "ops.heartbeat",
+            "schedule": 60.0,
         },
     },
 )

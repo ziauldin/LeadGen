@@ -17,7 +17,7 @@ import secrets
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select, update
+from sqlalchemy import Select, func, select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.tenancy import system_session
@@ -208,7 +208,7 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
     return "failed"
 
 
-def _due_messages_query(campaign_id: int, now: datetime, limit: int):
+def _due_messages_query(campaign_id: int, now: datetime, limit: int) -> Select[int]:
     return (
         select(EmailMessage.id)
         .where(

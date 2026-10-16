@@ -179,9 +179,10 @@ MOCK_SEARCH_RESULTS = [
     },
 ]
 
-WELLPREDICT_STEP = {
+DEMO_STEP = {
     "step_number": 1,
     "delay_days": 0,
+    "template_id": "system:intro",
     "subject_template": "Quick question about {{company}}",
     "body_template": """Hi {{first_name}},
 
@@ -236,14 +237,14 @@ def seed(db, *, force: bool = False) -> None:
     workspace = create_workspace(db, user, "Demo workspace")
     workspace_settings = get_or_create_settings(db, workspace.id)
     workspace_settings.sender_name = "Alex Founder"
-    workspace_settings.sender_company = "WellPredict"
+    workspace_settings.sender_company = "Acme Insights"
     workspace_settings.business_address = "London, UK"
     # New tenant rows below are stamped with the demo workspace automatically.
     bind_session(db, workspace.id)
 
     niche = Niche(
         user_id=user.id,
-        name="UK Regulated Organisations — WellPredict",
+        name="UK Regulated Organisations",
         country="UK",
         industry="Food Manufacturing, Healthcare, NHS",
         target_roles=[
@@ -280,7 +281,7 @@ def seed(db, *, force: bool = False) -> None:
 
     active_campaign = Campaign(
         niche_id=niche.id,
-        name="WellPredict Q2 outreach",
+        name="Q2 outreach",
         status=CampaignStatus.ACTIVE,
         daily_send_limit=20,
         sending_window_start="09:00",
@@ -288,7 +289,7 @@ def seed(db, *, force: bool = False) -> None:
     )
     db.add(active_campaign)
     db.flush()
-    db.add(CampaignStep(campaign_id=active_campaign.id, **WELLPREDICT_STEP))
+    db.add(CampaignStep(campaign_id=active_campaign.id, **DEMO_STEP))
 
     draft_campaign = Campaign(
         niche_id=niche.id,
@@ -300,7 +301,7 @@ def seed(db, *, force: bool = False) -> None:
     )
     db.add(draft_campaign)
     db.flush()
-    db.add(CampaignStep(campaign_id=draft_campaign.id, **WELLPREDICT_STEP))
+    db.add(CampaignStep(campaign_id=draft_campaign.id, **DEMO_STEP))
 
     now = datetime.now(UTC)
 

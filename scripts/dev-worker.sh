@@ -15,4 +15,4 @@ if [[ -f .venv/bin/activate ]]; then
   # shellcheck disable=SC1091
   source .venv/bin/activate
 fi
-exec celery -A app.core.celery_app worker -l info
+exec celery -A app.core.celery_app worker -l info -Q default,sending,inbound,enrichment

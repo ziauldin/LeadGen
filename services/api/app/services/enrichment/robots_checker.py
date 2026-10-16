@@ -35,11 +35,11 @@ def fetch_robots_parser(base_url: str, client: httpx.Client) -> tuple[RobotFileP
             parser.parse(result.text.splitlines())
             fetched = True
         else:
-            parser.allow_all = True
+            parser.allow_all = True  # type: ignore[attr-defined]  # stdlib attribute, untyped
     except UnsafeURLError:
         raise
     except FetchError:
-        parser.allow_all = True
+        parser.allow_all = True  # type: ignore[attr-defined]  # stdlib attribute, untyped
 
     return parser, fetched
 

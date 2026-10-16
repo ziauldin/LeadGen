@@ -55,7 +55,13 @@ def test_missing_encryption_key_is_rejected():
 
 
 def test_postgres_scheme_is_normalised():
-    assert Settings(database_url="postgres://u:p@h/db").database_url.startswith("postgresql://")
+    assert (
+        Settings(database_url="postgres://u:p@h/db").database_url == "postgresql+psycopg://u:p@h/db"
+    )
+    assert (
+        Settings(database_url="postgresql://u:p@h/db").database_url
+        == "postgresql+psycopg://u:p@h/db"
+    )
 
 
 def test_key_rotation_decrypts_old_ciphertext(monkeypatch):

@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from typing import Any
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -8,15 +9,15 @@ from app.core.config import settings
 
 
 @event.listens_for(Engine, "connect")
-def _enable_sqlite_foreign_keys(dbapi_connection, _record) -> None:
+def _enable_sqlite_foreign_keys(dbapi_connection: Any, _record: Any) -> None:
     if type(dbapi_connection).__module__.startswith("sqlite3"):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
 
-def build_engine(database_url: str, *, poolclass=None):
-    kwargs: dict = {}
+def build_engine(database_url: str, *, poolclass: Any = None) -> Engine:
+    kwargs: dict[str, Any] = {}
     if database_url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False}
     else:

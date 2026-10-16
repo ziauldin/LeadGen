@@ -57,7 +57,7 @@ def resolve_public_addresses(host: str, port: int) -> list[str]:
         infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
     except socket.gaierror as exc:
         raise FetchError(f"Could not resolve {host}") from exc
-    addresses = sorted({info[4][0] for info in infos})
+    addresses = sorted({str(info[4][0]) for info in infos})
     if not addresses:
         raise FetchError(f"Could not resolve {host}")
     for address in addresses:

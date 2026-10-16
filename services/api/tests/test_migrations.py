@@ -12,6 +12,7 @@ import sqlalchemy as sa
 from alembic.config import Config
 
 from alembic import command
+from app.core.config import normalize_database_url
 
 API_ROOT = Path(__file__).resolve().parents[1]
 PRE_WORKSPACES = "e5f6a7b8c9d0"
@@ -28,6 +29,7 @@ def _config(url: str) -> Config:
 def database_url(tmp_path):
     url = os.environ.get("TEST_DATABASE_URL")
     if url:
+        url = normalize_database_url(url)
         engine = sa.create_engine(url)
         with engine.begin() as conn:
             conn.exec_driver_sql("DROP SCHEMA public CASCADE")
@@ -58,8 +60,8 @@ def _seed_legacy(engine: sa.Engine) -> None:
         # One company shared by both users' leads.
         x(
             "INSERT INTO companies (id, name, website, domain, robots_checked, enrichment_status) "
-            "VALUES (1, 'Shared Ltd', 'https://shared.co.uk', 'shared.co.uk', 0, 'completed'), "
-            "(2, 'Orphan Ltd', NULL, NULL, 0, 'pending')",
+            "VALUES (1, 'Shared Ltd', 'https://shared.co.uk', 'shared.co.uk', FALSE, 'completed'), "
+            "(2, 'Orphan Ltd', NULL, NULL, FALSE, 'pending')",
         )
         x(
             "INSERT INTO leads (id, niche_id, full_name, company_id, status, score) VALUES "
@@ -68,9 +70,9 @@ def _seed_legacy(engine: sa.Engine) -> None:
         x(
             "INSERT INTO email_contacts (id, lead_id, company_id, email, email_type, confidence, "
             "is_role_based, is_personal, is_verified, opted_out) VALUES "
-            "(1, 1, 1, 'a@shared.co.uk', 'named', 0.8, 0, 1, 0, 0), "
-            "(2, 2, 1, 'b@shared.co.uk', 'named', 0.8, 0, 1, 0, 0), "
-            "(3, NULL, 1, 'info@shared.co.uk', 'generic', 0.5, 0, 0, 0, 0)",
+            "(1, 1, 1, 'a@shared.co.uk', 'named', 0.8, FALSE, TRUE, FALSE, FALSE), "
+            "(2, 2, 1, 'b@shared.co.uk', 'named', 0.8, FALSE, TRUE, FALSE, FALSE), "
+            "(3, NULL, 1, 'info@shared.co.uk', 'generic', 0.5, FALSE, FALSE, FALSE, FALSE)",
         )
         x(
             "INSERT INTO campaigns (id, niche_id, name, status, daily_send_limit) VALUES "
@@ -96,6 +98,25 @@ def _seed_legacy(engine: sa.Engine) -> None:
             "('gone@gmail.com', 'gmail.com', 'unsubscribe', 'unsubscribe_link'), "
             "(NULL, 'blocked.example', 'manual', 'manual')",
         )
+        if engine.dialect.name == "postgresql":
+            # Explicit ids above don't advance PostgreSQL sequences; real data would have.
+            for table in (
+                "users",
+                "niches",
+                "companies",
+                "leads",
+                "email_contacts",
+                "campaigns",
+                "campaign_steps",
+                "email_messages",
+                "replies",
+                "suppressions",
+                "user_settings",
+            ):
+                x(
+                    f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), "
+                    f"COALESCE((SELECT MAX(id) FROM {table}), 0) + 1, false)",
+                )
 
 
 def test_upgrade_moves_legacy_data_into_workspaces(database_url):

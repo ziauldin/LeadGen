@@ -19,18 +19,26 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core import database as core_database
+from app.core.config import normalize_database_url
 from app.core.database import Base, get_db
 from app.core.rate_limit import reset_rate_limits
 from app.main import app
 from app.services.llm.mock import reset_mock_llm
 from app.services.platform_email.mailer import OUTBOX
 
-SQLALCHEMY_DATABASE_URL = "sqlite://"
+# Tests use in-memory SQLite by default. Set TEST_DATABASE_URL to run the same suite on a real
+# PostgreSQL database (CI does), e.g. postgresql://postgres@localhost:5432/leadgen_test
+SQLALCHEMY_DATABASE_URL = normalize_database_url(os.environ.get("TEST_DATABASE_URL") or "sqlite://")
+IS_POSTGRES = SQLALCHEMY_DATABASE_URL.startswith("postgresql")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+engine = (
+    create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+    if IS_POSTGRES
+    else create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Background tasks run eagerly in tests and open sessions via SessionLocal: point it here too.
@@ -93,7 +101,14 @@ def auth_headers(
 
 
 def setup_db():
-    Base.metadata.drop_all(bind=engine)
+    if IS_POSTGRES:
+        # Other tests (e.g. migrations) may leave a differently-built schema behind.
+        engine.dispose()
+        with engine.begin() as conn:
+            conn.exec_driver_sql("DROP SCHEMA public CASCADE")
+            conn.exec_driver_sql("CREATE SCHEMA public")
+    else:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 

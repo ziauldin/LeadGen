@@ -82,14 +82,16 @@ def replace_steps(db: Session, campaign: Campaign, steps: list[dict]) -> None:
         "thread_with_previous",
     )
     for number, data in sorted(resolved.items()):
-        step = existing.get(number)
-        if step is None:
+        found = existing.get(number)
+        if found is None:
             step = CampaignStep(
                 workspace_id=campaign.workspace_id,
                 campaign_id=campaign.id,
                 step_number=number,
             )
             campaign.steps.append(step)
+        else:
+            step = found
         for field in fields:
             if field in data:
                 setattr(step, field, data[field])

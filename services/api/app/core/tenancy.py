@@ -82,7 +82,7 @@ def system_session(session: Session) -> Iterator[Session]:
 
 
 def scoped(stmt: Select[Any], model: type[TenantScoped], workspace_id: int) -> Select[Any]:
-    return stmt.where(model.workspace_id == workspace_id)  # type: ignore[attr-defined]
+    return stmt.where(model.workspace_id == workspace_id)
 
 
 def get_scoped_or_404[T](
@@ -93,8 +93,8 @@ def get_scoped_or_404[T](
     *,
     label: str | None = None,
 ) -> T:
-    obj = session.scalar(
-        select(model).where(
+    obj: T | None = session.scalar(
+        select(model).where(  # type: ignore[arg-type]
             model.id == object_id,  # type: ignore[attr-defined]
             model.workspace_id == workspace_id,  # type: ignore[attr-defined]
         ),
@@ -132,7 +132,7 @@ def _stamp_and_guard_tenant_rows(session: Session, _flush_context: Any, _instanc
         if isinstance(obj, TenantScoped):
             current = getattr(obj, "workspace_id", None)
             if current is None:
-                obj.workspace_id = workspace_id  # type: ignore[assignment]
+                obj.workspace_id = workspace_id
             elif current != workspace_id:
                 raise TenantIsolationError(
                     f"Refusing to create {type(obj).__name__} in workspace {current} "

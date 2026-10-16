@@ -56,6 +56,12 @@ def message_ids(value: str | None) -> list[str]:
     return found or [part.strip() for part in value.split() if part.strip()]
 
 
+def first_id(value: str | None) -> str | None:
+    """The first Message-ID in a header value, or None."""
+    ids = message_ids(value)
+    return ids[0] if ids else None
+
+
 def _address(value: str | None) -> str:
     return parseaddr(value or "")[1].strip().lower()
 
@@ -128,8 +134,8 @@ def from_rfc822(raw: bytes | str) -> InboundEmail:
         to=_addresses(parsed.get_all("To", [])) + _addresses(parsed.get_all("Delivered-To", [])),
         subject=str(parsed.get("Subject") or "") or None,
         text=text,
-        message_id=(message_ids(parsed.get("Message-ID")) or [None])[0],
-        in_reply_to=(message_ids(parsed.get("In-Reply-To")) or original_id or [None])[0],
+        message_id=first_id(parsed.get("Message-ID")),
+        in_reply_to=first_id(parsed.get("In-Reply-To")) or next(iter(original_id), None),
         references=references + original_id,
         headers={key: str(value) for key, value in parsed.items()},
         content_type=parsed.get_content_type(),
@@ -152,12 +158,8 @@ def resend(payload: dict[str, Any], event_id: str) -> DeliveryEvent | InboundEma
             to=_addresses(data.get("to")),
             subject=data.get("subject"),
             text=text,
-            message_id=(
-                message_ids(headers.get("Message-ID") or headers.get("message-id")) or [None]
-            )[0],
-            in_reply_to=(
-                message_ids(headers.get("In-Reply-To") or headers.get("in-reply-to")) or [None]
-            )[0],
+            message_id=first_id(headers.get("Message-ID") or headers.get("message-id")),
+            in_reply_to=first_id(headers.get("In-Reply-To") or headers.get("in-reply-to")),
             references=message_ids(headers.get("References") or headers.get("references")),
             headers=headers,
             received_at=_ts(payload.get("created_at") or data.get("created_at")),
@@ -233,8 +235,8 @@ def sendgrid_inbound(form: dict[str, Any]) -> InboundEmail:
         to=_addresses(form.get("to")),
         subject=form.get("subject"),
         text=str(form.get("text") or _text_from_html(str(form.get("html") or ""))),
-        message_id=(message_ids(headers.get("Message-ID")) or [None])[0],
-        in_reply_to=(message_ids(headers.get("In-Reply-To")) or [None])[0],
+        message_id=first_id(headers.get("Message-ID")),
+        in_reply_to=first_id(headers.get("In-Reply-To")),
         references=message_ids(headers.get("References")),
         headers=headers,
     )
@@ -277,8 +279,8 @@ def mailgun_inbound(form: dict[str, Any]) -> InboundEmail:
         to=_addresses(form.get("recipient") or form.get("To")),
         subject=form.get("subject"),
         text=str(form.get("body-plain") or form.get("stripped-text") or ""),
-        message_id=(message_ids(form.get("Message-Id")) or [None])[0],
-        in_reply_to=(message_ids(form.get("In-Reply-To")) or [None])[0],
+        message_id=first_id(form.get("Message-Id")),
+        in_reply_to=first_id(form.get("In-Reply-To")),
         references=message_ids(form.get("References")),
         headers={k: str(v) for k, v in form.items() if k[:1].isupper()},
     )

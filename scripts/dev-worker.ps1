@@ -15,7 +15,7 @@ try {
     if (Test-Path ".\.venv\Scripts\Activate.ps1") {
         . .\.venv\Scripts\Activate.ps1
     }
-    celery -A app.core.celery_app worker -l info -P solo
+    celery -A app.core.celery_app worker -l info -P solo -Q default,sending,inbound,enrichment
 } finally {
     Pop-Location
 }
