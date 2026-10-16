@@ -176,6 +176,8 @@ class WorkspaceSettings(Base):
     )
     # Data governance
     require_lia_note: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Don't send to addresses verification marks as risky (catch-all, disposable...).
+    block_risky_emails: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     retention_uncontacted_lead_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     retention_reply_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Slack incoming webhook (encrypted) and which notification kinds to post there.

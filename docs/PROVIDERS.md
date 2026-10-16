@@ -66,6 +66,23 @@ Turn this on with `FEATURE_MAILBOX_OAUTH=true`, or for one workspace from the ad
 - Follow-ups always come from the mailbox that sent that lead's first email.
 - With no accounts selected, the campaign uses its default sender, as before.
 
+## Email verification
+
+Under **Providers → Email verification**, connect **ZeroBounce** or **NeverBounce** with an API key (or the test verifier).
+
+Each contact gets a verification status:
+
+| Status | Meaning |
+|---|---|
+| `valid` | The mailbox exists |
+| `risky` | Catch-all, disposable or abuse addresses |
+| `invalid` | Bad syntax, no mail server, the mailbox doesn't exist, or a spam trap |
+| `unknown` | The check couldn't decide |
+
+- **When contacts are checked:** with a provider connected, new contacts are checked in the background after CSV imports and when leads are added to a campaign. Anyone can also select leads and choose **Verify emails**. Without a provider, **Verify emails** runs a free DNS-only check (syntax, disposable domains, and whether the domain accepts mail at all), which can mark addresses invalid but never valid.
+- **What gets blocked:** the approval checks and the send gate never email `invalid` addresses. Turn on **Settings → Deliverability → Don't send to risky addresses** to block `risky` ones too.
+- **Credits:** each paid check uses one of the plan's `monthly_verifications` credits (Free 100, Starter 2,000, Pro 20,000, Enterprise 100,000). DNS-only checks and provider errors are free. Results older than 90 days are re-checked when verified again.
+
 ## Reply inbox (IMAP)
 
 For SMTP senders, or as a backup to webhooks. Add an **IMAP** account under *Reply inbox* with host, port (993), username, password, folder (`INBOX`) and SSL. LeadsGen polls every 5 minutes and remembers where it got to, so messages are never processed twice. Needs `FEATURE_IMAP=true`.

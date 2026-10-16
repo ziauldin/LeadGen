@@ -37,6 +37,7 @@ import {
 } from "@/components/leads/lead-status";
 import { getErrorMessage } from "@/lib/api/client";
 import { companiesApi, leadsApi, nichesApi } from "@/lib/api/endpoints";
+import { VerificationBadge } from "@/components/leads/verification-badge";
 import type { Lead, LeadStatus, LeadUpdate } from "@/lib/api/types";
 
 const schema = z.object({
@@ -479,7 +480,9 @@ function LeadDetail({ lead }: { lead: Lead }) {
                       <span className="self-start rounded-full bg-[var(--error-container)] px-2 py-0.5 text-[11px] font-semibold text-[var(--on-error-container)] sm:self-auto">
                         Opted out
                       </span>
-                    ) : null}
+                    ) : (
+                      <VerificationBadge status={contact.verification_status} detail={contact.verification_detail} />
+                    )}
                   </li>
                 ))}
               </ul>

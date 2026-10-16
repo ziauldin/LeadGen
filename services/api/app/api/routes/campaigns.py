@@ -42,6 +42,7 @@ from app.services.campaigns.service import (
 )
 from app.services.campaigns.service import update_campaign as apply_campaign_update
 from app.services.sending.sender import process_active_campaigns
+from app.services.verification.service import queue_auto_verification
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
@@ -225,6 +226,7 @@ def add_leads(
     _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> AddLeadsResponse:
     result = add_leads_to_campaign(db, ctx, campaign_id, payload.lead_ids)
+    queue_auto_verification(db, ctx.workspace_id)
     return AddLeadsResponse(
         created=int(result["created"]),
         skipped=int(result["skipped"]),

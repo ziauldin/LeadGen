@@ -14,6 +14,7 @@ class UserSettingsRead(BaseModel):
     product_description: str | None = None
     tone_guidelines: str | None = None
     ai_mode: str = "off"
+    block_risky_emails: bool = False
 
 
 class UserSettingsUpdate(BaseModel):
@@ -25,6 +26,7 @@ class UserSettingsUpdate(BaseModel):
     tone_guidelines: str | None = Field(default=None, max_length=1000)
     # "assist": AI drafts and reply labelling are available on request; "off": templates only.
     ai_mode: AIMode | None = None
+    block_risky_emails: bool | None = None
 
 
 class DeliverabilityCheck(BaseModel):

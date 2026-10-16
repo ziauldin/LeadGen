@@ -17,6 +17,7 @@ class PlanLimits:
     daily_enrichments: int
     daily_hunter_lookups: int
     max_campaigns: int
+    monthly_verifications: int = 0
 
     def as_dict(self) -> dict[str, int]:
         return asdict(self)
@@ -31,6 +32,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_enrichments=50,
         daily_hunter_lookups=25,
         max_campaigns=3,
+        monthly_verifications=100,
     ),
     "starter": PlanLimits(
         monthly_sends=5_000,
@@ -40,6 +42,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_enrichments=300,
         daily_hunter_lookups=200,
         max_campaigns=20,
+        monthly_verifications=2_000,
     ),
     "pro": PlanLimits(
         monthly_sends=50_000,
@@ -49,6 +52,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_enrichments=2_000,
         daily_hunter_lookups=1_000,
         max_campaigns=100,
+        monthly_verifications=20_000,
     ),
     "enterprise": PlanLimits(
         monthly_sends=250_000,
@@ -58,6 +62,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_enrichments=10_000,
         daily_hunter_lookups=5_000,
         max_campaigns=1_000,
+        monthly_verifications=100_000,
     ),
 }
 
@@ -113,6 +118,7 @@ METRIC_PERIOD = {
     "monthly_sends": "month",
     "monthly_leads": "month",
     "monthly_llm_tokens": "month",
+    "monthly_verifications": "month",
     "daily_enrichments": "day",
     "daily_hunter_lookups": "day",
 }

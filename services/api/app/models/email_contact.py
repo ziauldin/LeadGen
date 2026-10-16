@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Float, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -45,6 +46,11 @@ class EmailContact(Base, TenantScoped, TimestampMixin):
     is_personal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     opted_out: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Verification: valid | risky | invalid | unknown (None = not checked yet).
+    verification_status: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    verification_detail: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    verification_provider: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     lead: Mapped[Lead | None] = relationship(back_populates="email_contacts")
     company: Mapped[Company | None] = relationship(back_populates="email_contacts")

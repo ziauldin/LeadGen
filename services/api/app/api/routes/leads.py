@@ -33,6 +33,7 @@ from app.services.leads.bulk import lead_stats, run_bulk_action
 from app.services.leads.csv_import import export_leads_to_csv, import_leads_from_csv
 from app.services.leads.serializers import serialize_lead
 from app.services.leads.status import validate_user_status_change
+from app.services.verification.service import queue_auto_verification
 
 router = APIRouter(prefix="/leads", tags=["leads"])
 
@@ -198,6 +199,7 @@ async def import_csv(
             detail="CSV file must be UTF-8 encoded",
         ) from None
     result = import_leads_from_csv(db, ctx.workspace_id, content, workspace=ctx.workspace)
+    queue_auto_verification(db, ctx.workspace_id)
     return LeadImportResult(
         created=result.created,
         updated=result.updated,

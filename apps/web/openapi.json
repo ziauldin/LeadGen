@@ -4727,7 +4727,8 @@
               "enrich",
               "set_status",
               "delete",
-              "rescore"
+              "rescore",
+              "verify"
             ],
             "title": "Action",
             "type": "string"
@@ -6537,7 +6538,9 @@
           "openai",
           "gemini",
           "gmail",
-          "outlook"
+          "outlook",
+          "zerobounce",
+          "neverbounce"
         ],
         "title": "ProviderName",
         "type": "string"
@@ -6572,7 +6575,8 @@
           "email",
           "email_discovery",
           "inbox",
-          "llm"
+          "llm",
+          "email_verification"
         ],
         "title": "ProviderType",
         "type": "string"
@@ -8608,6 +8612,11 @@
             "title": "Ai Mode",
             "type": "string"
           },
+          "block_risky_emails": {
+            "default": false,
+            "title": "Block Risky Emails",
+            "type": "boolean"
+          },
           "business_address": {
             "anyOf": [
               {
@@ -8666,6 +8675,7 @@
         },
         "required": [
           "ai_mode",
+          "block_risky_emails",
           "business_address",
           "product_description",
           "sender_company",
@@ -8691,6 +8701,17 @@
               }
             ],
             "title": "Ai Mode"
+          },
+          "block_risky_emails": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Risky Emails"
           },
           "business_address": {
             "anyOf": [
@@ -9648,6 +9669,40 @@
               }
             ],
             "title": "Source Url"
+          },
+          "verification_detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Detail"
+          },
+          "verification_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Status"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
           }
         },
         "required": [
@@ -9659,7 +9714,10 @@
           "is_role_based",
           "opted_out",
           "source_provider",
-          "source_url"
+          "source_url",
+          "verification_detail",
+          "verification_status",
+          "verified_at"
         ],
         "title": "EmailContactRead",
         "type": "object"

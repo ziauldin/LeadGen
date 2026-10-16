@@ -21,6 +21,7 @@ celery_app = Celery(
         "app.workers.outbound_webhook_jobs",
         "app.workers.billing_jobs",
         "app.workers.notification_jobs",
+        "app.workers.verification_jobs",
     ],
 )
 

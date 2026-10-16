@@ -61,6 +61,13 @@ def validate_lead_for_outreach(lead: Lead, db: Session) -> list[str]:
     if not active_contacts:
         errors.append("Lead has no active email contact")
 
+    if active_contacts:
+        from app.services.verification.service import blocks_outreach
+
+        reasons = [blocks_outreach(db, lead.workspace_id, c) for c in active_contacts]
+        if all(reasons):
+            errors.append(str(reasons[0]))
+
     for contact in active_contacts:
         if is_email_suppressed(db, lead.workspace_id, contact.email):
             errors.append(f"Email {contact.email} is on the suppression list")

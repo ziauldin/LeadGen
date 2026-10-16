@@ -31,31 +31,57 @@ class FakeProviders:
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         url = str(request.url)
-        if url.startswith(("https://oauth2.googleapis.com/token", "https://login.microsoftonline.com")):
+        if url.startswith(
+            ("https://oauth2.googleapis.com/token", "https://login.microsoftonline.com")
+        ):
             form = parse_qs(request.content.decode())
             self.token_requests.append({k: v[0] for k, v in form.items()})
             if self.revoked:
-                return httpx.Response(400, json={"error": "invalid_grant", "error_description": "Token revoked"})
+                return httpx.Response(
+                    400, json={"error": "invalid_grant", "error_description": "Token revoked"}
+                )
             return httpx.Response(
                 200,
-                json={"access_token": f"at-{len(self.token_requests)}", "refresh_token": "rt-1", "expires_in": 3600},
+                json={
+                    "access_token": f"at-{len(self.token_requests)}",
+                    "refresh_token": "rt-1",
+                    "expires_in": 3600,
+                },
             )
         if url.endswith("/gmail/v1/users/me/profile"):
-            return httpx.Response(200, json={"emailAddress": "Sam@Acme-Mail.co.uk", "historyId": "100"})
+            return httpx.Response(
+                200, json={"emailAddress": "Sam@Acme-Mail.co.uk", "historyId": "100"}
+            )
         if url.endswith("/gmail/v1/users/me/messages/send"):
             raw = base64.urlsafe_b64decode(json.loads(request.content)["raw"])
-            self.sent.append({"provider": "gmail", "raw": raw, "auth": request.headers["Authorization"]})
+            self.sent.append(
+                {"provider": "gmail", "raw": raw, "auth": request.headers["Authorization"]}
+            )
             return httpx.Response(200, json={"id": f"gm-{len(self.sent)}"})
         if "/gmail/v1/users/me/history" in url:
             ids, self.history = self.history, []
-            return httpx.Response(200, json={"historyId": "101", "history": [{"messagesAdded": [{"message": {"id": i}} for i in ids]}]})
+            return httpx.Response(
+                200,
+                json={
+                    "historyId": "101",
+                    "history": [{"messagesAdded": [{"message": {"id": i}} for i in ids]}],
+                },
+            )
         if "/gmail/v1/users/me/messages/" in url:
             message_id = urlparse(url).path.rsplit("/", 1)[-1]
-            return httpx.Response(200, json={"raw": base64.urlsafe_b64encode(self.raw_messages[message_id]).decode()})
+            return httpx.Response(
+                200, json={"raw": base64.urlsafe_b64encode(self.raw_messages[message_id]).decode()}
+            )
         if url == "https://graph.microsoft.com/v1.0/me":
             return httpx.Response(200, json={"mail": "jo@contoso-mail.co.uk"})
         if url.endswith("/me/sendMail"):
-            self.sent.append({"provider": "outlook", "raw": base64.b64decode(request.content), "auth": request.headers["Authorization"]})
+            self.sent.append(
+                {
+                    "provider": "outlook",
+                    "raw": base64.b64decode(request.content),
+                    "auth": request.headers["Authorization"],
+                }
+            )
             return httpx.Response(202)
         return httpx.Response(404, json={"error": {"message": f"unexpected {url}"}})
 
@@ -68,7 +94,9 @@ def providers(monkeypatch):
     monkeypatch.setattr(settings, "google_oauth_client_secret", "google-secret")
     monkeypatch.setattr(settings, "microsoft_oauth_client_id", "ms-client")
     monkeypatch.setattr(settings, "microsoft_oauth_client_secret", "ms-secret")
-    monkeypatch.setattr(oauth, "http_client", lambda: httpx.Client(transport=httpx.MockTransport(fake.handler)))
+    monkeypatch.setattr(
+        oauth, "http_client", lambda: httpx.Client(transport=httpx.MockTransport(fake.handler))
+    )
     return fake
 
 
@@ -88,7 +116,9 @@ def _connect(client, headers, provider="gmail"):
 def _credential(provider="gmail"):
     db = TestingSessionLocal()
     try:
-        return db.scalar(select(ProviderCredential).where(ProviderCredential.provider_name == provider))
+        return db.scalar(
+            select(ProviderCredential).where(ProviderCredential.provider_name == provider)
+        )
     finally:
         db.close()
 
@@ -99,7 +129,9 @@ def test_flag_and_provider_list():
 
     headers = auth_headers(client)
     assert client.post("/mailboxes/gmail/connect", headers=headers).status_code == 404
-    assert all(not p["available"] for p in client.get("/mailboxes/providers", headers=headers).json())
+    assert all(
+        not p["available"] for p in client.get("/mailboxes/providers", headers=headers).json()
+    )
 
 
 def test_connect_gmail_with_pkce(providers):
@@ -114,7 +146,9 @@ def test_connect_gmail_with_pkce(providers):
     verifier = providers.token_requests[0]["code_verifier"]
     import hashlib
 
-    challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
+    challenge = (
+        base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
+    )
     assert challenge == query["code_challenge"][0]
 
     credential = _credential()
@@ -127,12 +161,20 @@ def test_connect_gmail_with_pkce(providers):
     assert any(a["is_mailbox"] and a["email"] == "sam@acme-mail.co.uk" for a in accounts)
 
     # Tampered or cancelled callbacks land back in the app with an error.
-    bad = client.get("/mailboxes/oauth/gmail/callback", params={"code": "x", "state": "nope"}, follow_redirects=False)
+    bad = client.get(
+        "/mailboxes/oauth/gmail/callback",
+        params={"code": "x", "state": "nope"},
+        follow_redirects=False,
+    )
     assert "mailbox=error" in bad.headers["location"]
-    cancelled = client.get("/mailboxes/oauth/gmail/callback", params={"error": "access_denied"}, follow_redirects=False)
+    cancelled = client.get(
+        "/mailboxes/oauth/gmail/callback", params={"error": "access_denied"}, follow_redirects=False
+    )
     assert "mailbox=cancelled" in cancelled.headers["location"]
     wrong_provider = client.get(
-        "/mailboxes/oauth/outlook/callback", params={"code": "x", "state": query["state"][0]}, follow_redirects=False
+        "/mailboxes/oauth/outlook/callback",
+        params={"code": "x", "state": query["state"][0]},
+        follow_redirects=False,
     )
     assert "mailbox=error" in wrong_provider.headers["location"]
 
@@ -142,11 +184,19 @@ def test_send_through_the_campaign_pool(providers):
     headers, campaign_id, message_ids = approved_message(client)
     _connect(client, headers)
     credential = _credential()
-    pool = client.put(f"/campaigns/{campaign_id}/senders", headers=headers, json={"credential_ids": [credential.id]})
+    pool = client.put(
+        f"/campaigns/{campaign_id}/senders",
+        headers=headers,
+        json={"credential_ids": [credential.id]},
+    )
     assert pool.status_code == 200
-    assert [a["id"] for a in client.get(f"/campaigns/{campaign_id}/senders", headers=headers).json()] == [credential.id]
+    assert [
+        a["id"] for a in client.get(f"/campaigns/{campaign_id}/senders", headers=headers).json()
+    ] == [credential.id]
 
-    assert client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers).json()["sent"] == 1
+    assert (
+        client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers).json()["sent"] == 1
+    )
     sent = providers.sent[0]
     mime = message_from_bytes(sent["raw"])
     assert mime["From"].endswith("<sam@acme-mail.co.uk>") or "sam@acme-mail.co.uk" in mime["From"]
@@ -166,8 +216,14 @@ def test_outlook_sends_mime_through_graph(providers):
     headers, campaign_id, _ids = approved_message(client)
     _connect(client, headers, "outlook")
     credential = _credential("outlook")
-    client.put(f"/campaigns/{campaign_id}/senders", headers=headers, json={"credential_ids": [credential.id]})
-    assert client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers).json()["sent"] == 1
+    client.put(
+        f"/campaigns/{campaign_id}/senders",
+        headers=headers,
+        json={"credential_ids": [credential.id]},
+    )
+    assert (
+        client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers).json()["sent"] == 1
+    )
     assert providers.sent[0]["provider"] == "outlook"
     assert message_from_bytes(providers.sent[0]["raw"])["To"] == "alex@example-foods.co.uk"
 
@@ -188,8 +244,14 @@ def test_rotation_spreads_load_and_keeps_threads(providers):
         db.commit()
     finally:
         db.close()
-    client.put(f"/campaigns/{campaign_id}/senders", headers=headers, json={"credential_ids": [gmail.id, outlook.id]})
-    assert client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers).json()["sent"] == 2
+    client.put(
+        f"/campaigns/{campaign_id}/senders",
+        headers=headers,
+        json={"credential_ids": [gmail.id, outlook.id]},
+    )
+    assert (
+        client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers).json()["sent"] == 2
+    )
     assert sorted(s["provider"] for s in providers.sent) == ["gmail", "outlook"]
 
     # A follow-up in the same enrollment reuses the mailbox that sent the first email.
@@ -241,12 +303,20 @@ def test_expired_tokens_refresh_and_revoked_ones_pause_the_mailbox(providers):
         db.close()
 
     providers.revoked = True
-    client.put(f"/campaigns/{campaign_id}/senders", headers=headers, json={"credential_ids": [credential.id]})
+    client.put(
+        f"/campaigns/{campaign_id}/senders",
+        headers=headers,
+        json={"credential_ids": [credential.id]},
+    )
     client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers)
     paused = _credential()
     assert paused.disabled_at is not None
     assert paused.disabled_reason.startswith("Reconnect needed")
-    account = next(a for a in client.get("/sending-accounts", headers=headers).json() if a["id"] == credential.id)
+    account = next(
+        a
+        for a in client.get("/sending-accounts", headers=headers).json()
+        if a["id"] == credential.id
+    )
     assert account["healthy"] is False
 
 
@@ -255,7 +325,11 @@ def test_gmail_replies_are_synced(providers):
     headers, campaign_id, message_ids = approved_message(client)
     _connect(client, headers)
     credential = _credential()
-    client.put(f"/campaigns/{campaign_id}/senders", headers=headers, json={"credential_ids": [credential.id]})
+    client.put(
+        f"/campaigns/{campaign_id}/senders",
+        headers=headers,
+        json={"credential_ids": [credential.id]},
+    )
     client.post(f"/campaigns/{campaign_id}/process-sends", headers=headers)
     db = TestingSessionLocal()
     try:
@@ -313,9 +387,17 @@ def test_health_pauses_bouncing_mailboxes_and_limits_apply(providers):
         db.commit()
     finally:
         db.close()
-    account = next(a for a in client.get("/sending-accounts", headers=headers).json() if a["id"] == credential.id)
+    account = next(
+        a
+        for a in client.get("/sending-accounts", headers=headers).json()
+        if a["id"] == credential.id
+    )
     assert account["healthy"] is False and "bounces" in account["problem"]
 
-    resumed = client.patch(f"/sending-accounts/{credential.id}", headers=headers, json={"resume": True, "daily_limit": 1})
+    resumed = client.patch(
+        f"/sending-accounts/{credential.id}",
+        headers=headers,
+        json={"resume": True, "daily_limit": 1},
+    )
     assert resumed.json()["healthy"] is True
     assert resumed.json()["daily_limit"] == 1

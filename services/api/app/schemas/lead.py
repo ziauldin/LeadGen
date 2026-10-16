@@ -64,6 +64,9 @@ class EmailContactRead(BaseModel):
     source_provider: str | None = None
     is_role_based: bool = False
     opted_out: bool
+    verification_status: str | None = None
+    verification_detail: str | None = None
+    verified_at: datetime | None = None
     created_at: datetime
 
 
@@ -95,7 +98,7 @@ class LeadImportResult(BaseModel):
     errors: list[str]
 
 
-BulkLeadAction = Literal["add_to_campaign", "enrich", "set_status", "delete", "rescore"]
+BulkLeadAction = Literal["add_to_campaign", "enrich", "set_status", "delete", "rescore", "verify"]
 
 
 class LeadBulkRequest(BaseModel):

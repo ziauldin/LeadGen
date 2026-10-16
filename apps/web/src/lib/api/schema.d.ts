@@ -4456,7 +4456,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "add_to_campaign" | "enrich" | "set_status" | "delete" | "rescore";
+            action: "add_to_campaign" | "enrich" | "set_status" | "delete" | "rescore" | "verify";
             /** Campaign Id */
             campaign_id?: number | null;
             /** Lead Ids */
@@ -5003,7 +5003,7 @@ export interface components {
          * ProviderName
          * @enum {string}
          */
-        ProviderName: "mock" | "google_cse" | "bing" | "serpapi" | "smtp" | "resend" | "sendgrid" | "mailgun" | "hunter" | "imap" | "groq" | "openai" | "gemini" | "gmail" | "outlook";
+        ProviderName: "mock" | "google_cse" | "bing" | "serpapi" | "smtp" | "resend" | "sendgrid" | "mailgun" | "hunter" | "imap" | "groq" | "openai" | "gemini" | "gmail" | "outlook" | "zerobounce" | "neverbounce";
         /** ProviderTestResponse */
         ProviderTestResponse: {
             /** Message */
@@ -5020,7 +5020,7 @@ export interface components {
          * ProviderType
          * @enum {string}
          */
-        ProviderType: "search" | "email" | "email_discovery" | "inbox" | "llm";
+        ProviderType: "search" | "email" | "email_discovery" | "inbox" | "llm" | "email_verification";
         /** ProvidersRead */
         ProvidersRead: {
             /** Google */
@@ -5675,6 +5675,11 @@ export interface components {
              * @default off
              */
             ai_mode: string;
+            /**
+             * Block Risky Emails
+             * @default false
+             */
+            block_risky_emails: boolean;
             /** Business Address */
             business_address: string | null;
             /** Product Description */
@@ -5690,6 +5695,8 @@ export interface components {
         UserSettingsUpdate: {
             /** Ai Mode */
             ai_mode?: ("off" | "assist") | null;
+            /** Block Risky Emails */
+            block_risky_emails?: boolean | null;
             /** Business Address */
             business_address?: string | null;
             /** Product Description */
@@ -6003,6 +6010,12 @@ export interface components {
             source_provider: string | null;
             /** Source Url */
             source_url: string | null;
+            /** Verification Detail */
+            verification_detail: string | null;
+            /** Verification Status */
+            verification_status: string | null;
+            /** Verified At */
+            verified_at: string | null;
         };
     };
     responses: never;
