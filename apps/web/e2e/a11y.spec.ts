@@ -42,6 +42,7 @@ test("main app pages are accessible", async ({ page }) => {
     "/replies",
     "/inbox",
     "/deals",
+    "/analytics",
     "/tasks",
     "/settings/workspace",
     "/settings/providers",

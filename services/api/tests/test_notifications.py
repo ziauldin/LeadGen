@@ -259,6 +259,7 @@ def test_weekly_digest(opted_out):
         if not opted_out:
             digest = next(m for m in OUTBOX if m.tags.get("kind") == "lifecycle:digest")
             assert "Emails sent: 1" in digest.text
+            assert "Reply rate" not in digest.text  # analytics section is behind its flag
             assert lifecycle.weekly_digest(db) == 0  # once per week
             assert db.scalar(select(LifecycleEmail).where(LifecycleEmail.key.like("digest:%")))
     finally:

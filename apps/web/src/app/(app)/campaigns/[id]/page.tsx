@@ -27,6 +27,7 @@ import { CampaignEnrollmentsTable } from "@/components/campaigns/campaign-enroll
 import { CampaignMessagesTable } from "@/components/campaigns/campaign-messages-table";
 import { CampaignOverview } from "@/components/campaigns/campaign-overview";
 import { CampaignSendersCard } from "@/components/campaigns/campaign-senders-card";
+import { CampaignVariantsCard } from "@/components/campaigns/campaign-variants-card";
 import { CampaignSequenceView } from "@/components/campaigns/campaign-sequence-view";
 import { CampaignStatusBadge } from "@/components/campaigns/campaign-status-badge";
 import { formatDate, formatDateTime, formatSendingDays } from "@/components/campaigns/format";
@@ -293,6 +294,7 @@ function CampaignDetail() {
         </div>
         <TabsContent value="overview" className="pt-4">
           <CampaignOverview campaignId={id} />
+          <CampaignVariantsCard campaignId={id} />
         </TabsContent>
         <TabsContent value="sequence" className="pt-4">
           <CampaignSequenceView campaign={campaign} />

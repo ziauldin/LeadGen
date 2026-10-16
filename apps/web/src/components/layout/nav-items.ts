@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Building2,
   CheckSquare,
   FileText,
@@ -39,6 +40,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/deals", label: "Deals", icon: KanbanSquare, flag: "crm" },
   { href: "/tasks", label: "Tasks", icon: ListTodo, flag: "crm" },
   { href: "/replies", label: "Replies", icon: MessagesSquare },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, flag: "analytics_v2" },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

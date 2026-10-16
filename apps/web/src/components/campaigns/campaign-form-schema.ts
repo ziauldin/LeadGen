@@ -29,6 +29,39 @@ export function unknownVariables(text: string, allowed: readonly string[]): stri
   return [...found];
 }
 
+export const VARIANT_KEYS = ["B", "C", "D"] as const;
+
+export const variantSchema = z
+  .object({
+    key: z.enum(VARIANT_KEYS),
+    subject_template: z.string(),
+    body_template: z.string(),
+  })
+  .superRefine((variant, ctx) => {
+    const subject = variant.subject_template.trim();
+    const body = variant.body_template.trim();
+    if (!subject) {
+      ctx.addIssue({ code: "custom", path: ["subject_template"], message: "Write a subject line for this version" });
+    } else if (subject.length > 500) {
+      ctx.addIssue({ code: "custom", path: ["subject_template"], message: "Keep the subject under 500 characters" });
+    }
+    if (!body) {
+      ctx.addIssue({ code: "custom", path: ["body_template"], message: "Write the body for this version" });
+    } else if (!hasUnsubscribeLink(body)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["body_template"],
+        message: `The body must include ${UNSUBSCRIBE_VARIABLE} so recipients can opt out`,
+      });
+    } else if (body.length > 20000) {
+      ctx.addIssue({ code: "custom", path: ["body_template"], message: "Keep the body under 20,000 characters" });
+    }
+    const unknown = unknownVariables(`${subject}\n${body}`, DEFAULT_VARIABLES);
+    if (unknown.length) {
+      ctx.addIssue({ code: "custom", path: ["body_template"], message: `Unknown variables: ${unknown.join(", ")}` });
+    }
+  });
+
 export const stepSchema = z
   .object({
     source: z.enum(["template", "custom"]),
@@ -43,6 +76,7 @@ export const stepSchema = z
     use_ai: z.boolean(),
     ai_instructions: z.string().max(2000, "Keep instructions under 2,000 characters"),
     thread_with_previous: z.boolean(),
+    variants: z.array(variantSchema).max(3, "A step has at most four versions"),
   })
   .superRefine((step, ctx) => {
     if (step.source === "template") {
@@ -120,6 +154,7 @@ export const campaignFormSchema = z
   });
 
 export type CampaignStepFormValues = z.infer<typeof stepSchema>;
+export type StepVariantFormValues = z.infer<typeof variantSchema>;
 export type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
 export function newStep(overrides: Partial<CampaignStepFormValues> = {}): CampaignStepFormValues {
@@ -132,6 +167,7 @@ export function newStep(overrides: Partial<CampaignStepFormValues> = {}): Campai
     use_ai: false,
     ai_instructions: "",
     thread_with_previous: true,
+    variants: [],
     ...overrides,
   };
 }
@@ -179,6 +215,7 @@ export function campaignToFormValues(campaign: Campaign): CampaignFormValues {
       use_ai: step.use_ai,
       ai_instructions: step.ai_instructions ?? "",
       thread_with_previous: step.thread_with_previous,
+      variants: (step.variants ?? []).map((variant) => ({ ...variant })),
     })),
     timezone: campaign.timezone || browserTimezone(),
     sending_days: campaign.sending_days?.length ? campaign.sending_days : [0, 1, 2, 3, 4],
@@ -204,6 +241,11 @@ export function stepsToPayload(steps: CampaignStepFormValues[]): CampaignStepInp
       use_ai: step.use_ai,
       ai_instructions: step.use_ai && instructions ? instructions : null,
       thread_with_previous: index === 0 ? false : step.thread_with_previous,
+      variants: step.variants.map((variant) => ({
+        key: variant.key,
+        subject_template: variant.subject_template.trim(),
+        body_template: variant.body_template.trim(),
+      })),
     };
   });
 }

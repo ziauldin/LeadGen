@@ -374,6 +374,14 @@ export function socialSignInUrl(provider: "google" | "microsoft", next?: string 
   return `/api/auth/oidc/${provider}/start${query}`;
 }
 
+export const analyticsApi = {
+  overview: (params: { days?: number; campaign_id?: number } = {}) =>
+    apiFetch<S["Overview"]>(`/analytics/overview${queryString(params)}`),
+  exportCsv: (days: number) =>
+    downloadAuthenticatedFile(`/analytics/export${queryString({ days })}`, `leadsgen-analytics-${days}d.csv`),
+  variants: (campaignId: number) => apiFetch<S["StepVariants"][]>(`/campaigns/${campaignId}/variants`),
+};
+
 export const billingApi = {
   summary: () => apiFetch<BillingSummary>("/billing"),
   checkout: (plan: string, interval: "month" | "year") =>

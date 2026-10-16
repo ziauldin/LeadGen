@@ -135,6 +135,7 @@ class Settings(BaseSettings):
     feature_billing: bool = False
     feature_mailbox_oauth: bool = False
     feature_crm: bool = False
+    feature_analytics_v2: bool = False
 
     # Stripe billing (FEATURE_BILLING). STRIPE_PRICES maps "plan:interval" to a Stripe price id,
     # e.g. {"starter:month": "price_123", "starter:year": "price_456", "pro:month": "price_789"}.

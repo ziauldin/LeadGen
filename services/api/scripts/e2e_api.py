@@ -35,6 +35,7 @@ env = {
     # The admin journey grants a superuser from the CLI; it skips the 2FA requirement here.
     "SUPERUSER_REQUIRE_MFA": "false",
     "FEATURE_CRM": "true",
+    "FEATURE_ANALYTICS_V2": "true",
 }
 
 

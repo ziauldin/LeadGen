@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import (
     admin,
+    analytics,
     approvals,
     auth,
     billing,
@@ -128,6 +129,7 @@ app.include_router(notifications.router)
 app.include_router(mailboxes.router)
 app.include_router(inbox.router)
 app.include_router(crm.router)
+app.include_router(analytics.router)
 app.include_router(developer.router)
 app.include_router(public_v1.router)
 app.include_router(workspaces.router)

@@ -80,6 +80,7 @@ def replace_steps(db: Session, campaign: Campaign, steps: list[dict]) -> None:
         "use_ai",
         "ai_instructions",
         "thread_with_previous",
+        "variants",
     )
     for number, data in sorted(resolved.items()):
         found = existing.get(number)
@@ -176,6 +177,7 @@ def create_campaign(
                 use_ai=bool(step.get("use_ai")),
                 ai_instructions=step.get("ai_instructions"),
                 thread_with_previous=step.get("thread_with_previous", True),
+                variants=step.get("variants") or [],
             ),
         )
 

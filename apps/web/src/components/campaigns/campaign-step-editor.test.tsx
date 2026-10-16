@@ -167,4 +167,38 @@ describe("CampaignStepEditor", () => {
     expect(within(first).getByLabelText(/Instructions for the AI draft/)).toBeInTheDocument();
     expect(within(first).getByText(/the template above is used instead/)).toBeInTheDocument();
   });
+
+  it("adds an A/B version that starts from the step text and is sent in the payload", async () => {
+    const { user, onValid } = setup();
+    const first = step(1);
+    await user.click(within(first).getByRole("button", { name: "Add version B" }));
+    const subject = within(first).getByRole("textbox", { name: "Subject" });
+    expect(subject).toHaveValue("Quick question about {{company}}");
+    await user.clear(subject);
+    await user.type(subject, "A better subject");
+    expect(within(first).getByText(/split evenly between 2 versions/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onValid).toHaveBeenCalled());
+    const payload = stepsToPayload(onValid.mock.calls[0][0].steps);
+    expect(payload[0].variants).toEqual([
+      { key: "B", subject_template: "A better subject", body_template: TEMPLATES[0].body },
+    ]);
+    expect(payload[1].variants).toEqual([]);
+  });
+
+  it("requires an opt-out link in every version", async () => {
+    const { user, onValid } = setup();
+    const first = step(1);
+    await user.click(within(first).getByRole("button", { name: "Add version B" }));
+    const body = within(first).getByRole("textbox", { name: "Body" });
+    await user.clear(body);
+    await user.type(body, "No link here");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(await within(first).findByText(/must include {{unsubscribe_link}}/)).toBeInTheDocument();
+    expect(onValid).not.toHaveBeenCalled();
+    await user.click(within(first).getByRole("button", { name: "Remove version B of step 1" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onValid).toHaveBeenCalled());
+  });
 });

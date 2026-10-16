@@ -10,6 +10,7 @@ import {
   Clock,
   CornerDownRight,
   FileText,
+  FlaskConical,
   PenLine,
   Plus,
   Sparkles,
@@ -30,6 +31,7 @@ import {
   DEFAULT_VARIABLES,
   hasUnsubscribeLink,
   newStep,
+  VARIANT_KEYS,
   type CampaignFormValues,
 } from "@/components/campaigns/campaign-form-schema";
 import type { EmailTemplate } from "@/lib/api/types";
@@ -453,6 +455,12 @@ function StepCard({
           </div>
         )}
 
+        <StepVariantsEditor
+          index={index}
+          baseSubject={isCustom ? (step?.subject_template ?? "") : (selectedTemplate?.subject ?? "")}
+          baseBody={isCustom ? (step?.body_template ?? "") : (selectedTemplate?.body ?? "")}
+        />
+
         <div className="space-y-3 rounded-lg border border-[var(--outline-variant)] p-3">
           <Switch
             label={
@@ -500,5 +508,101 @@ function StepCard({
         ) : null}
       </div>
     </article>
+  );
+}
+
+type VariantsProps = {
+  index: number;
+  /** Version A's text, used to start a new version from. */
+  baseSubject: string;
+  baseBody: string;
+};
+
+/** Extra versions (B, C, D) of one step, split evenly with version A for an A/B test. */
+function StepVariantsEditor({ index, baseSubject, baseBody }: VariantsProps) {
+  const uid = useId();
+  const {
+    control,
+    register,
+    formState: { errors },
+  } = useFormContext<CampaignFormValues>();
+  const { fields, append, remove } = useFieldArray({ control, name: `steps.${index}.variants` });
+  const variants = useWatch({ control, name: `steps.${index}.variants` }) ?? [];
+  const used = new Set(variants.map((variant) => variant.key));
+  const nextKey = VARIANT_KEYS.find((key) => !used.has(key));
+  const variantErrors = errors.steps?.[index]?.variants;
+
+  return (
+    <div className="space-y-3 rounded-lg border border-[var(--outline-variant)] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--on-surface)]">
+            <FlaskConical className="size-3.5 text-[var(--primary)]" aria-hidden />
+            A/B test
+          </p>
+          <p className="text-[12px] text-[var(--on-surface-variant)]">
+            {fields.length
+              ? `Leads are split evenly between ${fields.length + 1} versions. Each lead always gets the same one.`
+              : "Try another subject or body on part of your leads and see which gets more replies."}
+          </p>
+        </div>
+        {nextKey ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => append({ key: nextKey, subject_template: baseSubject, body_template: baseBody })}
+          >
+            <Plus aria-hidden />
+            Add version {nextKey}
+          </Button>
+        ) : null}
+      </div>
+      {fields.map((field, position) => {
+        const key = variants[position]?.key ?? field.key;
+        const fieldErrors = variantErrors?.[position];
+        const subjectId = `${uid}-${field.id}-subject`;
+        const bodyId = `${uid}-${field.id}-body`;
+        return (
+          <fieldset key={field.id} className="relative space-y-2 rounded-md bg-[var(--surface-container-low)] p-3">
+            <legend className="float-left text-[13px] font-semibold text-[var(--on-surface)]">Version {key}</legend>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => remove(position)}
+                aria-label={`Remove version ${key} of step ${index + 1}`}
+                className="text-[var(--error)] hover:bg-[var(--error-container)] hover:text-[var(--on-error-container)]"
+              >
+                <Trash2 aria-hidden />
+              </Button>
+            </div>
+            <div>
+              <FieldLabel htmlFor={subjectId}>Subject</FieldLabel>
+              <Input
+                id={subjectId}
+                className="h-9 bg-white text-[13px]"
+                aria-invalid={Boolean(fieldErrors?.subject_template)}
+                {...register(`steps.${index}.variants.${position}.subject_template`)}
+              />
+              <FieldError message={fieldErrors?.subject_template?.message} />
+            </div>
+            <div>
+              <FieldLabel htmlFor={bodyId}>Body</FieldLabel>
+              <Textarea
+                id={bodyId}
+                rows={6}
+                className="bg-white text-[13px] leading-[20px]"
+                aria-invalid={Boolean(fieldErrors?.body_template)}
+                {...register(`steps.${index}.variants.${position}.body_template`)}
+              />
+              <FieldError message={fieldErrors?.body_template?.message} />
+            </div>
+          </fieldset>
+        );
+      })}
+      <FieldError message={typeof variantErrors?.message === "string" ? variantErrors.message : undefined} />
+    </div>
   );
 }

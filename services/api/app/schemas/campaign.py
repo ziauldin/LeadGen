@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from zoneinfo import available_timezones
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -25,6 +26,12 @@ def _check_days(value: list[int] | None) -> list[int] | None:
     return days
 
 
+class StepVariant(BaseModel):
+    key: Literal["B", "C", "D"]
+    subject_template: str = Field(min_length=1, max_length=500)
+    body_template: str = Field(min_length=1, max_length=20_000)
+
+
 class CampaignStepBase(BaseModel):
     step_number: int = Field(ge=1, le=20)
     delay_days: int = Field(default=0, ge=0, le=365)
@@ -36,9 +43,14 @@ class CampaignStepBase(BaseModel):
     use_ai: bool = False
     ai_instructions: str | None = Field(default=None, max_length=2000)
     thread_with_previous: bool = True
+    # A/B test: up to three extra versions, split evenly with the main one (A).
+    variants: list[StepVariant] = Field(default_factory=list, max_length=3)
 
     @model_validator(mode="after")
     def needs_content(self) -> "CampaignStepBase":
+        keys = [v.key for v in self.variants]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Each A/B version needs its own letter")
         if not self.template_id and not (self.subject_template and self.body_template):
             raise ValueError("Give a template_id, or both subject_template and body_template")
         return self
@@ -57,6 +69,12 @@ class CampaignStepRead(BaseModel):
     use_ai: bool
     ai_instructions: str | None
     thread_with_previous: bool
+    variants: list[StepVariant] = []
+
+    @field_validator("variants", mode="before")
+    @classmethod
+    def no_variants(cls, value: object) -> object:
+        return value or []
 
 
 class CampaignScheduleFields(BaseModel):

@@ -22,6 +22,7 @@ from app.models.enums import CampaignStatus, EmailMessageStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.workspace import Workspace, WorkspaceSettings
+from app.services.analytics.service import choose_variant
 from app.services.compliance.outreach import primary_recipient_email, validate_lead_for_outreach
 from app.services.developer import events as webhook_events
 from app.services.email_generation.generator import (
@@ -107,6 +108,7 @@ def render_step_message(
         raise StepRenderError("Niche not found")
     token = secrets.token_urlsafe(32)
     first = _first_subject(db, enrollment) if step.step_number > 1 else None
+    variant_key, variant = choose_variant(step, enrollment.id or lead.id)
     content = build_content(
         db,
         workspace_id=campaign.workspace_id,
@@ -114,9 +116,9 @@ def render_step_message(
         niche=niche,
         sender_fallback_name=sender_fallback_name,
         unsubscribe_token=token,
-        template_id=step.template_id,
-        subject_template=step.subject_template,
-        body_template=step.body_template,
+        template_id=step.template_id if variant is None else None,
+        subject_template=variant["subject_template"] if variant else step.subject_template,
+        body_template=variant["body_template"] if variant else step.body_template,
         mode="ai" if step.use_ai else "template",
         instructions=step.ai_instructions,
         step_number=step.step_number,
@@ -142,6 +144,7 @@ def render_step_message(
         status=status,
         scheduled_for=scheduled_for,
         unsubscribe_token=token,
+        variant=variant_key if step.variants else None,
     )
     apply_content(message, content)
     db.add(message)

@@ -903,6 +903,58 @@
         "title": "Body_import_csv_leads_import_csv_post",
         "type": "object"
       },
+      "BreakdownRow": {
+        "properties": {
+          "bounce_rate": {
+            "title": "Bounce Rate",
+            "type": "number"
+          },
+          "bounced": {
+            "title": "Bounced",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "positive": {
+            "title": "Positive",
+            "type": "integer"
+          },
+          "positive_rate": {
+            "title": "Positive Rate",
+            "type": "number"
+          },
+          "replies": {
+            "title": "Replies",
+            "type": "integer"
+          },
+          "reply_rate": {
+            "title": "Reply Rate",
+            "type": "number"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bounce_rate",
+          "bounced",
+          "key",
+          "label",
+          "positive",
+          "positive_rate",
+          "replies",
+          "reply_rate",
+          "sent"
+        ],
+        "title": "BreakdownRow",
+        "type": "object"
+      },
       "BulkApproveRequest": {
         "properties": {
           "message_ids": {
@@ -1709,6 +1761,14 @@
             "default": false,
             "title": "Use Ai",
             "type": "boolean"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/StepVariant"
+            },
+            "maxItems": 3,
+            "title": "Variants",
+            "type": "array"
           }
         },
         "required": [
@@ -1815,6 +1875,14 @@
           "use_ai": {
             "title": "Use Ai",
             "type": "boolean"
+          },
+          "variants": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/StepVariant"
+            },
+            "title": "Variants",
+            "type": "array"
           }
         },
         "required": [
@@ -1827,7 +1895,8 @@
           "subject_template",
           "template_id",
           "thread_with_previous",
-          "use_ai"
+          "use_ai",
+          "variants"
         ],
         "title": "CampaignStepRead",
         "type": "object"
@@ -3120,6 +3189,49 @@
           }
         },
         "title": "ConversationUpdate",
+        "type": "object"
+      },
+      "Counts": {
+        "properties": {
+          "bounce_rate": {
+            "title": "Bounce Rate",
+            "type": "number"
+          },
+          "bounced": {
+            "title": "Bounced",
+            "type": "integer"
+          },
+          "positive": {
+            "title": "Positive",
+            "type": "integer"
+          },
+          "positive_rate": {
+            "title": "Positive Rate",
+            "type": "number"
+          },
+          "replies": {
+            "title": "Replies",
+            "type": "integer"
+          },
+          "reply_rate": {
+            "title": "Reply Rate",
+            "type": "number"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bounce_rate",
+          "bounced",
+          "positive",
+          "positive_rate",
+          "replies",
+          "reply_rate",
+          "sent"
+        ],
+        "title": "Counts",
         "type": "object"
       },
       "DashboardSummary": {
@@ -7014,6 +7126,71 @@
         "title": "OutreachReadiness",
         "type": "object"
       },
+      "Overview": {
+        "properties": {
+          "by_campaign": {
+            "items": {
+              "$ref": "#/components/schemas/BreakdownRow"
+            },
+            "title": "By Campaign",
+            "type": "array"
+          },
+          "by_mailbox": {
+            "items": {
+              "$ref": "#/components/schemas/BreakdownRow"
+            },
+            "title": "By Mailbox",
+            "type": "array"
+          },
+          "by_step": {
+            "items": {
+              "$ref": "#/components/schemas/BreakdownRow"
+            },
+            "title": "By Step",
+            "type": "array"
+          },
+          "by_template": {
+            "items": {
+              "$ref": "#/components/schemas/BreakdownRow"
+            },
+            "title": "By Template",
+            "type": "array"
+          },
+          "by_variant": {
+            "items": {
+              "$ref": "#/components/schemas/BreakdownRow"
+            },
+            "title": "By Variant",
+            "type": "array"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPoint"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/Counts"
+          }
+        },
+        "required": [
+          "by_campaign",
+          "by_mailbox",
+          "by_step",
+          "by_template",
+          "by_variant",
+          "days",
+          "series",
+          "totals"
+        ],
+        "title": "Overview",
+        "type": "object"
+      },
       "PermissionInfo": {
         "properties": {
           "description": {
@@ -8517,6 +8694,39 @@
         "title": "SentReply",
         "type": "object"
       },
+      "SeriesPoint": {
+        "properties": {
+          "bounced": {
+            "title": "Bounced",
+            "type": "integer"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "positive": {
+            "title": "Positive",
+            "type": "integer"
+          },
+          "replies": {
+            "title": "Replies",
+            "type": "integer"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bounced",
+          "date",
+          "positive",
+          "replies",
+          "sent"
+        ],
+        "title": "SeriesPoint",
+        "type": "object"
+      },
       "SessionRead": {
         "properties": {
           "current": {
@@ -8702,6 +8912,75 @@
           "name"
         ],
         "title": "StageWrite",
+        "type": "object"
+      },
+      "StepVariant": {
+        "properties": {
+          "body_template": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Body Template",
+            "type": "string"
+          },
+          "key": {
+            "enum": [
+              "B",
+              "C",
+              "D"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "subject_template": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Subject Template",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "subject_template",
+          "body_template"
+        ],
+        "title": "StepVariant",
+        "type": "object"
+      },
+      "StepVariants": {
+        "properties": {
+          "min_sends": {
+            "title": "Min Sends",
+            "type": "integer"
+          },
+          "step_number": {
+            "title": "Step Number",
+            "type": "integer"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/VariantStats"
+            },
+            "title": "Variants",
+            "type": "array"
+          },
+          "winner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Winner"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "min_sends",
+          "step_number",
+          "variants",
+          "winner"
+        ],
+        "title": "StepVariants",
         "type": "object"
       },
       "SubscriptionInfo": {
@@ -10265,6 +10544,54 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "VariantStats": {
+        "properties": {
+          "bounce_rate": {
+            "title": "Bounce Rate",
+            "type": "number"
+          },
+          "bounced": {
+            "title": "Bounced",
+            "type": "integer"
+          },
+          "positive": {
+            "title": "Positive",
+            "type": "integer"
+          },
+          "positive_rate": {
+            "title": "Positive Rate",
+            "type": "number"
+          },
+          "replies": {
+            "title": "Replies",
+            "type": "integer"
+          },
+          "reply_rate": {
+            "title": "Reply Rate",
+            "type": "number"
+          },
+          "sent": {
+            "title": "Sent",
+            "type": "integer"
+          },
+          "variant": {
+            "title": "Variant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bounce_rate",
+          "bounced",
+          "positive",
+          "positive_rate",
+          "replies",
+          "reply_rate",
+          "sent",
+          "variant"
+        ],
+        "title": "VariantStats",
+        "type": "object"
+      },
       "WarmupRequest": {
         "properties": {
           "daily_increment": {
@@ -10303,6 +10630,24 @@
           "enabled"
         ],
         "title": "WarmupRequest",
+        "type": "object"
+      },
+      "Winner": {
+        "properties": {
+          "p_value": {
+            "title": "P Value",
+            "type": "number"
+          },
+          "variant": {
+            "title": "Variant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "p_value",
+          "variant"
+        ],
+        "title": "Winner",
         "type": "object"
       },
       "WorkspaceCreate": {
@@ -11913,6 +12258,152 @@
         "summary": "Unsuspend Workspace",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/analytics/export": {
+      "get": {
+        "operationId": "export_analytics_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/analytics/overview": {
+      "get": {
+        "operationId": "get_overview_analytics_overview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaign_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Campaign Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Overview",
+        "tags": [
+          "analytics"
         ]
       }
     },
@@ -15002,6 +15493,73 @@
         "summary": "Start Campaign Endpoint",
         "tags": [
           "campaigns"
+        ]
+      }
+    },
+    "/campaigns/{campaign_id}/variants": {
+      "get": {
+        "operationId": "campaign_variants_campaigns__campaign_id__variants_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StepVariants"
+                  },
+                  "title": "Response Campaign Variants Campaigns  Campaign Id  Variants Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Campaign Variants",
+        "tags": [
+          "analytics"
         ]
       }
     },

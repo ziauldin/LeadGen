@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.flags import feature_enabled
 from app.models.email_message import EmailMessage
 from app.models.enums import EmailMessageStatus, ReplyClassification
 from app.models.lead import Lead
@@ -20,6 +21,7 @@ from app.models.notification import LifecycleEmail
 from app.models.reply import Reply
 from app.models.user import User
 from app.models.workspace import Workspace, WorkspaceMember, WorkspaceRole
+from app.services.analytics.service import weekly_report_lines
 from app.services.notifications.service import notify, preferences
 from app.services.platform_email.dispatch import send_platform_email
 from app.services.platform_email.mailer import TransactionalEmail
@@ -174,6 +176,12 @@ def weekly_digest(db: Session, *, now: datetime | None = None) -> int:
             f"Replies: {replies_by_ws.get(workspace.id, 0)} ({positive_by_ws.get(workspace.id, 0)} interested)\n"
             f"New leads: {leads_by_ws.get(workspace.id, 0)}\n"
         )
+        analytics_link = ""
+        if feature_enabled("analytics_v2", workspace):
+            extra = weekly_report_lines(db, workspace.id)
+            if extra:
+                stats += "\n".join(extra) + "\n"
+            analytics_link = f"See the full breakdown: {_app('/analytics')}\n"
         for _member, user in db.execute(
             select(WorkspaceMember, User)
             .join(User, User.id == WorkspaceMember.user_id)
@@ -193,7 +201,8 @@ def weekly_digest(db: Session, *, now: datetime | None = None) -> int:
                     subject=f"Your week in {workspace.name}",
                     text=(
                         f"Hi {user.name},\n\nHere's what happened in {workspace.name} over the last 7 days:\n\n{stats}\n"
-                        f"Open your dashboard: {_app('/dashboard')}\n\n"
+                        f"Open your dashboard: {_app('/dashboard')}\n"
+                        f"{analytics_link}\n"
                         "Turn this email off in Settings, under Notifications.\n"
                     ),
                     tags={"kind": "lifecycle:digest"},

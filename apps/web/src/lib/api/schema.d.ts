@@ -264,6 +264,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/analytics/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export */
+        get: operations["export_analytics_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Overview */
+        get: operations["get_overview_analytics_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api-keys": {
         parameters: {
             query?: never;
@@ -1105,6 +1139,23 @@ export interface paths {
         put?: never;
         /** Start Campaign Endpoint */
         post: operations["start_campaign_endpoint_campaigns__campaign_id__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/campaigns/{campaign_id}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Campaign Variants */
+        get: operations["campaign_variants_campaigns__campaign_id__variants_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3538,6 +3589,27 @@ export interface components {
             /** File */
             file: string;
         };
+        /** BreakdownRow */
+        BreakdownRow: {
+            /** Bounce Rate */
+            bounce_rate: number;
+            /** Bounced */
+            bounced: number;
+            /** Key */
+            key: unknown;
+            /** Label */
+            label: string;
+            /** Positive */
+            positive: number;
+            /** Positive Rate */
+            positive_rate: number;
+            /** Replies */
+            replies: number;
+            /** Reply Rate */
+            reply_rate: number;
+            /** Sent */
+            sent: number;
+        };
         /** BulkApproveRequest */
         BulkApproveRequest: {
             /** Message Ids */
@@ -3787,6 +3859,8 @@ export interface components {
              * @default false
              */
             use_ai?: boolean;
+            /** Variants */
+            variants?: components["schemas"]["StepVariant"][];
         };
         /** CampaignStepMetrics */
         CampaignStepMetrics: {
@@ -3827,6 +3901,11 @@ export interface components {
             thread_with_previous: boolean;
             /** Use Ai */
             use_ai: boolean;
+            /**
+             * Variants
+             * @default []
+             */
+            variants: components["schemas"]["StepVariant"][];
         };
         /** CampaignUpdate */
         CampaignUpdate: {
@@ -4139,6 +4218,23 @@ export interface components {
             status?: ("open" | "snoozed" | "done") | null;
             /** Unread */
             unread?: boolean | null;
+        };
+        /** Counts */
+        Counts: {
+            /** Bounce Rate */
+            bounce_rate: number;
+            /** Bounced */
+            bounced: number;
+            /** Positive */
+            positive: number;
+            /** Positive Rate */
+            positive_rate: number;
+            /** Replies */
+            replies: number;
+            /** Reply Rate */
+            reply_rate: number;
+            /** Sent */
+            sent: number;
         };
         /** DashboardSummary */
         DashboardSummary: {
@@ -5344,6 +5440,24 @@ export interface components {
             /** Ready */
             ready: boolean;
         };
+        /** Overview */
+        Overview: {
+            /** By Campaign */
+            by_campaign: components["schemas"]["BreakdownRow"][];
+            /** By Mailbox */
+            by_mailbox: components["schemas"]["BreakdownRow"][];
+            /** By Step */
+            by_step: components["schemas"]["BreakdownRow"][];
+            /** By Template */
+            by_template: components["schemas"]["BreakdownRow"][];
+            /** By Variant */
+            by_variant: components["schemas"]["BreakdownRow"][];
+            /** Days */
+            days: number;
+            /** Series */
+            series: components["schemas"]["SeriesPoint"][];
+            totals: components["schemas"]["Counts"];
+        };
         /** PermissionInfo */
         PermissionInfo: {
             /** Description */
@@ -5833,6 +5947,19 @@ export interface components {
             /** Email Message Id */
             email_message_id: number;
         };
+        /** SeriesPoint */
+        SeriesPoint: {
+            /** Bounced */
+            bounced: number;
+            /** Date */
+            date: string;
+            /** Positive */
+            positive: number;
+            /** Replies */
+            replies: number;
+            /** Sent */
+            sent: number;
+        };
         /** SessionRead */
         SessionRead: {
             /** Current */
@@ -5907,6 +6034,28 @@ export interface components {
              * @default 10
              */
             probability?: number;
+        };
+        /** StepVariant */
+        StepVariant: {
+            /** Body Template */
+            body_template: string;
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "B" | "C" | "D";
+            /** Subject Template */
+            subject_template: string;
+        };
+        /** StepVariants */
+        StepVariants: {
+            /** Min Sends */
+            min_sends: number;
+            /** Step Number */
+            step_number: number;
+            /** Variants */
+            variants: components["schemas"]["VariantStats"][];
+            winner: components["schemas"]["Winner"] | null;
         };
         /** SubscriptionInfo */
         SubscriptionInfo: {
@@ -6355,6 +6504,25 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VariantStats */
+        VariantStats: {
+            /** Bounce Rate */
+            bounce_rate: number;
+            /** Bounced */
+            bounced: number;
+            /** Positive */
+            positive: number;
+            /** Positive Rate */
+            positive_rate: number;
+            /** Replies */
+            replies: number;
+            /** Reply Rate */
+            reply_rate: number;
+            /** Sent */
+            sent: number;
+            /** Variant */
+            variant: string;
+        };
         /** WarmupRequest */
         WarmupRequest: {
             /**
@@ -6371,6 +6539,13 @@ export interface components {
              * @default 10
              */
             start_volume?: number;
+        };
+        /** Winner */
+        Winner: {
+            /** P Value */
+            p_value: number;
+            /** Variant */
+            variant: string;
         };
         /** WorkspaceCreate */
         WorkspaceCreate: {
@@ -7128,6 +7303,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkspaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_analytics_export_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_overview_analytics_overview_get: {
+        parameters: {
+            query?: {
+                days?: number;
+                campaign_id?: number | null;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Overview"];
                 };
             };
             /** @description Validation Error */
@@ -8761,6 +9003,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CampaignActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    campaign_variants_campaigns__campaign_id__variants_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StepVariants"][];
                 };
             };
             /** @description Validation Error */

@@ -108,6 +108,8 @@ class EmailMessage(Base, TenantScoped, TimestampUpdatedMixin):
 
     # How the content was produced
     generation_mode: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Which A/B version of the campaign step this email used (None = the only version).
+    variant: Mapped[str | None] = mapped_column(String(5), nullable=True)
     template_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     llm_model: Mapped[str | None] = mapped_column(String(100), nullable=True)
     prompt_version: Mapped[str | None] = mapped_column(String(20), nullable=True)
