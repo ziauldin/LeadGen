@@ -37,9 +37,10 @@ from app.models.search_query import SearchQuery
 from app.models.suppression import Suppression
 from app.models.user import User
 from app.models.workspace import Workspace
+from app.services.provider_credentials.service import ensure_default_mock_credentials
 from app.services.workspaces.service import create_workspace, get_or_create_settings
 
-DEMO_EMAIL = "demo@leadsgen.local"
+DEMO_EMAIL = "demo@leadsgen-demo.com"
 
 
 def _demo_password() -> str:
@@ -230,11 +231,14 @@ def seed(db, *, force: bool = False) -> None:
         email=DEMO_EMAIL,
         hashed_password=get_password_hash(demo_password),
         role=UserRole.OPERATOR,
+        email_verified_at=datetime.now(UTC),  # demo account: ready to approve and send
     )
     db.add(user)
     db.flush()
 
     workspace = create_workspace(db, user, "Demo workspace")
+    # Mock search and sending accounts so the whole flow works without real providers.
+    ensure_default_mock_credentials(db, workspace.id, user.id)
     workspace_settings = get_or_create_settings(db, workspace.id)
     workspace_settings.sender_name = "Alex Founder"
     workspace_settings.sender_company = "Acme Insights"
