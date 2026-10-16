@@ -1,7 +1,5 @@
-from app.services.scoring.lead_score import score_lead
 from app.services.scoring.rules import SCORING_RULES
 from app.services.search.mock_provider import MockSearchProvider
-from app.services.search.query_generator import generate_search_queries
 
 
 def test_mock_search_provider_returns_linkedin_urls():

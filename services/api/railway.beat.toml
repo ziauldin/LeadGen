@@ -1,0 +1,12 @@
+# Railway: Celery beat (the scheduler). Root Directory: services/api
+# Config file path: /services/api/railway.beat.toml
+# Run exactly ONE replica, or scheduled jobs (dispatch, sequences, inbox polling) run twice.
+
+[build]
+builder = "RAILPACK"
+buildCommand = "pip install -e '.[postgres]'"
+
+[deploy]
+startCommand = "celery -A app.core.celery_app beat --loglevel=INFO --schedule /tmp/celerybeat-schedule"
+numReplicas = 1
+restartPolicyType = "ALWAYS"

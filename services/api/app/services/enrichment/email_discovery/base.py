@@ -16,5 +16,4 @@ class DiscoveredEmail:
 
 
 class EmailDiscoveryProvider(Protocol):
-    def discover_by_domain(self, domain: str) -> list[DiscoveredEmail]:
-        ...
+    def discover_by_domain(self, domain: str) -> list[DiscoveredEmail]: ...

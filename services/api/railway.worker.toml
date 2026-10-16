@@ -1,0 +1,11 @@
+# Railway: Celery worker service (same repo, Root Directory: services/api).
+# Config file path: /services/api/railway.worker.toml
+# Consumes every queue; scale replicas up for more sending/enrichment throughput.
+
+[build]
+builder = "RAILPACK"
+buildCommand = "pip install -e '.[postgres]'"
+
+[deploy]
+startCommand = "celery -A app.core.celery_app worker --loglevel=INFO -Q default,sending,inbound,enrichment --concurrency=${CELERY_CONCURRENCY:-4} --without-gossip --without-mingle"
+restartPolicyType = "ALWAYS"

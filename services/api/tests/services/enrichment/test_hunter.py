@@ -1,12 +1,11 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-import httpx
-from unittest.mock import patch, MagicMock
 
 from app.services.enrichment.email_discovery.hunter_provider import (
     HunterEmailDiscoveryProvider,
     classify_email_type,
 )
-from app.services.enrichment.email_discovery.base import DiscoveredEmail
 from app.services.enrichment.email_discovery.utils import extract_company_domain
 
 
@@ -33,7 +32,7 @@ def test_extract_company_domain():
 def test_hunter_provider_success(mock_client_class):
     mock_client = MagicMock()
     mock_client_class.return_value.__enter__.return_value = mock_client
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -43,19 +42,19 @@ def test_hunter_provider_success(mock_client_class):
                     "value": "info@example.com",
                     "confidence": 95,
                     "first_name": None,
-                    "last_name": None
+                    "last_name": None,
                 },
                 {
                     "value": "john.doe@example.com",
                     "confidence": 88,
                     "first_name": "John",
                     "last_name": "Doe",
-                    "position": "CEO"
+                    "position": "CEO",
                 },
                 {
                     "value": "info@example.com",  # Duplicate
-                    "confidence": 95
-                }
+                    "confidence": 95,
+                },
             ]
         }
     }
@@ -65,12 +64,12 @@ def test_hunter_provider_success(mock_client_class):
     results = provider.discover_by_domain("example.com")
 
     assert len(results) == 2
-    
+
     assert results[0].email == "info@example.com"
     assert results[0].email_type == "generic"
     assert results[0].confidence == 0.95
     assert results[0].source == "hunter"
-    
+
     assert results[1].email == "john.doe@example.com"
     assert results[1].email_type == "named"
     assert results[1].confidence == 0.88
@@ -82,7 +81,7 @@ def test_hunter_provider_success(mock_client_class):
 def test_hunter_provider_empty(mock_client_class):
     mock_client = MagicMock()
     mock_client_class.return_value.__enter__.return_value = mock_client
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {"data": {"emails": []}}
@@ -97,7 +96,7 @@ def test_hunter_provider_empty(mock_client_class):
 def test_hunter_provider_401(mock_client_class):
     mock_client = MagicMock()
     mock_client_class.return_value.__enter__.return_value = mock_client
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 401
     mock_client.get.return_value = mock_response
@@ -111,7 +110,7 @@ def test_hunter_provider_401(mock_client_class):
 def test_hunter_provider_429(mock_client_class):
     mock_client = MagicMock()
     mock_client_class.return_value.__enter__.return_value = mock_client
-    
+
     mock_response = MagicMock()
     mock_response.status_code = 429
     mock_client.get.return_value = mock_response

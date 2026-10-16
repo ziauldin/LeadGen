@@ -1,5 +1,4 @@
 from tests.conftest import auth_headers, get_client
-
 from tests.test_phase7 import WELLPREDICT_STEP, _create_lead_with_email
 
 
@@ -16,6 +15,7 @@ def test_reply_notes_and_export():
             "name": "Notes test",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]
@@ -68,6 +68,7 @@ def test_unsubscribe_writes_audit_log():
             "name": "Audit test",
             "sending_window_start": "00:00",
             "sending_window_end": "23:59",
+            "sending_days": [0, 1, 2, 3, 4, 5, 6],
             "steps": [WELLPREDICT_STEP],
         },
     ).json()["id"]
@@ -84,15 +85,15 @@ def test_unsubscribe_writes_audit_log():
 
     from sqlalchemy import select
 
-    from tests.conftest import TestingSessionLocal
     from app.models.audit_log import AuditLog
     from app.models.email_message import EmailMessage
+    from tests.conftest import TestingSessionLocal
 
     db = TestingSessionLocal()
     try:
         message = db.scalar(select(EmailMessage).where(EmailMessage.id == message_id))
         assert message and message.unsubscribe_token
-        client.get(f"/unsubscribe/{message.unsubscribe_token}")
+        client.post(f"/unsubscribe/{message.unsubscribe_token}")
         audit = db.scalar(
             select(AuditLog).where(
                 AuditLog.action == "unsubscribe",

@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
-import tldextract
 
+import tldextract
 
 BLOCKED_DOMAINS = {
     "linkedin.com",

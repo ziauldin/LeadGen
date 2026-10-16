@@ -30,7 +30,7 @@ def test_seed_creates_demo_dataset():
 
         niches = db.scalars(select(Niche).where(Niche.user_id == user.id)).all()
         assert len(niches) == 1
-        assert "WellPredict" in niches[0].name
+        assert niches[0].name == "UK Regulated Organisations"
 
         leads = db.scalars(select(Lead).where(Lead.niche_id == niches[0].id)).all()
         assert len(leads) >= 8

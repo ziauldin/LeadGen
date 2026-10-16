@@ -2,7 +2,7 @@ import csv
 import io
 
 from app.services.leads.csv_import import CSV_IMPORT_COLUMNS, import_leads_from_csv
-from tests.conftest import TestingSessionLocal, auth_headers, get_client
+from tests.conftest import TestingSessionLocal, auth_headers, get_client, setup_db
 
 
 def test_csv_import_parses_rows_and_creates_lead():
@@ -47,14 +47,11 @@ def test_csv_import_parses_rows_and_creates_lead():
 def test_csv_import_reports_unknown_niche():
     db = TestingSessionLocal()
     try:
-        from app.models.user import User
+        from app.models.workspace import Workspace
 
-        user = User(
-            name="CSV User",
-            email="csv-user@example.com",
-            hashed_password="hash",
-        )
-        db.add(user)
+        setup_db()
+        workspace = Workspace(name="CSV", slug="csv-units")
+        db.add(workspace)
         db.commit()
 
         csv_content = io.StringIO()
@@ -74,7 +71,7 @@ def test_csv_import_reports_unknown_niche():
             },
         )
 
-        result = import_leads_from_csv(db, user, csv_content.getvalue())
+        result = import_leads_from_csv(db, workspace.id, csv_content.getvalue())
         assert result.created == 0
         assert any("niche" in err.lower() for err in result.errors)
     finally:

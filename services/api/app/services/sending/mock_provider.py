@@ -1,20 +1,19 @@
 import logging
-import uuid
+from collections import deque
 
-from app.services.sending.base import EmailSender, SendResult
+from app.services.sending.base import OutboundEmail, SendKind, SendResult
 
 logger = logging.getLogger(__name__)
 
+# Recently "sent" mock emails, for tests and local debugging.
+MOCK_OUTBOX: deque[OutboundEmail] = deque(maxlen=500)
 
-class MockEmailSender(EmailSender):
+
+class MockEmailSender:
     provider_name = "mock"
+    from_email = "mock@leadsgen.local"
 
-    def send(self, recipient_email: str, subject: str, body: str) -> SendResult:
-        message_id = f"mock-{uuid.uuid4().hex[:16]}"
-        logger.info(
-            "Mock email sent to=%s subject=%s message_id=%s",
-            recipient_email,
-            subject,
-            message_id,
-        )
-        return SendResult(success=True, provider_message_id=message_id)
+    def send(self, email: OutboundEmail) -> SendResult:
+        MOCK_OUTBOX.append(email)
+        logger.info("Mock email sent to=%s message_id=%s", email.to, email.message_id)
+        return SendResult(kind=SendKind.OK, provider_message_id=f"mock-{email.message_id}")

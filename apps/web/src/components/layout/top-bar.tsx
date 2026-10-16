@@ -1,7 +1,15 @@
 "use client";
 
-import { Bell, ChevronDown, HelpCircle, History, LogOut } from "lucide-react";
+import Link from "next/link";
+import { Check, ChevronDown, ChevronsUpDown, LogOut, Settings } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useWorkspace } from "@/hooks/use-workspace";
+import { authApi } from "@/lib/api/endpoints";
+import { getErrorMessage } from "@/lib/api/client";
+import { HelpMenu } from "@/components/layout/help-menu";
+import { MobileNav } from "@/components/layout/mobile-nav";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,144 +18,101 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+function WorkspaceSwitcher() {
+  const { workspaces, current, switchTo } = useWorkspace();
+  if (!current) return null;
+
+  async function choose(id: number) {
+    if (id === current?.id) return;
+    try {
+      await switchTo(id);
+      toast.success("Switched workspace");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="flex max-w-[220px] items-center gap-2 rounded-lg border border-[var(--outline-variant)] px-3 py-1.5 text-[13px] font-medium text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+        aria-label={`Workspace: ${current.name}. Switch workspace`}
+      >
+        <span className="truncate">{current.name}</span>
+        <ChevronsUpDown className="size-3.5 shrink-0 opacity-60" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-60">
+        {workspaces.map((workspace) => (
+          <DropdownMenuItem
+            key={workspace.id}
+            onClick={() => void choose(workspace.id)}
+            className="cursor-pointer gap-2 text-[13px]"
+          >
+            <span className="flex-1 truncate">{workspace.name}</span>
+            <span className="text-[11px] capitalize text-[var(--on-surface-variant)]">
+              {workspace.role}
+            </span>
+            {workspace.id === current.id && <Check className="size-3.5" aria-hidden />}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer text-[13px]"
+          render={<Link href="/settings/workspace" />}
+        >
+          Workspace settings
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function TopBar() {
   const { user, logout } = useAuth();
 
+  async function signOutEverywhere() {
+    try {
+      await authApi.logoutAll();
+    } finally {
+      await logout();
+    }
+  }
+
   return (
-    <header
-      className="fixed top-0 left-[260px] right-0 h-16 flex items-center justify-between px-8 z-10 border-b"
-      style={{
-        background: "var(--surface-container-lowest)",
-        borderColor: "var(--outline-variant)",
-        boxShadow: "0px 1px 3px rgba(0,0,0,0.05)",
-      }}
-    >
-      {/* Left: top-level nav tabs */}
-      <nav className="hidden lg:flex items-center gap-6">
-        <button
-          className="text-[13px] font-bold pb-1 border-b-2 transition-all"
-          style={{
-            color: "var(--primary)",
-            borderColor: "var(--primary)",
-          }}
-        >
-          Analytics
-        </button>
-        <button
-          className="text-[13px] pb-1 border-b-2 border-transparent transition-all hover:border-[var(--primary)]"
-          style={{ color: "var(--on-surface-variant)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--primary)")}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "var(--on-surface-variant)")
-          }
-        >
-          Reports
-        </button>
-        <button
-          className="text-[13px] pb-1 border-b-2 border-transparent transition-all"
-          style={{ color: "var(--on-surface-variant)" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "var(--primary)")}
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.color = "var(--on-surface-variant)")
-          }
-        >
-          Audit Log
-        </button>
-      </nav>
+    <header className="fixed left-0 right-0 top-0 z-10 flex h-16 items-center gap-3 border-b border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] px-4 shadow-[0_1px_3px_rgba(0,0,0,0.05)] sm:px-6 lg:left-[260px] lg:px-8">
+      <MobileNav />
+      <WorkspaceSwitcher />
 
-      {/* Right: actions + profile */}
-      <div className="flex items-center gap-3 ml-auto">
-        {/* Icon buttons */}
-        <div className="flex items-center gap-1">
-          <button
-            className="p-2 rounded-full transition-colors"
-            style={{ color: "var(--on-surface-variant)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--surface-container-high)";
-              e.currentTarget.style.color = "var(--primary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "var(--on-surface-variant)";
-            }}
-            title="History"
-          >
-            <History className="w-4 h-4" />
-          </button>
-          <button
-            className="p-2 rounded-full transition-colors"
-            style={{ color: "var(--on-surface-variant)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--surface-container-high)";
-              e.currentTarget.style.color = "var(--primary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "var(--on-surface-variant)";
-            }}
-            title="Help"
-          >
-            <HelpCircle className="w-4 h-4" />
-          </button>
-          <button
-            className="relative p-2 rounded-full transition-colors"
-            style={{ color: "var(--on-surface-variant)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--surface-container-high)";
-              e.currentTarget.style.color = "var(--primary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "var(--on-surface-variant)";
-            }}
-            title="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div
-          className="w-px h-6"
-          style={{ background: "var(--outline-variant)" }}
-        />
-
-        {/* User dropdown */}
+      <div className="ml-auto flex items-center gap-3">
+        <HelpMenu />
+        <NotificationBell />
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--surface-container-low)] active:scale-95">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-              style={{ background: "var(--primary)" }}
+          <DropdownMenuTrigger
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+          >
+            <span
+              aria-hidden
+              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[11px] font-bold text-white"
             >
               {user?.name?.slice(0, 2).toUpperCase() ?? "LG"}
-            </div>
+            </span>
             {user && (
-              <span
-                className="hidden sm:block text-[13px] font-medium max-w-[140px] truncate"
-                style={{ color: "var(--on-surface)" }}
-              >
+              <span className="hidden max-w-[140px] truncate text-[13px] font-medium text-[var(--on-surface)] sm:block">
                 {user.name}
               </span>
             )}
-            <ChevronDown
-              className="w-3.5 h-3.5 shrink-0"
-              style={{ color: "var(--on-surface-variant)" }}
-            />
+            {/* The visible name stays part of the accessible name (WCAG 2.5.3). */}
+            <span className="sr-only">Account menu</span>
+            <ChevronDown className="size-3.5 shrink-0 text-[var(--on-surface-variant)]" aria-hidden />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
             {user && (
               <>
                 <div className="px-3 py-2">
-                  <p
-                    className="text-[13px] font-semibold truncate"
-                    style={{ color: "var(--on-surface)" }}
-                  >
+                  <p className="truncate text-[13px] font-semibold text-[var(--on-surface)]">
                     {user.name}
                   </p>
-                  <p
-                    className="text-[11px] truncate"
-                    style={{ color: "var(--on-surface-variant)" }}
-                  >
+                  <p className="truncate text-[11px] text-[var(--on-surface-variant)]">
                     {user.email}
                   </p>
                 </div>
@@ -155,11 +120,24 @@ export function TopBar() {
               </>
             )}
             <DropdownMenuItem
-              onClick={logout}
-              className="gap-2 text-[13px] cursor-pointer"
-              style={{ color: "var(--error)" }}
+              className="cursor-pointer gap-2 text-[13px]"
+              render={<Link href="/settings" />}
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <Settings className="size-3.5" aria-hidden />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => void signOutEverywhere()}
+              className="cursor-pointer gap-2 text-[13px]"
+            >
+              <LogOut className="size-3.5" aria-hidden />
+              Sign out on all devices
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => void logout()}
+              className="cursor-pointer gap-2 text-[13px] text-[var(--error)]"
+            >
+              <LogOut className="size-3.5" aria-hidden />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

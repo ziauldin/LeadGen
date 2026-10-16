@@ -1,6 +1,8 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.enums import ProviderName, ProviderType
+from app.models.provider_credential import ProviderCredential
 from app.services.provider_credentials.service import (
     _as_str,
     decrypt_provider_config,
@@ -14,8 +16,32 @@ from app.services.search.external_providers import (
 from app.services.search.mock_provider import MockSearchProvider
 
 
-def get_search_provider_for_user(db: Session, user_id: int):
-    credential = get_active_credential(db, user_id, ProviderType.SEARCH)
+def find_search_credential(
+    db: Session, workspace_id: int, provider_name: str
+) -> ProviderCredential | None:
+    """The workspace's configured search credential for one provider (active first)."""
+    return db.scalar(
+        select(ProviderCredential)
+        .where(
+            ProviderCredential.workspace_id == workspace_id,
+            ProviderCredential.provider_type == ProviderType.SEARCH,
+            ProviderCredential.provider_name == ProviderName(provider_name),
+        )
+        .order_by(ProviderCredential.is_active.desc(), ProviderCredential.id.desc())
+        .limit(1),
+    )
+
+
+def get_search_provider_for_workspace(
+    db: Session, workspace_id: int, provider_name: str | None = None
+):
+    """The provider to search with: the requested one, else the workspace's active one."""
+    if provider_name == ProviderName.MOCK.value:
+        return MockSearchProvider()
+    if provider_name:
+        credential = find_search_credential(db, workspace_id, provider_name)
+    else:
+        credential = get_active_credential(db, workspace_id, ProviderType.SEARCH)
     if credential is None:
         return MockSearchProvider()
 
@@ -41,8 +67,8 @@ def get_search_provider_for_user(db: Session, user_id: int):
     return MockSearchProvider()
 
 
-def get_active_search_provider_name(db: Session, user_id: int) -> str:
-    credential = get_active_credential(db, user_id, ProviderType.SEARCH)
+def get_active_search_provider_name(db: Session, workspace_id: int) -> str:
+    credential = get_active_credential(db, workspace_id, ProviderType.SEARCH)
     if credential is None:
         return ProviderName.MOCK.value
     return _as_str(credential.provider_name)

@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_workspace, require_permission
 from app.core.database import get_db
+from app.core.permissions import Permission
+from app.core.tenancy import WorkspaceContext
 from app.models.lead import Lead
 from app.models.niche import Niche
-from app.models.user import User
 from app.schemas.scoring import (
     LeadScoreRead,
     RecalculateRequest,
@@ -36,8 +37,9 @@ def get_scoring_rules() -> list[ScoringRuleRead]:
 @router.post("/recalculate", response_model=RecalculateResponse)
 def recalculate_scores(
     payload: RecalculateRequest,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> RecalculateResponse:
     if payload.niche_id is None and not payload.lead_ids:
         raise HTTPException(
@@ -47,8 +49,7 @@ def recalculate_scores(
 
     query = (
         select(Lead)
-        .join(Niche, Lead.niche_id == Niche.id)
-        .where(Niche.user_id == current_user.id)
+        .where(Lead.workspace_id == ctx.workspace_id)
         .options(
             selectinload(Lead.company),
             selectinload(Lead.email_contacts),
@@ -60,7 +61,10 @@ def recalculate_scores(
         query = query.where(Lead.id.in_(payload.lead_ids))
     elif payload.niche_id is not None:
         niche = db.scalar(
-            select(Niche).where(Niche.id == payload.niche_id, Niche.user_id == current_user.id),
+            select(Niche).where(
+                Niche.id == payload.niche_id,
+                Niche.workspace_id == ctx.workspace_id,
+            ),
         )
         if niche is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")

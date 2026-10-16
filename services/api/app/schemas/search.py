@@ -16,6 +16,8 @@ class RunSearchRequest(BaseModel):
     niche_id: int
     query: str
     limit: int = Field(default=10, ge=1, le=50)
+    # A configured search provider to use instead of the active one (e.g. "serpapi", "mock").
+    provider: str | None = Field(default=None, max_length=30)
 
 
 class SearchResultItem(BaseModel):

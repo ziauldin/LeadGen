@@ -2,13 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_workspace, require_permission
 from app.core.database import get_db
-from app.models.enums import SearchProvider, SearchStatus
+from app.core.errors import ValidationFailedError
+from app.core.permissions import Permission
+from app.core.tenancy import WorkspaceContext
+from app.models.enums import ProviderName, SearchProvider, SearchStatus
 from app.models.niche import Niche
 from app.models.search_query import SearchQuery
-from app.models.user import User
-from app.services.search.provider_factory import get_active_search_provider_name
 from app.schemas.search import (
     GenerateQueriesRequest,
     GenerateQueriesResponse,
@@ -17,6 +18,10 @@ from app.schemas.search import (
     SaveSearchResultsResponse,
     SearchQueryRead,
     SearchResultItem,
+)
+from app.services.search.provider_factory import (
+    find_search_credential,
+    get_active_search_provider_name,
 )
 from app.services.search.query_generator import generate_search_queries
 from app.services.search.search_service import run_search_query_record, save_search_results
@@ -32,56 +37,73 @@ def _serialize_search(search: SearchQuery) -> SearchQueryRead:
         else:
             results.append(item)
 
-    provider = search.provider.value if hasattr(search.provider, "value") else str(search.provider)
-    search_status = search.status.value if hasattr(search.status, "value") else str(search.status)
-
     return SearchQueryRead(
         id=search.id,
         niche_id=search.niche_id,
         query=search.query,
-        provider=provider,
-        status=search_status,
+        provider=str(search.provider),
+        status=str(search.status),
         result_count=search.result_count,
         results=results,
         created_at=search.created_at,
     )
 
 
-@router.post("/generate-queries", response_model=GenerateQueriesResponse)
-def generate_queries(
-    payload: GenerateQueriesRequest,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> GenerateQueriesResponse:
+def _get_niche(db: Session, niche_id: int, ctx: WorkspaceContext) -> Niche:
     niche = db.scalar(
-        select(Niche).where(Niche.id == payload.niche_id, Niche.user_id == current_user.id),
+        select(Niche).where(Niche.id == niche_id, Niche.workspace_id == ctx.workspace_id),
     )
     if niche is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")
+    return niche
 
-    queries = generate_search_queries(niche)
-    return GenerateQueriesResponse(niche_id=niche.id, queries=queries)
+
+def _get_search(db: Session, search_id: int, ctx: WorkspaceContext) -> SearchQuery:
+    search = db.scalar(
+        select(SearchQuery).where(
+            SearchQuery.id == search_id,
+            SearchQuery.workspace_id == ctx.workspace_id,
+        ),
+    )
+    if search is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search not found")
+    return search
+
+
+@router.post("/generate-queries", response_model=GenerateQueriesResponse)
+def generate_queries(
+    payload: GenerateQueriesRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
+) -> GenerateQueriesResponse:
+    niche = _get_niche(db, payload.niche_id, ctx)
+    return GenerateQueriesResponse(niche_id=niche.id, queries=generate_search_queries(niche))
 
 
 @router.post("/run", response_model=SearchQueryRead, status_code=status.HTTP_201_CREATED)
 def run_search(
     payload: RunSearchRequest,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> SearchQueryRead:
-    niche = db.scalar(
-        select(Niche).where(Niche.id == payload.niche_id, Niche.user_id == current_user.id),
-    )
-    if niche is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Niche not found")
+    niche = _get_niche(db, payload.niche_id, ctx)
 
-    provider_key = get_active_search_provider_name(db, current_user.id)
+    if payload.provider and payload.provider != ProviderName.MOCK.value:
+        valid = payload.provider in {name.value for name in ProviderName}
+        if not valid or find_search_credential(db, ctx.workspace_id, payload.provider) is None:
+            raise ValidationFailedError(
+                f"No {payload.provider} search account is set up. Add it in Settings → Providers.",
+            )
+    provider_key = payload.provider or get_active_search_provider_name(db, ctx.workspace_id)
     try:
         provider = SearchProvider(provider_key)
     except ValueError:
         provider = SearchProvider.MOCK
 
     search_query = SearchQuery(
+        workspace_id=ctx.workspace_id,
         niche_id=niche.id,
         query=payload.query.strip(),
         provider=provider,
@@ -92,48 +114,30 @@ def run_search(
     db.commit()
     db.refresh(search_query)
 
-    search_query = run_search_query_record(db, search_query, limit=payload.limit)
+    search_query = run_search_query_record(
+        db, search_query, limit=payload.limit, provider_name=payload.provider
+    )
     return _serialize_search(search_query)
 
 
 @router.get("/{search_id}", response_model=SearchQueryRead)
 def get_search(
     search_id: int,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
 ) -> SearchQueryRead:
-    search = db.scalar(
-        select(SearchQuery)
-        .join(Niche, SearchQuery.niche_id == Niche.id)
-        .where(SearchQuery.id == search_id, Niche.user_id == current_user.id),
-    )
-    if search is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search not found")
-    return _serialize_search(search)
+    return _serialize_search(_get_search(db, search_id, ctx))
 
 
 @router.post("/{search_id}/save-results", response_model=SaveSearchResultsResponse)
 def save_results(
     search_id: int,
     payload: SaveSearchResultsRequest,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> SaveSearchResultsResponse:
-    search = db.scalar(
-        select(SearchQuery)
-        .join(Niche, SearchQuery.niche_id == Niche.id)
-        .where(SearchQuery.id == search_id, Niche.user_id == current_user.id),
-    )
-    if search is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Search not found")
-
-    niche = db.get(Niche, search.niche_id)
-    assert niche is not None
-
-    created, skipped = save_search_results(
-        db,
-        search,
-        niche,
-        selected_urls=payload.selected_urls,
-    )
+    search = _get_search(db, search_id, ctx)
+    niche = _get_niche(db, search.niche_id, ctx)
+    created, skipped = save_search_results(db, search, niche, selected_urls=payload.selected_urls)
     return SaveSearchResultsResponse(created=created, skipped=skipped)

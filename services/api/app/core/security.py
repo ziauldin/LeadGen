@@ -1,11 +1,17 @@
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
-from cryptography.fernet import Fernet
-from jose import JWTError, jwt
+import jwt
+from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 
 from app.core.config import settings
+
+_KEY_HELP = (
+    "Generate one with: "
+    'python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"'
+)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -19,53 +25,76 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def create_access_token(subject: str | int, expires_delta: timedelta | None = None) -> str:
-    expire = datetime.now(UTC) + (
-        expires_delta
-        if expires_delta
-        else timedelta(minutes=settings.jwt_access_token_expire_minutes)
-    )
-    payload: dict[str, Any] = {"sub": str(subject), "exp": expire}
+ACCESS_TOKEN_TYPE = "access"  # noqa: S105 - JWT "typ" claim, not a secret
+
+
+def create_access_token(
+    subject: str | int,
+    *,
+    token_version: int = 0,
+    expires_delta: timedelta | None = None,
+    extra_claims: dict[str, Any] | None = None,
+) -> str:
+    now = datetime.now(UTC)
+    expire = now + (expires_delta or timedelta(minutes=settings.jwt_access_token_expire_minutes))
+    payload: dict[str, Any] = {
+        "sub": str(subject),
+        "ver": token_version,
+        "typ": ACCESS_TOKEN_TYPE,
+        "iat": now,
+        "exp": expire,
+        "jti": secrets.token_hex(8),
+        **(extra_claims or {}),
+    }
     return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
+    payload = jwt.decode(
+        token,
+        settings.secret_key,
+        algorithms=[settings.jwt_algorithm],
+        options={"require": ["sub", "exp", "typ"]},
+    )
+    if payload.get("typ") != ACCESS_TOKEN_TYPE:
+        raise jwt.InvalidTokenError("Not an access token")
+    return payload
 
 
-def get_token_subject(token: str) -> str | None:
+def read_access_token(token: str) -> tuple[int, int] | None:
+    """Return ``(user_id, token_version)`` for a valid access token, else None."""
     try:
         payload = decode_access_token(token)
-        subject = payload.get("sub")
-        return str(subject) if subject is not None else None
-    except JWTError:
+        return int(payload["sub"]), int(payload.get("ver", 0))
+    except (jwt.PyJWTError, ValueError, KeyError):
         return None
 
 
-def ensure_encryption_key_configured() -> None:
-    if not settings.secret_encryption_key:
-        raise RuntimeError(
-            "SECRET_ENCRYPTION_KEY is not set. Generate one with: "
-            'python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"',
-        )
+def _fernet() -> MultiFernet:
+    keys = settings.encryption_keys()
+    if not keys:
+        raise RuntimeError(f"SECRET_ENCRYPTION_KEY is not set. {_KEY_HELP}")
     try:
-        Fernet(settings.secret_encryption_key.encode())
-    except Exception as exc:
+        return MultiFernet([Fernet(key.encode()) for key in keys])
+    except (ValueError, TypeError) as exc:
         raise RuntimeError("SECRET_ENCRYPTION_KEY is invalid for Fernet encryption") from exc
 
 
+def ensure_encryption_key_configured() -> None:
+    _fernet()
+
+
 def encrypt_secret_payload(payload: str) -> str:
-    ensure_encryption_key_configured()
-    return Fernet(settings.secret_encryption_key.encode()).encrypt(payload.encode("utf-8")).decode("utf-8")
+    """Encrypt with the newest key (the first in SECRET_ENCRYPTION_KEYS)."""
+    return _fernet().encrypt(payload.encode("utf-8")).decode("utf-8")
 
 
 def decrypt_secret_payload(encrypted_payload: str) -> str:
-    ensure_encryption_key_configured()
-    return (
-        Fernet(settings.secret_encryption_key.encode())
-        .decrypt(encrypted_payload.encode("utf-8"))
-        .decode("utf-8")
-    )
+    """Decrypt with any configured key, so old ciphertexts survive a key rotation."""
+    try:
+        return _fernet().decrypt(encrypted_payload.encode("utf-8")).decode("utf-8")
+    except InvalidToken as exc:
+        raise RuntimeError("Stored secret could not be decrypted with the configured keys") from exc
 
 
 def mask_secret_value(value: str | None) -> str:

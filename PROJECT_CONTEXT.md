@@ -514,10 +514,7 @@ npm run dev
 
 ### Demo Login (after seed)
 
-| Field | Value |
-|---|---|
-| Email | `demo@wellpredict.io` |
-| Password | `demo1234` |
+`python scripts/seed.py` creates `demo@leadsgen.local` and prints a random password (or uses `SEED_DEMO_PASSWORD`). It refuses to run in production.
 
 ### Verify Setup
 

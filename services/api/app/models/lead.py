@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Float, ForeignKey, String, Text
+from sqlalchemy import Float, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import LeadStatus
 from app.models.mixins import TimestampUpdatedMixin
+from app.models.workspace import TenantScoped
 
 if TYPE_CHECKING:
     from app.models.company import Company
@@ -16,8 +17,16 @@ if TYPE_CHECKING:
     from app.models.niche import Niche
 
 
-class Lead(Base, TimestampUpdatedMixin):
+class Lead(Base, TenantScoped, TimestampUpdatedMixin):
     __tablename__ = "leads"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "niche_id",
+            "linkedin_url",
+            name="uq_leads_workspace_niche_linkedin",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     niche_id: Mapped[int] = mapped_column(ForeignKey("niches.id", ondelete="CASCADE"), index=True)
@@ -40,6 +49,15 @@ class Lead(Base, TimestampUpdatedMixin):
     score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     qualification_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     compliance_source_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # GDPR Art. 6 basis for processing: legitimate_interest | consent | contract.
+    lawful_basis: Mapped[str] = mapped_column(
+        String(30),
+        default="legitimate_interest",
+        server_default="legitimate_interest",
+        nullable=False,
+    )
+    # The legitimate-interest assessment (why contacting this person is reasonable).
+    lawful_basis_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     niche: Mapped[Niche] = relationship(back_populates="leads")
     company: Mapped[Company | None] = relationship(back_populates="leads")
@@ -47,4 +65,8 @@ class Lead(Base, TimestampUpdatedMixin):
         back_populates="lead",
         cascade="all, delete-orphan",
     )
-    email_messages: Mapped[list[EmailMessage]] = relationship(back_populates="lead")
+    # Drafts go with the lead (ON DELETE CASCADE); leads that were emailed can't be deleted.
+    email_messages: Mapped[list[EmailMessage]] = relationship(
+        back_populates="lead",
+        passive_deletes=True,
+    )

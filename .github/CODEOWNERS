@@ -1,0 +1,5 @@
+# Review is required from these owners for changes to the paths below.
+*                                  @ziauldin
+/services/api/alembic/             @ziauldin
+/services/api/app/core/            @ziauldin
+/.github/                          @ziauldin

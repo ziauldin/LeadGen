@@ -1,9 +1,9 @@
-# Railway service config for the FastAPI API.
-# In Railway: set Root Directory to services/api
-# (Settings → Source → Root Directory).
+# Railway: API service. Settings → Source → Root Directory: services/api
+# Config file path: /services/api/railway.toml
 #
-# If Railway does not pick this up automatically, set the config file path to:
-# /services/api/railway.toml
+# Migrations run before each deploy. For deploys that contain a "contract" migration
+# (removing/renaming columns), scale the worker and beat services to 0 first, deploy the
+# API, then scale them back up. See docs/DEPLOYMENT.md.
 
 [build]
 builder = "RAILPACK"
@@ -11,7 +11,7 @@ buildCommand = "pip install -e '.[postgres]'"
 
 [deploy]
 preDeployCommand = ["alembic upgrade head"]
-startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers ${WEB_CONCURRENCY:-2} --proxy-headers --forwarded-allow-ips='*'"
 healthcheckPath = "/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

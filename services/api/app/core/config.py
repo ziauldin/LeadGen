@@ -37,6 +37,21 @@ _SQLITE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 DEFAULT_SQLITE_URL = f"sqlite:///{_SQLITE_DB_PATH.resolve().as_posix()}"
 
 
+PLACEHOLDER_SECRET_KEY = "change-me-to-a-long-random-string"  # noqa: S105 - rejected in production
+
+
+def normalize_database_url(url: str) -> str:
+    """Pin PostgreSQL URLs to the psycopg 3 driver.
+
+    Railway/Heroku hand out ``postgres://`` or driver-less ``postgresql://`` URLs; SQLAlchemy's
+    default driver for those differs between versions, so name the one we install.
+    """
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url.removeprefix(prefix)
+    return url
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
@@ -46,37 +61,127 @@ class Settings(BaseSettings):
 
     app_name: str = "LeadsGen"
     environment: str = "development"
+    log_level: str = "INFO"
+    log_json: bool | None = None  # defaults to JSON logs outside development/test
 
     database_url: str = DEFAULT_SQLITE_URL
     redis_url: str = "redis://localhost:6379/0"
 
-    secret_key: str = "change-me-to-a-long-random-string"
+    secret_key: str = PLACEHOLDER_SECRET_KEY
+    # Primary Fernet key. SECRET_ENCRYPTION_KEYS (comma-separated, newest first) enables rotation.
     secret_encryption_key: str = ""
+    secret_encryption_keys: str = ""
     jwt_algorithm: str = "HS256"
-    jwt_access_token_expire_minutes: int = 1440
+    jwt_access_token_expire_minutes: int = 15
+    jwt_refresh_token_expire_days: int = 30
 
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
     cors_origin_regex: str | None = None
 
-    search_provider: str = "mock"
-    email_provider: str = "mock"
+    # Refresh-token cookie. The default path assumes the web app proxies the API under /api.
+    refresh_cookie_name: str = "lg_refresh"
+    refresh_cookie_path: str = "/api/auth"
+    refresh_cookie_secure: bool | None = None  # defaults to True outside development/test
+    refresh_cookie_samesite: str = "lax"  # use "none" only for a cross-site API without proxy
+    refresh_cookie_domain: str | None = None
+    require_email_verification: bool = True
+    # Reject passwords found in known breaches (Have I Been Pwned range API, k-anonymity).
+    password_breach_check: bool = True
+    # Cloudflare Turnstile CAPTCHA on sign-up, password reset and repeated failed logins.
+    turnstile_secret_key: str = ""
 
-    google_cse_api_key: str = ""
-    google_cse_cx: str = ""
-    bing_search_api_key: str = ""
-    serpapi_api_key: str = ""
+    # Rate limiting (slowapi). Use Redis in production so limits hold across instances.
+    rate_limit_enabled: bool = True
+    rate_limit_storage_url: str | None = None  # defaults to REDIS_URL outside dev/test
+    rate_limit_default: str = "600/minute"
+    trusted_proxy_hops: int = 1
+
+    # Celery: run tasks inline (tests / e2e only).
+    celery_task_always_eager: bool = False
+
+    # Platform transactional email (verify / reset / invite). Never used for outreach.
+    platform_email_provider: str = "console"  # console | resend | smtp
+    platform_email_from: str = "LeadsGen <no-reply@localhost>"
+    platform_email_api_key: str = ""
+    platform_smtp_host: str = ""
+    platform_smtp_port: int = 587
+    platform_smtp_username: str = ""
+    platform_smtp_password: str = ""
+    # Off only for a local catch-all server such as Mailpit; required in production.
+    platform_smtp_use_tls: bool = True
+
+    # Domain whose MX routes to our inbound webhook/IMAP (reply+token@, unsubscribe+token@).
+    inbound_email_domain: str = ""
+
+    frontend_url: str = "http://localhost:3000"
+    api_public_url: str = "http://localhost:8000"
+    expose_api_docs: bool = True
+
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.0
+    # OpenTelemetry: OTLP/HTTP endpoint (e.g. https://otlp.example.com) to export traces to.
+    otel_exporter_otlp_endpoint: str = ""
+    otel_sample_ratio: float = 0.1
+    # Bearer token for GET /metrics (Prometheus). Empty disables the endpoint.
+    metrics_token: str = ""
+    railway_git_commit_sha: str = ""
+
+    # Dark-launch flags for the new production features.
+    feature_ai_emails: bool = False
+    feature_imap: bool = False
+    feature_inbound_webhooks: bool = False
+    feature_sso: bool = False
+    feature_public_api: bool = False
+    feature_billing: bool = False
+    feature_mailbox_oauth: bool = False
+    feature_crm: bool = False
+    feature_analytics_v2: bool = False
+    feature_integrations: bool = False
+
+    # Stripe billing (FEATURE_BILLING). STRIPE_PRICES maps "plan:interval" to a Stripe price id,
+    # e.g. {"starter:month": "price_123", "starter:year": "price_456", "pro:month": "price_789"}.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_prices: str = "{}"
+    stripe_automatic_tax: bool = False
+    stripe_api_base: str = "https://api.stripe.com/v1"
+    billing_trial_days: int = 14
+    billing_grace_days: int = 7
+
+    # Marketing site: prices shown on /pricing (Stripe stays the source of truth for charges)
+    # and where contact-form messages go.
+    plan_display_prices: str = '{"currency": "USD", "free": {"month": 0, "year": 0}}'
+    support_email: str = "support@localhost"
+
+    # Platform admins must use two-factor authentication to open the back office.
+    superuser_require_mfa: bool = True
+    impersonation_max_minutes: int = 60
+
+    # Public API (/v1) and outbound webhooks
+    rate_limit_api: str = "120/minute"  # per API key
+    outbound_webhook_timeout_seconds: float = 10.0
+
+    # "Continue with Google / Microsoft" (OIDC apps you register with each provider).
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+    microsoft_oauth_client_id: str = ""
+    microsoft_oauth_client_secret: str = ""
+
+    # CRM integrations. HubSpot needs a public app (OAuth); Pipedrive uses each workspace's API token.
+    hubspot_client_id: str = ""
+    hubspot_client_secret: str = ""
+
+    # Platform-paid LLM, used when a workspace has no key of its own: groq | openai | gemini |
+    # mock | "" (off). Workspace keys are stored encrypted as "llm" provider credentials.
+    platform_llm_provider: str = ""
+    platform_llm_api_key: str = ""
+    platform_llm_model: str = ""
+    llm_timeout_seconds: float = 30.0
 
     email_discovery_provider: str = "none"
     hunter_api_key: str = ""
     hunter_daily_limit: int = 25
     hunter_enabled: bool = False
-
-    smtp_enabled: bool = False
-    smtp_host: str = ""
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_password: str = ""
-    smtp_from_email: str = ""
 
     default_daily_send_limit: int = 20
     default_per_domain_limit: int = 3
@@ -87,8 +192,18 @@ class Settings(BaseSettings):
     enrichment_request_timeout: int = 10
     enrichment_rate_limit_seconds: float = 1.0
     enrichment_max_pages: int = 3
+    enrichment_max_response_bytes: int = 2_000_000
 
-    api_public_url: str = "http://localhost:8000"
+    csv_max_bytes: int = 5_000_000
+    # File storage for exports: "local" (disk, development) or "s3" (S3 / Cloudflare R2 / MinIO).
+    storage_backend: str = "local"
+    storage_local_dir: str = ""
+    s3_bucket: str = ""
+    s3_region: str = "auto"
+    s3_endpoint_url: str = ""
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
+    csv_max_rows: int = 10_000
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -99,13 +214,80 @@ class Settings(BaseSettings):
             raw = value
         return [normalize_cors_origin(origin) for origin in raw if origin.strip()]
 
+    @field_validator("database_url", mode="after")
+    @classmethod
+    def normalize_db_url(cls, value: str) -> str:
+        return normalize_database_url(value)
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment == "production"
+
+    @property
+    def is_test_like(self) -> bool:
+        return self.environment in {"test", "development"}
+
+    @property
+    def use_json_logs(self) -> bool:
+        if self.log_json is not None:
+            return self.log_json
+        return self.environment not in {"development", "test"}
+
+    @property
+    def cookie_secure(self) -> bool:
+        if self.refresh_cookie_secure is not None:
+            return self.refresh_cookie_secure
+        return self.environment not in {"development", "test"}
+
+    @property
+    def resolved_rate_limit_storage(self) -> str:
+        if self.rate_limit_storage_url:
+            return self.rate_limit_storage_url
+        return "memory://" if self.environment in {"development", "test"} else self.redis_url
+
+    def encryption_keys(self) -> list[str]:
+        keys = [key.strip() for key in self.secret_encryption_keys.split(",") if key.strip()]
+        if self.secret_encryption_key and self.secret_encryption_key not in keys:
+            keys.append(self.secret_encryption_key)
+        return keys
+
     def resolved_cors_origin_regex(self) -> str | None:
-        if self.cors_origin_regex:
-            return self.cors_origin_regex
-        if self.environment == "production":
-            # Railway + Vercel frontends without listing every hostname in CORS_ORIGINS.
-            return r"https://[\w-]+\.(up\.railway\.app|vercel\.app)"
-        return None
+        # Only an explicit regex is honoured. Wildcard hosting domains (any *.up.railway.app or
+        # *.vercel.app) would let other tenants' apps call the API with credentials.
+        return self.cors_origin_regex or None
+
+
+def production_config_errors(config: Settings) -> list[str]:
+    """Configuration problems that must stop the API from starting in production."""
+    errors: list[str] = []
+    if len(config.secret_key) < 32 or config.secret_key == PLACEHOLDER_SECRET_KEY:
+        errors.append("SECRET_KEY must be a random string of at least 32 characters")
+    if not config.encryption_keys():
+        errors.append("SECRET_ENCRYPTION_KEY (or SECRET_ENCRYPTION_KEYS) must be set")
+    if not config.database_url.startswith("postgresql"):
+        errors.append("DATABASE_URL must point at PostgreSQL in production")
+    for name in ("api_public_url", "frontend_url"):
+        if not getattr(config, name).startswith("https://"):
+            errors.append(f"{name.upper()} must be an https:// URL in production")
+    if not config.cors_origins or any(o.startswith("http://") for o in config.cors_origins):
+        errors.append("CORS_ORIGINS must list the https frontend origin(s) explicitly")
+    if config.platform_email_provider == "console":
+        errors.append("PLATFORM_EMAIL_PROVIDER must be resend or smtp in production")
+    if config.platform_email_provider == "smtp" and not config.platform_smtp_use_tls:
+        errors.append("PLATFORM_SMTP_USE_TLS must be on in production")
+    if config.platform_llm_provider == "mock":
+        errors.append("PLATFORM_LLM_PROVIDER must not be mock in production")
+    if config.celery_task_always_eager:
+        errors.append("CELERY_TASK_ALWAYS_EAGER must not be enabled in production")
+    if config.cors_origin_regex and any(
+        host in config.cors_origin_regex.lower() for host in ("railway", "vercel")
+    ):
+        errors.append("CORS_ORIGIN_REGEX must not allow every Railway/Vercel subdomain")
+    if config.feature_billing and not (config.stripe_secret_key and config.stripe_webhook_secret):
+        errors.append("FEATURE_BILLING needs STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET")
+    if config.stripe_secret_key.startswith("sk_test_"):
+        errors.append("STRIPE_SECRET_KEY is a test key; use a live key in production")
+    return errors
 
 
 @lru_cache

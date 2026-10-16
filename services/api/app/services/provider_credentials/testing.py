@@ -1,7 +1,7 @@
+import smtplib
 from datetime import UTC, datetime
 
 import httpx
-import smtplib
 
 from app.models.enums import ProviderName
 from app.models.provider_credential import ProviderCredential
@@ -12,6 +12,7 @@ from app.services.search.external_providers import (
     SerpApiSearchProvider,
 )
 from app.services.search.mock_provider import MockSearchProvider
+from app.services.verification.providers import Verifier
 
 
 def test_search_provider(credential: ProviderCredential) -> tuple[bool, str]:
@@ -38,7 +39,7 @@ def test_search_provider(credential: ProviderCredential) -> tuple[bool, str]:
         else:
             return False, f"Unsupported search provider: {_as_str(provider_name)}"
         return True, "Search connection successful"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return False, str(exc)
 
 
@@ -88,13 +89,87 @@ def test_email_provider(credential: ProviderCredential) -> tuple[bool, str]:
             response.raise_for_status()
             return True, "Mailgun API key and domain validated"
         return False, f"Unsupported email provider: {_as_str(provider_name)}"
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return False, str(exc)
 
 
+def test_email_discovery_provider(credential: ProviderCredential) -> tuple[bool, str]:
+    provider_name = ProviderName(_as_str(credential.provider_name))
+    if provider_name != ProviderName.HUNTER:
+        return False, f"Unsupported email discovery provider: {_as_str(provider_name)}"
+    config = decrypt_provider_config(credential)
+    try:
+        response = httpx.get(
+            "https://api.hunter.io/v2/account",
+            params={"api_key": str(config["api_key"])},
+            timeout=15.0,
+        )
+        if response.status_code == 401:
+            return False, "Hunter rejected the API key"
+        response.raise_for_status()
+        return True, "Hunter API key validated"
+    except Exception as exc:
+        return False, f"Hunter connection failed: {exc.__class__.__name__}"
+
+
+def test_inbox_provider(credential: ProviderCredential) -> tuple[bool, str]:
+    from app.services.inbound.imap_poller import default_imap_factory
+
+    config = decrypt_provider_config(credential)
+    try:
+        client = default_imap_factory(config)
+        try:
+            client.login(str(config["username"]), str(config["password"]))
+            status, _ = client.select(str(config.get("folder") or "INBOX"), readonly=True)
+            if status != "OK":
+                return False, "Logged in, but the folder could not be opened"
+        finally:
+            client.logout()
+        return True, "IMAP login and folder access successful"
+    except Exception as exc:
+        return False, f"IMAP connection failed: {exc.__class__.__name__}"
+
+
+def test_verification_provider(credential: ProviderCredential) -> tuple[bool, str]:
+    from app.services.verification.providers import UNKNOWN
+
+    verifier = verifier_for_credential(credential)
+    result = verifier.verify("postmaster@gmail.com")
+    if result.status == UNKNOWN and not result.billable:
+        return False, f"{verifier.name} check failed: {result.detail}"
+    return True, f"{verifier.name} answered ({result.status})"
+
+
+def verifier_for_credential(credential: ProviderCredential) -> Verifier:
+    from app.services.verification.providers import (
+        MockVerifier,
+        NeverBounceVerifier,
+        ZeroBounceVerifier,
+    )
+
+    name = ProviderName(_as_str(credential.provider_name))
+    api_key = str(decrypt_provider_config(credential).get("api_key", ""))
+    if name == ProviderName.ZEROBOUNCE:
+        return ZeroBounceVerifier(api_key)
+    if name == ProviderName.NEVERBOUNCE:
+        return NeverBounceVerifier(api_key)
+    return MockVerifier()
+
+
 def test_provider_credential(credential: ProviderCredential) -> tuple[bool, str, datetime]:
-    if _as_str(credential.provider_type) == "search":
+    provider_type = _as_str(credential.provider_type)
+    if provider_type == "search":
         success, message = test_search_provider(credential)
+    elif provider_type == "email_discovery":
+        success, message = test_email_discovery_provider(credential)
+    elif provider_type == "inbox":
+        success, message = test_inbox_provider(credential)
+    elif provider_type == "email_verification":
+        success, message = test_verification_provider(credential)
+    elif provider_type == "llm":
+        from app.services.llm.factory import test_llm_credential
+
+        success, message = test_llm_credential(credential)
     else:
         success, message = test_email_provider(credential)
     return success, message, datetime.now(UTC)

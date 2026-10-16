@@ -18,6 +18,12 @@ class ProviderCredentialRead(BaseModel):
     last_tested_at: datetime | None = None
     last_test_status: str | None = None
     last_test_message: str | None = None
+    warmup_enabled: bool = False
+    warmup_started_at: datetime | None = None
+    warmup_start_volume: int = 10
+    warmup_daily_increment: int = 5
+    warmup_max: int | None = None
+    webhook_urls: dict[str, str] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
 

@@ -1,31 +1,48 @@
 from app.core.celery_app import celery_app
 from app.core.database import SessionLocal
-from app.services.sending.sender import process_active_campaigns
+from app.core.tenancy import system_session
+from app.services.campaigns.sequences import advance_sequences
+from app.services.sending.sender import deliver_message, dispatch, reap_stuck_messages
 
 
+@celery_app.task(name="sending.send_message", acks_late=True)
+def send_message_task(email_message_id: int) -> str:
+    db = SessionLocal()
+    try:
+        with system_session(db):
+            return deliver_message(db, email_message_id)
+    finally:
+        db.close()
+
+
+@celery_app.task(name="sending.dispatch")
+def dispatch_due_messages() -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        return dispatch(db, enqueue=lambda message_id: send_message_task.delay(message_id))
+    finally:
+        db.close()
+
+
+@celery_app.task(name="sending.reap")
+def reap_stuck() -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        return reap_stuck_messages(db)
+    finally:
+        db.close()
+
+
+@celery_app.task(name="sequences.advance")
+def advance_sequences_task() -> dict[str, int]:
+    db = SessionLocal()
+    try:
+        return advance_sequences(db)
+    finally:
+        db.close()
+
+
+# Old task name kept so a beat process from the previous release keeps working during deploys.
 @celery_app.task(name="campaign.process_sends")
 def process_campaign_sends() -> dict[str, int]:
-    db = SessionLocal()
-    try:
-        return process_active_campaigns(db)
-    finally:
-        db.close()
-
-
-@celery_app.task(name="campaign.send_message")
-def send_campaign_message(email_message_id: int) -> dict[str, str]:
-    from app.services.sending.sender import send_email_message
-
-    db = SessionLocal()
-    try:
-        message = send_email_message(db, email_message_id)
-        return {
-            "status": message.status.value
-            if hasattr(message.status, "value")
-            else str(message.status),
-            "email_message_id": str(email_message_id),
-        }
-    except ValueError as exc:
-        return {"status": "failed", "email_message_id": str(email_message_id), "error": str(exc)}
-    finally:
-        db.close()
+    return dispatch_due_messages()

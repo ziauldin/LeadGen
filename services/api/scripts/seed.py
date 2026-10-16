@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import argparse
+import os
 import secrets
 import sys
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import get_password_hash
+from app.core.tenancy import bind_session, unbind_session
 from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
 from app.models.email_contact import EmailContact
@@ -33,11 +36,17 @@ from app.models.reply import Reply
 from app.models.search_query import SearchQuery
 from app.models.suppression import Suppression
 from app.models.user import User
-from app.models.user_settings import UserSettings
+from app.models.workspace import Workspace
 from app.services.provider_credentials.service import ensure_default_mock_credentials
+from app.services.workspaces.service import create_workspace, get_or_create_settings
 
-DEMO_EMAIL = "demo@wellpredict.io"
-DEMO_PASSWORD = "demo1234"
+DEMO_EMAIL = "demo@leadsgen-demo.com"
+
+
+def _demo_password() -> str:
+    """Use SEED_DEMO_PASSWORD if set, otherwise a fresh random password per run."""
+    return os.environ.get("SEED_DEMO_PASSWORD") or secrets.token_urlsafe(12)
+
 
 SAMPLE_LEADS = [
     {
@@ -171,9 +180,10 @@ MOCK_SEARCH_RESULTS = [
     },
 ]
 
-WELLPREDICT_STEP = {
+DEMO_STEP = {
     "step_number": 1,
     "delay_days": 0,
+    "template_id": "system:intro",
     "subject_template": "Quick question about {{company}}",
     "body_template": """Hi {{first_name}},
 
@@ -194,17 +204,19 @@ def reset_demo_data(db) -> None:
     if user is None:
         return
 
-    niche_ids = list(db.scalars(select(Niche.id).where(Niche.user_id == user.id)).all())
-    if niche_ids:
-        lead_ids = list(db.scalars(select(Lead.id).where(Lead.niche_id.in_(niche_ids))).all())
-        if lead_ids:
-            db.execute(delete(EmailMessage).where(EmailMessage.lead_id.in_(lead_ids)))
-
+    owned = list(db.scalars(select(Workspace).where(Workspace.created_by == user.id)).all())
+    for workspace in owned:
+        db.execute(delete(EmailMessage).where(EmailMessage.workspace_id == workspace.id))
+        db.delete(workspace)
+    db.flush()
     db.delete(user)
     db.commit()
 
 
 def seed(db, *, force: bool = False) -> None:
+    if settings.environment == "production":
+        raise RuntimeError("Refusing to seed demo data when ENVIRONMENT=production")
+
     existing = db.scalar(select(User).where(User.email == DEMO_EMAIL))
     if existing:
         if not force:
@@ -213,28 +225,30 @@ def seed(db, *, force: bool = False) -> None:
             return
         reset_demo_data(db)
 
+    demo_password = _demo_password()
     user = User(
         name="Demo Operator",
         email=DEMO_EMAIL,
-        hashed_password=get_password_hash(DEMO_PASSWORD),
+        hashed_password=get_password_hash(demo_password),
         role=UserRole.OPERATOR,
+        email_verified_at=datetime.now(UTC),  # demo account: ready to approve and send
     )
     db.add(user)
     db.flush()
 
-    db.add(
-        UserSettings(
-            user_id=user.id,
-            sender_name="Alex Founder",
-            sender_company="WellPredict",
-            business_address="London, UK",
-        ),
-    )
-    ensure_default_mock_credentials(db, user.id)
+    workspace = create_workspace(db, user, "Demo workspace")
+    # Mock search and sending accounts so the whole flow works without real providers.
+    ensure_default_mock_credentials(db, workspace.id, user.id)
+    workspace_settings = get_or_create_settings(db, workspace.id)
+    workspace_settings.sender_name = "Alex Founder"
+    workspace_settings.sender_company = "Acme Insights"
+    workspace_settings.business_address = "London, UK"
+    # New tenant rows below are stamped with the demo workspace automatically.
+    bind_session(db, workspace.id)
 
     niche = Niche(
         user_id=user.id,
-        name="UK Regulated Organisations — WellPredict",
+        name="UK Regulated Organisations",
         country="UK",
         industry="Food Manufacturing, Healthcare, NHS",
         target_roles=[
@@ -271,7 +285,7 @@ def seed(db, *, force: bool = False) -> None:
 
     active_campaign = Campaign(
         niche_id=niche.id,
-        name="WellPredict Q2 outreach",
+        name="Q2 outreach",
         status=CampaignStatus.ACTIVE,
         daily_send_limit=20,
         sending_window_start="09:00",
@@ -279,7 +293,7 @@ def seed(db, *, force: bool = False) -> None:
     )
     db.add(active_campaign)
     db.flush()
-    db.add(CampaignStep(campaign_id=active_campaign.id, **WELLPREDICT_STEP))
+    db.add(CampaignStep(campaign_id=active_campaign.id, **DEMO_STEP))
 
     draft_campaign = Campaign(
         niche_id=niche.id,
@@ -291,7 +305,7 @@ def seed(db, *, force: bool = False) -> None:
     )
     db.add(draft_campaign)
     db.flush()
-    db.add(CampaignStep(campaign_id=draft_campaign.id, **WELLPREDICT_STEP))
+    db.add(CampaignStep(campaign_id=draft_campaign.id, **DEMO_STEP))
 
     now = datetime.now(UTC)
 
@@ -330,9 +344,7 @@ def seed(db, *, force: bool = False) -> None:
                 company_id=company.id,
                 email=item["email"],
                 email_type=(
-                    EmailType.GENERIC
-                    if item["email"].startswith("info@")
-                    else EmailType.NAMED
+                    EmailType.GENERIC if item["email"].startswith("info@") else EmailType.NAMED
                 ),
                 confidence=0.85,
                 source_url=item["website"],
@@ -383,15 +395,17 @@ def seed(db, *, force: bool = False) -> None:
 
     db.add(
         Suppression(
+            workspace_id=workspace.id,
             email="blocked@spam.example",
-            domain="spam.example",
+            domain=None,
             reason="manual",
             source="seed",
         ),
     )
 
     db.commit()
-    print(f"Seeded demo user: {DEMO_EMAIL} / {DEMO_PASSWORD}")
+    unbind_session(db)
+    print(f"Seeded demo user: {DEMO_EMAIL} / {demo_password}")
     print(f"Niche: {niche.name} ({len(SAMPLE_LEADS)} leads, 2 campaigns, 1 search query)")
 
 

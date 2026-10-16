@@ -1,9 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import (
+    get_current_user,
+    get_current_workspace,
+    require_permission,
+)
+from app.api.routes.approvals import approval_item
 from app.core.database import get_db
+from app.core.permissions import Permission
+from app.core.rate_limit import enforce
+from app.core.tenancy import WorkspaceContext
 from app.models.user import User
+from app.schemas.approval import ApprovalItem, EmailEditRequest, EmailRejectRequest
 from app.schemas.email import (
     EmailApproveRequest,
     EmailApproveResponse,
@@ -12,11 +21,19 @@ from app.schemas.email import (
     EmailMessageRead,
     EmailPreviewRequest,
     EmailPreviewResponse,
+    EmailRegenerateRequest,
     EmailTemplateRead,
+)
+from app.services.approvals.service import (
+    campaign_names,
+    edit_message,
+    load_reviewable,
+    reject_message,
 )
 from app.services.email_generation.generator import (
     approve_email_message,
     generate_email_message,
+    regenerate_email_message,
     render_email_for_lead,
 )
 from app.services.email_generation.templates import list_templates
@@ -26,29 +43,47 @@ router = APIRouter(prefix="/emails", tags=["emails"])
 
 @router.get("/templates", response_model=list[EmailTemplateRead])
 def get_email_templates(
-    _current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
 ) -> list[EmailTemplateRead]:
     return [
-        EmailTemplateRead(id=template.id, name=template.name, subject=template.subject)
-        for template in list_templates()
+        EmailTemplateRead(
+            id=template.id,
+            name=template.name,
+            subject=template.subject,
+            description=template.description,
+            is_system=template.is_system,
+        )
+        for template in list_templates(db, ctx.workspace_id)
     ]
+
+
+def _limit_ai(ctx: WorkspaceContext, mode: str) -> None:
+    if mode == "ai":
+        enforce("30/minute", "ai-draft", str(ctx.workspace_id))
 
 
 @router.post("/preview", response_model=EmailPreviewResponse)
 def preview_email(
     payload: EmailPreviewRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> EmailPreviewResponse:
+    _limit_ai(ctx, payload.mode)
     try:
         rendered = render_email_for_lead(
             db,
             payload.lead_id,
-            current_user.id,
+            ctx.workspace_id,
+            sender_fallback_name=current_user.name,
             template_id=payload.template_id,
+            mode=payload.mode,
+            instructions=payload.instructions,
+            user_id=current_user.id,
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        db.commit()  # keep the LLM usage record for previews
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -62,25 +97,33 @@ def preview_email(
         has_opt_out_line=rendered.has_opt_out_line,
         compliance_errors=rendered.compliance_errors,
         can_send=not rendered.compliance_errors and rendered.has_opt_out_line,
+        generation_mode=rendered.generation_mode,
+        llm_model=rendered.llm_model,
+        generation_note=rendered.generation_note,
     )
 
 
 @router.post("/generate", response_model=EmailGenerateResponse, status_code=status.HTTP_201_CREATED)
 def generate_email(
     payload: EmailGenerateRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> EmailGenerateResponse:
+    _limit_ai(ctx, payload.mode)
     try:
         message = generate_email_message(
             db,
             payload.lead_id,
-            current_user.id,
+            ctx.workspace_id,
+            sender_fallback_name=current_user.name,
             template_id=payload.template_id,
             campaign_id=payload.campaign_id,
+            mode=payload.mode,
+            instructions=payload.instructions,
+            user_id=current_user.id,
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -90,17 +133,104 @@ def generate_email(
     )
 
 
+@router.post("/{message_id}/regenerate", response_model=EmailMessageRead)
+def regenerate_email(
+    message_id: int,
+    payload: EmailRegenerateRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
+) -> EmailMessageRead:
+    _limit_ai(ctx, payload.mode)
+    try:
+        message = regenerate_email_message(
+            db,
+            message_id,
+            ctx.workspace_id,
+            sender_fallback_name=current_user.name,
+            mode=payload.mode,
+            template_id=payload.template_id,
+            instructions=payload.instructions,
+            actor_id=current_user.id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return EmailMessageRead.model_validate(message)
+
+
 @router.post("/approve", response_model=EmailApproveResponse)
 def approve_email(
     payload: EmailApproveRequest,
-    current_user: User = Depends(get_current_user),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.APPROVALS_APPROVE, verified=True)
+    ),
 ) -> EmailApproveResponse:
-    try:
-        message = approve_email_message(db, payload.email_message_id, current_user.id)
-    except ValueError as exc:
-        detail = str(exc)
-        status_code = status.HTTP_404_NOT_FOUND if "not found" in detail.lower() else status.HTTP_400_BAD_REQUEST
-        raise HTTPException(status_code=status_code, detail=detail) from exc
-
+    message = approve_email_message(
+        db,
+        payload.email_message_id,
+        ctx.workspace_id,
+        actor_id=ctx.user_id,
+    )
     return EmailApproveResponse(message=EmailMessageRead.model_validate(message))
+
+
+def _review_item(db: Session, workspace_id: int, message_id: int) -> ApprovalItem:
+    message = load_reviewable(db, workspace_id, message_id)
+    names = campaign_names(db, {message.campaign_id} if message.campaign_id else set())
+    return approval_item(db, message, names.get(message.campaign_id or 0))
+
+
+@router.get("/{message_id}", response_model=ApprovalItem)
+def get_email(
+    message_id: int,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> ApprovalItem:
+    return _review_item(db, ctx.workspace_id, message_id)
+
+
+@router.patch("/{message_id}", response_model=ApprovalItem)
+def edit_email(
+    message_id: int,
+    payload: EmailEditRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
+) -> ApprovalItem:
+    edit_message(
+        db,
+        ctx.workspace_id,
+        message_id,
+        subject=payload.subject,
+        body=payload.body,
+        actor_id=ctx.user_id,
+    )
+    return _review_item(db, ctx.workspace_id, message_id)
+
+
+@router.post("/{message_id}/approve", response_model=ApprovalItem)
+def approve_email_by_id(
+    message_id: int,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.APPROVALS_APPROVE, verified=True)
+    ),
+) -> ApprovalItem:
+    approve_email_message(db, message_id, ctx.workspace_id, actor_id=ctx.user_id)
+    return _review_item(db, ctx.workspace_id, message_id)
+
+
+@router.post("/{message_id}/reject", response_model=ApprovalItem)
+def reject_email_by_id(
+    message_id: int,
+    payload: EmailRejectRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.APPROVALS_APPROVE)),
+) -> ApprovalItem:
+    reject_message(db, ctx.workspace_id, message_id, reason=payload.reason, actor_id=ctx.user_id)
+    return _review_item(db, ctx.workspace_id, message_id)

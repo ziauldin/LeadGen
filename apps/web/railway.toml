@@ -1,6 +1,8 @@
-# Railway service config for the Next.js frontend.
-# Settings → Source → Root Directory: apps/web
-# Config file path (if needed): /apps/web/railway.toml
+# Railway: web service. Settings → Source → Root Directory: apps/web
+# Config file path: /apps/web/railway.toml
+#
+# Set API_INTERNAL_URL to the API's private address (e.g. http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}})
+# so the browser's /api/* calls are proxied to it and the session cookie stays first-party.
 
 [build]
 builder = "RAILPACK"
@@ -8,7 +10,7 @@ buildCommand = "npm ci && npm run build"
 
 [deploy]
 startCommand = "npm run start"
-healthcheckPath = "/"
+healthcheckPath = "/healthz"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
