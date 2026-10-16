@@ -375,7 +375,7 @@ function SearchView() {
                 </div>
               ) : !search ? (
                 <div className="flex flex-1 flex-col items-center justify-center p-12 text-center">
-                  <Search className="mb-3 size-10 text-[var(--outline)]" aria-hidden />
+                  <Search className="mb-3 size-10 text-[var(--on-surface-variant)]" aria-hidden />
                   <p className="text-[15px] font-semibold text-[var(--on-surface)]">
                     {!nicheId ? "Choose a niche to start" : !query.trim() ? "Pick a query" : "Ready to search"}
                   </p>

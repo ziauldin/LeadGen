@@ -214,7 +214,7 @@ export default function HealthPage() {
                       <p className="text-[12px] text-[var(--on-surface-variant)]">{info.about}</p>
                     ) : null}
                     {dependency.detail ? (
-                      <p className={cn("mt-1 break-words font-mono text-[11px]", ok ? "text-[var(--outline)]" : "text-[var(--error)]")}>
+                      <p className={cn("mt-1 break-words font-mono text-[11px]", ok ? "text-[var(--on-surface-variant)]" : "text-[var(--error)]")}>
                         {dependency.detail}
                       </p>
                     ) : null}

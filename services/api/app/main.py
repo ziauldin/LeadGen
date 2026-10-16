@@ -58,6 +58,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         errors = production_config_errors(app_settings)
         if errors:
             raise RuntimeError("Invalid production configuration: " + "; ".join(errors))
+        if app_settings.storage_backend != "s3":
+            logging.getLogger(__name__).warning(
+                "STORAGE_BACKEND is local: exported files live on this container's disk and "
+                "are lost on redeploy. Configure S3/R2 for production.",
+            )
     ensure_encryption_key_configured()
     yield
 

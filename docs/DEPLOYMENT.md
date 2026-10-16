@@ -35,6 +35,7 @@ Railway's shared variables are the easiest way to give api, worker and beat the 
 | `CORS_ORIGINS` | `https://app.example.com` |
 | `PLATFORM_EMAIL_PROVIDER` | `resend` or `smtp`, plus its key/credentials and `PLATFORM_EMAIL_FROM` |
 | `INBOUND_EMAIL_DOMAIN` | optional; see [PROVIDERS.md](PROVIDERS.md#reply-addresses) |
+| `STORAGE_BACKEND=s3`, `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | file storage for exports (Cloudflare R2 or S3). Local disk is lost on redeploy |
 | `SENTRY_DSN`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `METRICS_TOKEN` | optional observability; see [RUNBOOKS.md](RUNBOOKS.md) |
 | `FEATURE_*`, `PLATFORM_LLM_*` | as needed |
 
@@ -114,6 +115,12 @@ Don't run `scripts/seed.py` in production; it refuses to.
   1. Set `SECRET_ENCRYPTION_KEYS=new,old`. New writes use the new key and old values still decrypt.
   2. Re-save the credentials.
   3. Remove the old key.
+
+## Staging and preview environments
+
+- **Staging:** create a second Railway environment (Project, then Environments, then New) from the same repository, tracking `main`. Give it its own Postgres, Redis and secrets, and use test provider accounts there, never production keys. Every merge deploys to staging first. Promote to production by deploying the same commit there.
+- **Per-PR previews:** enable Railway PR environments for the project. Each pull request gets its own api, worker, beat and web services with a fresh database. Set `PLATFORM_EMAIL_PROVIDER=smtp` pointing at a Mailpit service and the mock providers, so previews can't send real email.
+- **Database migrations** run automatically in every environment through the API's pre-deploy step.
 
 ## Staging checklist
 

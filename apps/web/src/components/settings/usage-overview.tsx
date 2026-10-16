@@ -65,7 +65,7 @@ function UsageBar({
           <div className={cn("h-full rounded-full transition-[width]", tone)} style={{ width: `${percent}%` }} />
         </div>
       ) : null}
-      <p className="text-[11px] text-[var(--outline)]">
+      <p className="text-[11px] text-[var(--on-surface-variant)]">
         {percent >= 100
           ? `Limit reached. ${note ?? ""}`
           : percent >= 80

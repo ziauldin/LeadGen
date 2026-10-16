@@ -43,7 +43,7 @@ export function EmailPreview({
     }
     return (
       <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-        <Mail className="mb-3 size-10 text-[var(--outline)]" aria-hidden />
+        <Mail className="mb-3 size-10 text-[var(--on-surface-variant)]" aria-hidden />
         <div className="max-w-sm text-[13px] text-[var(--on-surface-variant)]">
           {placeholder ?? "Choose a lead to see the email they would receive."}
         </div>

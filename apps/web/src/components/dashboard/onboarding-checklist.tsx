@@ -154,7 +154,7 @@ export function OnboardingChecklist() {
                   {complete ? (
                     <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" aria-hidden />
                   ) : (
-                    <Circle className="mt-0.5 size-5 shrink-0 text-[var(--outline)]" aria-hidden />
+                    <Circle className="mt-0.5 size-5 shrink-0 text-[var(--on-surface-variant)]" aria-hidden />
                   )}
                   <div className="min-w-0">
                     <p

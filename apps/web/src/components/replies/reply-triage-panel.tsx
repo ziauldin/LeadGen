@@ -131,7 +131,7 @@ export function ReplyTriagePanel({ reply }: { reply: ReplyDetail }) {
             Suggested by AI. Change it if it&apos;s wrong.
           </p>
         ) : reply.classified_by ? (
-          <p className="mt-2 text-[12px] text-[var(--outline)]">
+          <p className="mt-2 text-[12px] text-[var(--on-surface-variant)]">
             Labelled by {reply.classified_by === "user" ? "your team" : "automatic rules"}.
           </p>
         ) : null}
@@ -181,7 +181,7 @@ export function ReplyTriagePanel({ reply }: { reply: ReplyDetail }) {
             className="bg-white text-[13px]"
           />
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-[var(--outline)]">{notes.length}/5000</span>
+            <span className="text-[11px] text-[var(--on-surface-variant)]">{notes.length}/5000</span>
             <Button type="submit" size="sm" disabled={!notesChanged || saveNotes.isPending}>
               {saveNotes.isPending ? "Saving…" : "Save notes"}
             </Button>

@@ -85,7 +85,7 @@ export function ProviderCard({
           <span>
             {credential.last_test_message ||
               (credential.last_test_status === "success" ? "Connection works" : "Test failed")}
-            <span className="text-[var(--outline)]"> · {formatWhen(credential.last_tested_at)}</span>
+            <span className="text-[var(--on-surface-variant)]"> · {formatWhen(credential.last_tested_at)}</span>
           </span>
         </p>
       ) : null}

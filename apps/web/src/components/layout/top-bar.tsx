@@ -85,9 +85,11 @@ export function TopBar() {
         <DropdownMenu>
           <DropdownMenuTrigger
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
-            aria-label="Account menu"
           >
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[11px] font-bold text-white">
+            <span
+              aria-hidden
+              className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-[11px] font-bold text-white"
+            >
               {user?.name?.slice(0, 2).toUpperCase() ?? "LG"}
             </span>
             {user && (
@@ -95,6 +97,8 @@ export function TopBar() {
                 {user.name}
               </span>
             )}
+            {/* The visible name stays part of the accessible name (WCAG 2.5.3). */}
+            <span className="sr-only">Account menu</span>
             <ChevronDown className="size-3.5 shrink-0 text-[var(--on-surface-variant)]" aria-hidden />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

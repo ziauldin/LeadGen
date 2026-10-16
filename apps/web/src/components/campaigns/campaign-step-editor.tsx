@@ -367,7 +367,10 @@ function StepCard({
                 <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--on-surface-variant)]">
                   Body
                 </p>
-                <div className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-[20px] text-[var(--on-surface)]">
+                <div
+                  tabIndex={0}
+                  className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-[20px] text-[var(--on-surface)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+                >
                   <HighlightedTemplate text={selectedTemplate.body} />
                 </div>
               </div>

@@ -1,8 +1,6 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { linkFromLog } from "./helpers";
 
-const API_LOG = resolve(__dirname, "../../../services/api/e2e-api.log");
 const EMAIL = `owner+${Date.now()}@acme-e2e.co.uk`;
 const PASSWORD = "correct-horse-battery";
 
@@ -12,15 +10,6 @@ const CSV = [
   "Jo Patel,Technical Director,Northern Grain,https://northern-grain.co.uk,,jo@northern-grain.co.uk,https://example.com/listing,Public company listing,E2E Niche",
 ].join("\n");
 
-/** The newest link of a kind from the console mailer's output in the API log. */
-async function linkFromLog(path: string): Promise<string> {
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    const matches = [...readFileSync(API_LOG, "utf-8").matchAll(new RegExp(`(https?://\\S+${path}\\?token=[\\w%-]+)`, "g"))];
-    if (matches.length) return matches[matches.length - 1][1];
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`No ${path} link in the API log`);
-}
 
 /** An API client that uses the browser's session (refresh cookie → access token). */
 async function apiFor(page: Page): Promise<APIRequestContext & { token: string }> {
@@ -106,6 +95,7 @@ test("sign up, build a campaign, approve, send, and handle a reply", async ({ pa
 
   // --- Bulk-add the leads to the campaign ---------------------------------------------------
   await page.reload();
+  await expect(page.getByText("Showing 1–2 of 2")).toBeVisible();
   await page.getByRole("checkbox", { name: "Select all rows on this page" }).check();
   await page.getByRole("region", { name: "Bulk actions" }).getByRole("button", { name: /Add to campaign/ }).click();
   const dialog = page.getByRole("dialog");

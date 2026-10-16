@@ -1,0 +1,26 @@
+name: Bug report
+description: Something isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Go to …\n2. Click …\n3. See error"
+    validations: { required: true }
+  - type: input
+    id: request-id
+    attributes:
+      label: Request ID
+      description: Shown in error messages and the X-Request-ID response header, if you have it.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Leads & companies, Campaigns & sequences, Approvals, Replies, Settings & providers, Billing, Other]

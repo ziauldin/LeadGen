@@ -151,6 +151,14 @@ class Settings(BaseSettings):
     enrichment_max_response_bytes: int = 2_000_000
 
     csv_max_bytes: int = 5_000_000
+    # File storage for exports: "local" (disk, development) or "s3" (S3 / Cloudflare R2 / MinIO).
+    storage_backend: str = "local"
+    storage_local_dir: str = ""
+    s3_bucket: str = ""
+    s3_region: str = "auto"
+    s3_endpoint_url: str = ""
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
     csv_max_rows: int = 10_000
 
     @field_validator("cors_origins", mode="before")

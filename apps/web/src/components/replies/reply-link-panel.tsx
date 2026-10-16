@@ -188,7 +188,7 @@ export function ReplyLinkPanel({ reply }: { reply: ReplyDetail }) {
                           <span className="block truncate text-[var(--on-surface-variant)]">
                             {message.subject}
                           </span>
-                          <span className="block text-[11px] text-[var(--outline)]">
+                          <span className="block text-[11px] text-[var(--on-surface-variant)]">
                             {message.step_number ? `Step ${message.step_number} · ` : ""}
                             Sent {formatDateTime(message.sent_at)}
                           </span>
@@ -199,7 +199,7 @@ export function ReplyLinkPanel({ reply }: { reply: ReplyDetail }) {
                 })}
               </ul>
               {(messages.data?.total ?? 0) > (messages.data?.items.length ?? 0) ? (
-                <p className="text-[11px] text-[var(--outline)]">
+                <p className="text-[11px] text-[var(--on-surface-variant)]">
                   Showing the 50 most recent sent emails in this campaign.
                 </p>
               ) : null}

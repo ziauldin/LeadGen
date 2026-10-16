@@ -58,7 +58,7 @@ export function WebhookUrls({ urls, help }: { urls: Record<string, string>; help
           );
         })}
       </ul>
-      <p className="text-[11px] text-[var(--outline)]">
+      <p className="text-[11px] text-[var(--on-surface-variant)]">
         Keep these private: each contains a token unique to this account.
       </p>
     </div>
