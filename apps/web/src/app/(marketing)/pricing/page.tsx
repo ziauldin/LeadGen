@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Minus } from "lucide-react";
-import { PageIntro } from "@/components/marketing/site-chrome";
-import { fetchPlans, formatPrice, type PublicPlan } from "@/lib/marketing";
+import { ArrowRight, Check, Coins, KeyRound, Minus, Zap } from "lucide-react";
+import { COMMON_FAQ, Faq, type FaqItem } from "@/components/marketing/faq";
+import { PricingPlans } from "@/components/marketing/pricing-plans";
+import { PageIntro, SectionHeading } from "@/components/marketing/site-chrome";
+import { compactNumber, fetchCreditPacks, fetchPlans, formatPrice } from "@/lib/marketing";
 
 export const metadata: Metadata = {
   title: "Pricing · LeadsGen",
-  description: "Simple plans that grow with your team. Start free, upgrade when it works for you.",
+  description: "Simple plans that grow with your team. Start free, bring your own keys or use credits, and upgrade when it works for you.",
   alternates: { canonical: "/pricing" },
 };
 
@@ -16,128 +18,175 @@ const LIMIT_ROWS: [string, string][] = [
   ["monthly_sends", "Emails a month"],
   ["monthly_leads", "New leads a month"],
   ["seats", "Team seats"],
+  ["max_mailboxes", "Connected mailboxes"],
   ["max_campaigns", "Campaigns"],
-  ["monthly_llm_tokens", "AI writing tokens a month"],
-  ["daily_enrichments", "Company enrichments a day"],
+  ["monthly_verifications", "Verifications included a month"],
+  ["monthly_llm_tokens", "AI tokens included a month"],
 ];
 const FEATURE_ROWS: [string, string][] = [
   ["api_access", "API and webhooks"],
+  ["integrations", "HubSpot and Pipedrive sync"],
   ["sso", "Single sign-on (OIDC)"],
   ["saml", "SAML 2.0"],
   ["custom_roles", "Custom roles"],
   ["audit_log_retention_days", "Audit log history"],
 ];
-const BLURBS: Record<string, string> = {
-  free: "Try the full workflow with a small team.",
-  starter: "For founders and small teams running steady outreach.",
-  pro: "For sales teams that need volume, SSO and the API.",
-  enterprise: "For larger organisations with security and compliance needs.",
-};
 
-function Price({ plan }: { plan: PublicPlan }) {
-  const monthly = formatPrice(plan.prices?.month, plan.currency);
-  const yearly = plan.prices?.year ? formatPrice(plan.prices.year, plan.currency) : null;
-  if (plan.name === "enterprise" && !monthly) return <p className="text-[28px] font-bold">Let&apos;s talk</p>;
-  if (!monthly) return <p className="text-[28px] font-bold">Contact us</p>;
-  return (
-    <div>
-      <p className="text-[32px] font-bold">
-        {monthly}
-        {monthly !== "Free" ? <span className="text-[14px] font-normal text-[var(--on-surface-variant)]"> / month</span> : null}
-      </p>
-      {yearly ? <p className="text-[13px] text-[var(--on-surface-variant)]">or {yearly} billed yearly</p> : null}
-    </div>
-  );
-}
+const PRICING_FAQ: FaqItem[] = [
+  COMMON_FAQ[0],
+  COMMON_FAQ[1],
+  COMMON_FAQ[2],
+  {
+    question: "What happens if I go over my plan?",
+    answer:
+      "Sending, leads and seats stop at the plan limit so you're never billed by surprise. For services we provide, like verification and AI writing, credits take over once the included allowance is used.",
+  },
+  {
+    question: "Can I change plans later?",
+    answer: "Yes. Upgrade or downgrade from Settings at any time. Changes are prorated by Stripe, and you keep your data on every plan.",
+  },
+  COMMON_FAQ[5],
+];
 
 function cell(value: boolean | number | undefined, key: string) {
   if (typeof value === "boolean" || value === undefined) {
     return value ? (
-      <Check className="mx-auto size-4 text-[var(--primary)]" aria-label="Included" />
+      <Check className="mx-auto size-5 text-[var(--mk-green)]" aria-label="Included" />
     ) : (
-      <Minus className="mx-auto size-4 text-[var(--on-surface-variant)]" aria-label="Not included" />
+      <Minus className="mx-auto size-5 text-[var(--mk-muted)]" aria-label="Not included" />
     );
   }
   if (key === "audit_log_retention_days") return `${value} days`;
+  if (key === "monthly_llm_tokens") return compactNumber(value);
   return value.toLocaleString("en");
 }
 
 export default async function PricingPage() {
-  const plans = await fetchPlans();
+  const [plans, credits] = await Promise.all([fetchPlans(), fetchCreditPacks()]);
   return (
-    <div className="space-y-14">
-      <PageIntro eyebrow="Pricing" title="Simple plans that grow with you">
-        Every plan includes the approval queue, compliance checks, suppression lists and data requests.
-      </PageIntro>
+    <>
+      <div className="relative overflow-hidden">
+        <div className="mk-grid-bg" aria-hidden />
+        <div className="mk-aurora opacity-80" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-16 sm:pt-24">
+          <PageIntro eyebrow="Pricing" title="Pricing that pays for itself">
+            Start free. Pay for the product, not the plumbing: bring your own keys at no extra cost, or use credits and skip
+            the setup.
+          </PageIntro>
+          <div className="mt-12">
+            <PricingPlans plans={plans} />
+          </div>
+          <p className="mt-6 text-center text-[13px] text-[var(--mk-muted)]">
+            Prices in {plans[0]?.currency ?? "USD"}, excluding taxes where applicable.
+          </p>
+        </div>
+      </div>
 
-      <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        {plans.map((plan) => (
-          <li
-            key={plan.name}
-            className={`flex flex-col rounded-xl border bg-white p-6 ${plan.name === "pro" ? "border-[var(--primary)] ring-1 ring-[var(--primary)]" : "border-[var(--outline-variant)]"}`}
-          >
-            <h2 className="text-[18px] font-semibold capitalize">{plan.name}</h2>
-            <p className="mt-1 min-h-[40px] text-[13px] text-[var(--on-surface-variant)]">{BLURBS[plan.name] ?? ""}</p>
-            <div className="mt-4">
-              <Price plan={plan} />
-            </div>
-            <ul className="mt-5 flex-1 space-y-2 text-[14px]">
-              {LIMIT_ROWS.slice(0, 4).map(([key, label]) => (
-                <li key={key} className="flex items-center gap-2">
-                  <Check className="size-4 text-[var(--primary)]" aria-hidden />
-                  {plan.limits[key]?.toLocaleString("en")} {label.toLowerCase()}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href={plan.name === "enterprise" ? "/contact" : "/register"}
-              className={`mt-6 rounded-lg px-4 py-2.5 text-center text-[14px] font-semibold ${plan.name === "pro" ? "bg-[var(--primary)] text-white hover:opacity-90" : "border border-[var(--outline-variant)] hover:bg-[var(--surface-container-low)]"}`}
-            >
-              {plan.name === "enterprise" ? "Contact sales" : plan.name === "free" ? "Start free" : `Start with ${plan.name}`}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {/* ── BYOK vs credits ─────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+        <SectionHeading eyebrow="How usage works" title="Bring your own keys, or use ours">
+          Your plan covers the product. Data and AI services are paid for whichever way suits you.
+        </SectionHeading>
+        <div className="mt-14 grid gap-5 lg:grid-cols-3">
+          <article className="mk-card p-7">
+            <KeyRound className="size-7 text-[#a9e9ff]" aria-hidden />
+            <h3 className="mt-5 text-[19px] font-semibold text-white">Your own keys: no markup</h3>
+            <p className="mt-2 text-[15px] leading-7 text-[var(--mk-muted)]">
+              Connect Gmail or Microsoft 365, your AI model, ZeroBounce or NeverBounce and Hunter. You pay them directly, and that
+              usage never counts against your plan.
+            </p>
+          </article>
+          <article className="mk-card p-7">
+            <Zap className="size-7 text-[#ffc2e3]" aria-hidden />
+            <h3 className="mt-5 text-[19px] font-semibold text-white">Our keys: included allowance</h3>
+            <p className="mt-2 text-[15px] leading-7 text-[var(--mk-muted)]">
+              Skip the setup. Every plan includes monthly verifications and AI tokens on LeadsGen&apos;s own accounts, shown on each
+              plan above.
+            </p>
+          </article>
+          <article className="mk-card p-7">
+            <Coins className="size-7 text-[#ffd98a]" aria-hidden />
+            <h3 className="mt-5 text-[19px] font-semibold text-white">Credits: top up any time</h3>
+            <p className="mt-2 text-[15px] leading-7 text-[var(--mk-muted)]">
+              Used the allowance? Credits take over: one credit is{" "}
+              {credits.units.monthly_verifications === 1 ? "one verification or one email lookup" : "a verification"}, or{" "}
+              {(credits.units.monthly_llm_tokens ?? 1000).toLocaleString("en")} AI tokens. Purchased credits never expire.
+            </p>
+          </article>
+        </div>
+        <ul className="mt-8 grid gap-4 sm:grid-cols-3" aria-label="Credit packs">
+          {credits.packs.map((pack, index) => (
+            <li key={pack.credits} className={`flex items-center justify-between rounded-2xl border p-5 ${index === 1 ? "border-[#a597ff]/50 bg-[#a597ff]/10" : "border-white/10 bg-white/[0.03]"}`}>
+              <div>
+                <p className="text-[18px] font-semibold text-white">{pack.credits.toLocaleString("en")} credits</p>
+                {pack.amount ? (
+                  <p className="text-[13px] text-[var(--mk-muted)]">
+                    {formatPrice(pack.amount / (pack.credits / 1000), pack.currency)} per 1,000
+                  </p>
+                ) : null}
+              </div>
+              <p className="text-[24px] font-bold text-white">{formatPrice(pack.amount, pack.currency) ?? "—"}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      <section aria-labelledby="compare-heading">
-        <h2 id="compare-heading" className="text-[22px] font-bold">Compare plans</h2>
-        <div className="mt-5 overflow-x-auto rounded-xl border border-[var(--outline-variant)] bg-white" tabIndex={0}>
-          <table className="w-full min-w-[640px] text-[14px]">
+      {/* ── Comparison ─────────────────────────────────────────── */}
+      <section aria-labelledby="compare-heading" className="mx-auto max-w-6xl px-4 py-10 sm:py-16">
+        <h2 id="compare-heading" className="text-center text-[30px] font-bold tracking-tight text-white sm:text-[38px]">
+          Compare plans
+        </h2>
+        <div className="mk-card mt-10 overflow-x-auto" tabIndex={0}>
+          <table className="w-full min-w-[720px] text-[15px]">
             <caption className="sr-only">Plan comparison</caption>
-            <thead className="bg-[var(--surface-container-low)]">
-              <tr>
-                <th scope="col" className="px-4 py-3 text-left font-medium">Plan</th>
+            <thead>
+              <tr className="border-b border-white/10">
+                <th scope="col" className="px-6 py-4 text-left text-[13px] font-semibold uppercase tracking-wider text-[var(--mk-muted)]">
+                  Plan
+                </th>
                 {plans.map((plan) => (
-                  <th key={plan.name} scope="col" className="px-4 py-3 text-center font-semibold capitalize">
+                  <th key={plan.name} scope="col" className={`px-6 py-4 text-center text-[15px] font-semibold capitalize ${plan.name === "pro" ? "text-[#cfc7ff]" : "text-white"}`}>
                     {plan.name}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--outline-variant)]">
+            <tbody>
               {LIMIT_ROWS.map(([key, label]) => (
-                <tr key={key}>
-                  <th scope="row" className="px-4 py-3 text-left font-normal">{label}</th>
+                <tr key={key} className="border-b border-white/[0.06]">
+                  <th scope="row" className="px-6 py-3.5 text-left font-normal text-white/90">{label}</th>
                   {plans.map((plan) => (
-                    <td key={plan.name} className="px-4 py-3 text-center">{cell(plan.limits[key], key)}</td>
+                    <td key={plan.name} className="px-6 py-3.5 text-center tabular-nums text-white">{cell(plan.limits[key], key)}</td>
                   ))}
                 </tr>
               ))}
               {FEATURE_ROWS.map(([key, label]) => (
-                <tr key={key}>
-                  <th scope="row" className="px-4 py-3 text-left font-normal">{label}</th>
+                <tr key={key} className="border-b border-white/[0.06] last:border-0">
+                  <th scope="row" className="px-6 py-3.5 text-left font-normal text-white/90">{label}</th>
                   {plans.map((plan) => (
-                    <td key={plan.name} className="px-4 py-3 text-center">{cell(plan.features[key], key)}</td>
+                    <td key={plan.name} className="px-6 py-3.5 text-center text-white">{cell(plan.features[key], key)}</td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-[13px] text-[var(--on-surface-variant)]">
-          Prices exclude taxes where applicable. You bring your own email provider and, optionally, your own AI key.
+        <p className="mt-4 text-center text-[13px] text-[var(--mk-muted)]">
+          Every plan includes the approval queue, compliance checks, suppression lists, data requests and the unified inbox.
         </p>
       </section>
-    </div>
+
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:py-24">
+        <SectionHeading eyebrow="FAQ" title="Pricing questions" />
+        <div className="mt-12">
+          <Faq items={PRICING_FAQ} />
+        </div>
+        <div className="mt-14 text-center">
+          <Link href="/register" className="mk-cta inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-[16px] font-semibold">
+            Start free, no card needed <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+      </section>
+    </>
   );
 }

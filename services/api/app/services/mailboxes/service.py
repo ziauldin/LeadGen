@@ -20,6 +20,8 @@ from app.models.enums import (
 )
 from app.models.mailbox import CampaignSender
 from app.models.provider_credential import ProviderCredential
+from app.models.workspace import Workspace
+from app.services.billing.usage import check_mailbox_limit
 from app.services.mailboxes import clients, oauth
 from app.services.provider_credentials.service import _as_str
 from app.services.sending.base import OutboundEmail, SendKind, SendResult
@@ -69,6 +71,9 @@ def complete_connection(db: Session, state: oauth.OAuthState, code: str) -> Prov
         )
     )
     if credential is None:
+        workspace = db.get(Workspace, state.workspace_id)
+        if workspace is not None:
+            check_mailbox_limit(db, workspace)  # reconnecting an existing mailbox is always allowed
         credential = ProviderCredential(
             workspace_id=state.workspace_id,
             user_id=state.user_id,

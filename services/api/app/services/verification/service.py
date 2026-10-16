@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.errors import QuotaExceededError
 from app.models.email_contact import EmailContact
 from app.models.enums import ProviderName, ProviderType
@@ -33,17 +34,34 @@ logger = logging.getLogger(__name__)
 REVERIFY_AFTER = timedelta(days=90)
 
 
-def verifier_for(db: Session, workspace_id: int) -> Verifier:
-    credential = get_active_credential(db, workspace_id, ProviderType.EMAIL_VERIFICATION)
-    if credential is None:
-        return DnsVerifier()
-    name = ProviderName(_as_str(credential.provider_name))
-    config = decrypt_provider_config(credential)
+def _verifier(name: str, api_key: str) -> Verifier:
     if name == ProviderName.ZEROBOUNCE:
-        return ZeroBounceVerifier(str(config.get("api_key", "")))
+        return ZeroBounceVerifier(api_key)
     if name == ProviderName.NEVERBOUNCE:
-        return NeverBounceVerifier(str(config.get("api_key", "")))
+        return NeverBounceVerifier(api_key)
     return MockVerifier()
+
+
+def resolve_verifier(db: Session, workspace_id: int) -> tuple[Verifier, bool]:
+    """The verifier to use and whether its checks count against the plan.
+
+    A workspace's own key is never metered; the platform key is; DNS-only checks are free.
+    """
+    credential = get_active_credential(db, workspace_id, ProviderType.EMAIL_VERIFICATION)
+    if credential is not None:
+        config = decrypt_provider_config(credential)
+        verifier = _verifier(_as_str(credential.provider_name), str(config.get("api_key", "")))
+        return verifier, False
+    if settings.platform_verification_provider:
+        verifier = _verifier(
+            settings.platform_verification_provider, settings.platform_verification_api_key
+        )
+        return verifier, True
+    return DnsVerifier(), False
+
+
+def verifier_for(db: Session, workspace_id: int) -> Verifier:
+    return resolve_verifier(db, workspace_id)[0]
 
 
 @dataclass
@@ -67,13 +85,13 @@ def needs_check(contact: EmailContact, now: datetime) -> bool:
 def verify_contacts(
     db: Session, workspace: Workspace, contacts: list[EmailContact], *, force: bool = False
 ) -> VerificationSummary:
-    verifier = verifier_for(db, workspace.id)
+    verifier, metered = resolve_verifier(db, workspace.id)
     now = datetime.now(UTC)
     summary = VerificationSummary()
     for contact in contacts:
         if not force and not needs_check(contact, now):
             continue
-        if verifier.name != "dns":
+        if metered:
             try:
                 check_quota(db, workspace, "monthly_verifications")
             except QuotaExceededError:
@@ -85,7 +103,7 @@ def verify_contacts(
         contact.verification_provider = result.provider
         contact.verified_at = now
         contact.is_verified = result.status == "valid"
-        if result.billable and verifier.name != "dns":
+        if metered and result.billable:
             record_usage(db, workspace.id, "monthly_verifications")
         summary.checked += 1
         summary.by_status[result.status] = summary.by_status.get(result.status, 0) + 1

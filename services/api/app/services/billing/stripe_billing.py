@@ -22,6 +22,7 @@ from app.core.tenancy import system_session, workspace_scope
 from app.models.billing import BillingEvent, Subscription
 from app.models.user import User
 from app.models.workspace import Workspace
+from app.services.billing import credits
 from app.services.billing.plans import PLANS
 from app.services.billing.stripe_client import StripeClient, verify_signature
 from app.services.notifications import events as notify_events
@@ -40,6 +41,9 @@ HANDLED_EVENTS = {
     "invoice.paid",
     "invoice.payment_failed",
 }
+# Checkout events that can complete a credit pack purchase (cards, then delayed methods).
+CREDIT_EVENTS = {"checkout.session.completed", "checkout.session.async_payment_succeeded"}
+HANDLED_EVENTS |= CREDIT_EVENTS
 
 
 def billing_enabled() -> bool:
@@ -132,11 +136,8 @@ def _return_url(path: str) -> str:
     return f"{settings.frontend_url.rstrip('/')}{path}"
 
 
-def create_checkout(db: Session, workspace: Workspace, user: User, plan: str, interval: str) -> str:
-    price = prices().get(f"{plan}:{interval}")
-    if price is None:
-        raise ValidationFailedError(f"The {plan} plan isn't available to buy {interval}ly")
-    client = StripeClient()
+def _customer_id(db: Session, client: StripeClient, workspace: Workspace, user: User) -> str:
+    """The workspace's Stripe customer, created on first use."""
     row = subscription_row(db, workspace.id)
     if not row.stripe_customer_id:
         customer = client.create_customer(
@@ -144,9 +145,18 @@ def create_checkout(db: Session, workspace: Workspace, user: User, plan: str, in
         )
         row.stripe_customer_id = customer["id"]
         db.commit()
+    return str(row.stripe_customer_id)
+
+
+def create_checkout(db: Session, workspace: Workspace, user: User, plan: str, interval: str) -> str:
+    price = prices().get(f"{plan}:{interval}")
+    if price is None:
+        raise ValidationFailedError(f"The {plan} plan isn't available to buy {interval}ly")
+    client = StripeClient()
+    customer_id = _customer_id(db, client, workspace, user)
     params: dict[str, Any] = {
         "mode": "subscription",
-        "customer": row.stripe_customer_id,
+        "customer": customer_id,
         "client_reference_id": str(workspace.id),
         "line_items": [{"price": price, "quantity": 1}],
         "success_url": _return_url("/settings/usage?checkout=success"),
@@ -170,6 +180,65 @@ def create_checkout(db: Session, workspace: Workspace, user: User, plan: str, in
     )
     db.commit()
     return str(session["url"])
+
+
+def create_credit_checkout(db: Session, workspace: Workspace, user: User, amount: int) -> str:
+    """A one-off Stripe payment for a credit pack. Credits are added by the webhook once paid."""
+    pack = credits.pack_for(amount)
+    if pack is None or not pack.price_id:
+        raise ValidationFailedError(f"A pack of {amount} credits isn't available to buy")
+    client = StripeClient()
+    metadata = {"workspace_id": workspace.id, "kind": "credits", "credits": pack.credits}
+    params: dict[str, Any] = {
+        "mode": "payment",
+        "customer": _customer_id(db, client, workspace, user),
+        "client_reference_id": str(workspace.id),
+        "line_items": [{"price": pack.price_id, "quantity": 1}],
+        "success_url": _return_url("/settings/usage?credits=success"),
+        "cancel_url": _return_url("/settings/usage?credits=cancelled"),
+        "metadata": metadata,
+        "payment_intent_data": {"metadata": metadata},
+    }
+    if settings.stripe_automatic_tax:
+        params["automatic_tax"] = {"enabled": True}
+        params["customer_update"] = {"address": "auto", "name": "auto"}
+    session = client.create_checkout_session(params)
+    audit(
+        db,
+        workspace.id,
+        user.id,
+        "billing.credits_checkout_started",
+        "workspace",
+        workspace.id,
+        {"credits": pack.credits},
+    )
+    db.commit()
+    return str(session["url"])
+
+
+def _apply_credit_purchase(db: Session, workspace: Workspace, session_id: str) -> None:
+    """Re-read the checkout session from Stripe and add its credits once it's paid."""
+    session = StripeClient().retrieve_checkout_session(session_id)
+    metadata = session.get("metadata") or {}
+    if session.get("payment_status") != "paid" or metadata.get("kind") != "credits":
+        return
+    if str(metadata.get("workspace_id")) != str(workspace.id):
+        raise ValueError("Checkout session belongs to another workspace")
+    amount = int(metadata.get("credits") or 0)
+    if amount <= 0:
+        return
+    if credits.grant(
+        db, workspace.id, amount, kind="purchase", reference=str(session["id"]), note="Credit pack"
+    ):
+        audit(
+            db,
+            workspace.id,
+            None,
+            "billing.credits_purchased",
+            "workspace",
+            workspace.id,
+            {"credits": amount, "session": session["id"]},
+        )
 
 
 def create_portal(db: Session, workspace: Workspace) -> str:
@@ -305,7 +374,12 @@ def handle_webhook(db: Session, payload: bytes, signature: str) -> str:
             )
             if record.type == "checkout.session.completed" and obj.get("customer"):
                 subscription_row(db, workspace.id).stripe_customer_id = obj["customer"]
-            if subscription_id:
+            if (
+                record.type in CREDIT_EVENTS
+                and (obj.get("metadata") or {}).get("kind") == "credits"
+            ):
+                _apply_credit_purchase(db, workspace, str(obj["id"]))
+            elif subscription_id:
                 # Re-read from Stripe instead of trusting the (possibly stale) event body.
                 reconcile(db, workspace, StripeClient().retrieve_subscription(subscription_id))
             record.processed_at = _now()

@@ -31,6 +31,7 @@ from app.services.admin.service import (
     validate_overrides,
     workspace_rows,
 )
+from app.services.billing import credits as credit_service
 from app.services.billing.plans import METRIC_PERIOD, PLANS, features_for, limits_for
 from app.services.billing.usage import current_usage
 from app.services.workspaces.service import audit
@@ -302,6 +303,38 @@ def update_workspace(
     )
     db.commit()
     return _detail(db, workspace)
+
+
+class CreditGrant(BaseModel):
+    amount: int = Field(ge=-10_000_000, le=10_000_000)
+    note: str = Field(min_length=3, max_length=255)
+
+
+@router.post("/workspaces/{workspace_id}/credits")
+def grant_credits(
+    workspace_id: int,
+    payload: CreditGrant,
+    db: Session = Depends(admin_db),
+    admin: User = Depends(require_superuser),
+) -> dict[str, int]:
+    """Add credits (goodwill, refunds) or remove them (a negative amount). Always audited."""
+    workspace = _workspace(db, workspace_id)
+    if payload.amount == 0:
+        raise ValidationFailedError("Enter a positive or negative number of credits")
+    credit_service.grant(
+        db, workspace.id, payload.amount, kind="grant", actor_id=admin.id, note=payload.note
+    )
+    audit(
+        db,
+        workspace.id,
+        admin.id,
+        "admin.credits_granted",
+        "workspace",
+        workspace.id,
+        {"amount": payload.amount, "note": payload.note},
+    )
+    db.commit()
+    return {"balance": credit_service.balance(db, workspace.id)}
 
 
 @router.post("/workspaces/{workspace_id}/suspend", response_model=WorkspaceDetail)

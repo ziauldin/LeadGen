@@ -1,6 +1,6 @@
 from app.models.audit_log import AuditLog
 from app.models.auth_tokens import EmailActionToken, RefreshToken
-from app.models.billing import BillingEvent, Subscription
+from app.models.billing import BillingEvent, CreditTransaction, Subscription
 from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
 from app.models.crm import Deal, DealStage, Note, Task
@@ -66,6 +66,7 @@ __all__ = [
     "CampaignStep",
     "Company",
     "Conversation",
+    "CreditTransaction",
     "DataRequest",
     "Deal",
     "DealStage",

@@ -13,6 +13,7 @@ from app.models.email_message import EmailMessage
 from app.models.enums import EmailMessageStatus
 from app.models.provider_credential import ProviderCredential
 from app.models.reply import Reply
+from app.models.workspace import Workspace
 from app.services.mailboxes import clients, oauth
 from app.services.mailboxes import service as mailboxes
 from tests.conftest import TestingSessionLocal, get_client
@@ -121,6 +122,37 @@ def _credential(provider="gmail"):
         )
     finally:
         db.close()
+
+
+def _set_plan(plan: str) -> None:
+    db = TestingSessionLocal()
+    try:
+        for workspace in db.scalars(select(Workspace)).all():
+            workspace.plan = plan
+        db.commit()
+    finally:
+        db.close()
+
+
+def test_mailbox_limit_follows_the_plan(providers):
+    client = get_client()
+    from tests.conftest import auth_headers
+
+    headers = auth_headers(client)
+    _query, location = _connect(client, headers, "gmail")
+    assert "mailbox=connected" in location
+    # Free allows one mailbox: saving a second is refused (it's only known after OAuth).
+    _query, refused = _connect(client, headers, "outlook")
+    assert "mailbox=error" in refused and "max+mailboxes" in refused
+    assert _credential("outlook") is None
+    # Reconnecting the mailbox already connected is always allowed.
+    _query, again = _connect(client, headers, "gmail")
+    assert "mailbox=connected" in again
+    limits = client.get("/billing", headers=headers).json()["limits"]
+    assert limits["max_mailboxes"] == 1
+    _set_plan("starter")
+    _query, added = _connect(client, headers, "outlook")
+    assert "mailbox=connected" in added
 
 
 def test_flag_and_provider_list():
@@ -233,6 +265,7 @@ def test_rotation_spreads_load_and_keeps_threads(providers):
     headers, campaign_id, message_ids = approved_message(
         client, emails=("a@example-foods.co.uk", "b@example-foods.co.uk")
     )
+    _set_plan("starter")  # Free allows one mailbox
     _connect(client, headers, "gmail")
     _connect(client, headers, "outlook")
     gmail, outlook = _credential("gmail"), _credential("outlook")

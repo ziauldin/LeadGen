@@ -4,11 +4,21 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.models.mixins import TimestampUpdatedMixin
+from app.models.mixins import TimestampMixin, TimestampUpdatedMixin
 from app.models.workspace import TenantScoped
 
 
@@ -51,3 +61,24 @@ class BillingEvent(Base):
     )
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class CreditTransaction(Base, TenantScoped, TimestampMixin):
+    """One change to a workspace's credit balance: a purchase, a grant, or a day's usage."""
+
+    __tablename__ = "credit_transactions"
+    __table_args__ = (
+        UniqueConstraint("workspace_id", "reference", name="uq_credit_transactions_reference"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)  # + added, - used
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)  # purchase | grant | usage
+    metric: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Stripe checkout session id for purchases, "usage:<metric>:<date>" for usage.
+    reference: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    note: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    actor_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    balance_after: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

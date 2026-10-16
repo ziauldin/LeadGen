@@ -30,6 +30,15 @@ def test_public_plans(monkeypatch):
     assert plans["pro"]["purchasable"] == []  # billing is off
 
 
+def test_default_display_prices():
+    client = get_client()
+    plans = {p["name"]: p for p in client.get("/billing/plans").json()}
+    assert plans["starter"]["prices"] == {"month": 39, "year": 390}
+    assert plans["pro"]["prices"] == {"month": 99, "year": 990}
+    assert plans["enterprise"]["prices"] is None  # "Custom" on the pricing page
+    assert plans["pro"]["limits"]["max_mailboxes"] == 25
+
+
 def test_contact_form(monkeypatch):
     monkeypatch.setattr(settings, "support_email", "sales@leadsgen-test.co.uk")
     client = get_client()

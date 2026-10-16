@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@/components/shared/loading-error";
 import { BillingPanel } from "@/components/settings/billing-panel";
+import { CreditsCard } from "@/components/settings/credits-card";
 import { SettingsCard } from "@/components/settings/settings-card";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { billingApi, campaignsApi, workspacesApi } from "@/lib/api/endpoints";
@@ -110,6 +111,8 @@ export function UsageOverview() {
           <BillingPanel data={data} />
         )}
       </SettingsCard>
+
+      {data?.credits ? <CreditsCard credits={data.credits} /> : null}
 
       <SettingsCard id="usage" title="Usage" description="What this workspace has used in the current period.">
         {!data ? (

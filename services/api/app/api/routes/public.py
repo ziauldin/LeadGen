@@ -15,6 +15,7 @@ from app.core.rate_limit import client_ip, enforce
 from app.models.user import User
 from app.schemas.auth import MessageResponse
 from app.services.auth.protection import verify_captcha
+from app.services.billing import credits as credit_service
 from app.services.billing.plans import PLAN_FEATURES, PLANS
 from app.services.billing.stripe_billing import billing_enabled, prices
 from app.services.platform_email.dispatch import send_platform_email
@@ -50,6 +51,30 @@ def _display_prices() -> dict[str, Any]:
     except json.JSONDecodeError:
         logger.error("PLAN_DISPLAY_PRICES is not valid JSON")
         return {}
+
+
+class PublicCreditPack(BaseModel):
+    credits: int
+    amount: float | None
+    currency: str
+
+
+class PublicCredits(BaseModel):
+    packs: list[PublicCreditPack]
+    units: dict[str, int]
+
+
+@router.get("/billing/credit-packs", response_model=PublicCredits)
+def public_credit_packs() -> PublicCredits:
+    """Credit packs and what one credit buys, for the pricing page."""
+    currency = str(_display_prices().get("currency") or "USD")
+    return PublicCredits(
+        packs=[
+            PublicCreditPack(credits=pack.credits, amount=pack.amount, currency=currency)
+            for pack in credit_service.credit_packs()
+        ],
+        units=dict(credit_service.CREDIT_UNITS),
+    )
 
 
 @router.get("/billing/plans", response_model=list[PublicPlan])

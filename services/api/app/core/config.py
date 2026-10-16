@@ -147,10 +147,22 @@ class Settings(BaseSettings):
     stripe_api_base: str = "https://api.stripe.com/v1"
     billing_trial_days: int = 14
     billing_grace_days: int = 7
+    # Credit packs shown on the pricing page and in billing settings (display prices), and
+    # the Stripe one-off price for each pack, e.g. {"1000": "price_..."}.
+    credit_packs: str = (
+        '[{"credits": 1000, "amount": 10}, {"credits": 5000, "amount": 40}, '
+        '{"credits": 20000, "amount": 120}]'
+    )
+    stripe_credit_prices: str = "{}"
 
     # Marketing site: prices shown on /pricing (Stripe stays the source of truth for charges)
     # and where contact-form messages go.
-    plan_display_prices: str = '{"currency": "USD", "free": {"month": 0, "year": 0}}'
+    # Prices shown on the pricing page (whole currency units; "year" is the yearly total).
+    # Plans left out (Enterprise by default) show "Custom". Stripe holds the real prices.
+    plan_display_prices: str = (
+        '{"currency": "USD", "free": {"month": 0, "year": 0}, '
+        '"starter": {"month": 39, "year": 390}, "pro": {"month": 99, "year": 990}}'
+    )
     support_email: str = "support@localhost"
 
     # Platform admins must use two-factor authentication to open the back office.
@@ -182,6 +194,10 @@ class Settings(BaseSettings):
     hunter_api_key: str = ""
     hunter_daily_limit: int = 25
     hunter_enabled: bool = False
+    # Platform-paid email verification, used when a workspace hasn't connected its own key.
+    # zerobounce | neverbounce | mock | "" (off: DNS-only checks). Counted against the plan.
+    platform_verification_provider: str = ""
+    platform_verification_api_key: str = ""
 
     default_daily_send_limit: int = 20
     default_per_domain_limit: int = 3
