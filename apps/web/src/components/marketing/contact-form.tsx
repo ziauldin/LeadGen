@@ -70,22 +70,22 @@ export function ContactForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <label htmlFor="contact-name" className="text-[13px] font-medium">Your name</label>
-          <Input id="contact-name" name="name" required maxLength={120} autoComplete="name" className="bg-white" />
+          <Input id="contact-name" name="name" required maxLength={120} autoComplete="name" className="bg-[var(--surface-container-lowest)]" />
         </div>
         <div className="grid gap-1.5">
           <label htmlFor="contact-email" className="text-[13px] font-medium">Work email</label>
-          <Input id="contact-email" name="email" type="email" required autoComplete="email" className="bg-white" />
+          <Input id="contact-email" name="email" type="email" required autoComplete="email" className="bg-[var(--surface-container-lowest)]" />
         </div>
         <div className="grid gap-1.5">
           <label htmlFor="contact-company" className="text-[13px] font-medium">
             Company <span className="font-normal text-muted-foreground">(optional)</span>
           </label>
-          <Input id="contact-company" name="company" maxLength={200} autoComplete="organization" className="bg-white" />
+          <Input id="contact-company" name="company" maxLength={200} autoComplete="organization" className="bg-[var(--surface-container-lowest)]" />
         </div>
         <div className="grid gap-1.5">
           <label id="contact-topic-label" className="text-[13px] font-medium">Topic</label>
           <Select value={topic} items={TOPICS} onValueChange={(value) => setTopic(String(value ?? "sales"))}>
-            <SelectTrigger className="w-full bg-white" aria-labelledby="contact-topic-label">
+            <SelectTrigger className="w-full bg-[var(--surface-container-lowest)]" aria-labelledby="contact-topic-label">
               <SelectValue />
             </SelectTrigger>
             <SelectContent alignItemWithTrigger={false}>
@@ -100,7 +100,7 @@ export function ContactForm() {
       </div>
       <div className="grid gap-1.5">
         <label htmlFor="contact-message" className="text-[13px] font-medium">How can we help?</label>
-        <Textarea id="contact-message" name="message" required minLength={10} maxLength={5000} rows={6} className="bg-white" />
+        <Textarea id="contact-message" name="message" required minLength={10} maxLength={5000} rows={6} className="bg-[var(--surface-container-lowest)]" />
       </div>
       {/* Hidden from people; bots tend to fill it in. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 overflow-hidden">
@@ -114,7 +114,7 @@ export function ContactForm() {
         </p>
       ) : null}
       <div>
-        <Button type="submit" disabled={status === "sending"}>
+        <Button type="submit" disabled={status === "sending"} className="mk-cta h-10 rounded-lg px-5">
           {status === "sending" ? "Sending…" : "Send message"}
         </Button>
       </div>

@@ -26,7 +26,7 @@ export default function AboutPage() {
       </PageIntro>
       <dl className="mx-auto grid max-w-4xl gap-5 sm:grid-cols-2">
         {PRINCIPLES.map(([title, text]) => (
-          <div key={title} className="rounded-xl border border-[var(--outline-variant)] bg-white p-6">
+          <div key={title} className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-6">
             <dt className="text-[16px] font-semibold">{title}</dt>
             <dd className="mt-2 text-[14px] leading-6 text-[var(--on-surface-variant)]">{text}</dd>
           </div>

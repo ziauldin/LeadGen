@@ -20,7 +20,7 @@ export default function BlogIndexPage() {
       <PageIntro eyebrow="Blog" title="Notes on better outbound" />
       <ul className="mx-auto grid max-w-3xl gap-5">
         {posts.map((post) => (
-          <li key={post.slug} className="rounded-xl border border-[var(--outline-variant)] bg-white p-6">
+          <li key={post.slug} className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-6">
             <p className="text-[13px] text-[var(--on-surface-variant)]">{formatPostDate(post.date)}</p>
             <h2 className="mt-1 text-[20px] font-semibold">
               <Link href={`/blog/${post.slug}`} className="hover:text-[var(--primary)]">

@@ -15,10 +15,10 @@ type OpenApi = { paths: Record<string, Record<string, Operation>> };
 
 const API = (process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 const METHOD_STYLES: Record<string, string> = {
-  get: "bg-[var(--primary-fixed)] text-[var(--on-primary-fixed)]",
-  post: "bg-[var(--secondary-fixed)] text-[var(--on-secondary-fixed)]",
-  patch: "bg-[var(--tertiary-fixed,#ffe8c2)] text-[var(--on-surface)]",
-  delete: "bg-[var(--error-container)] text-[var(--on-error-container)]",
+  get: "bg-sky-400/15 text-sky-200 ring-1 ring-sky-400/30",
+  post: "bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-400/30",
+  patch: "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/30",
+  delete: "bg-rose-400/15 text-rose-200 ring-1 ring-rose-400/30",
 };
 
 async function loadSchema(): Promise<OpenApi | null> {
@@ -72,7 +72,7 @@ export default async function ApiDocsPage() {
       <section className="space-y-3">
         <h2 className="text-[22px] font-bold">Endpoints</h2>
         {operations.length ? (
-          <ul className="divide-y divide-[var(--outline-variant)] rounded-xl border border-[var(--outline-variant)] bg-white">
+          <ul className="divide-y divide-[var(--outline-variant)] rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]">
             {operations.map((op) => (
               <li key={`${op.method} ${op.path}`} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
                 <span className={`w-16 rounded px-2 py-0.5 text-center font-mono text-[12px] font-semibold uppercase ${METHOD_STYLES[op.method] ?? ""}`}>
@@ -102,7 +102,7 @@ export default async function ApiDocsPage() {
         </p>
         <dl className="grid gap-3 sm:grid-cols-2">
           {EVENTS.map(([name, text]) => (
-            <div key={name} className="rounded-lg border border-[var(--outline-variant)] bg-white p-4">
+            <div key={name} className="rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-4">
               <dt className="font-mono text-[13px] font-semibold">{name}</dt>
               <dd className="mt-1 text-[14px] text-[var(--on-surface-variant)]">{text}</dd>
             </div>

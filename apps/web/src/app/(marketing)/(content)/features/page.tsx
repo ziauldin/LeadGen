@@ -80,7 +80,7 @@ export default function FeaturesPage() {
           </h2>
           <dl className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {group.items.map(([name, text]) => (
-              <div key={name} className="rounded-xl border border-[var(--outline-variant)] bg-white p-5">
+              <div key={name} className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5">
                 <dt className="text-[15px] font-semibold">{name}</dt>
                 <dd className="mt-1.5 text-[14px] leading-6 text-[var(--on-surface-variant)]">{text}</dd>
               </div>
@@ -89,7 +89,7 @@ export default function FeaturesPage() {
         </section>
       ))}
       <p className="text-center">
-        <Link href="/register" className="rounded-lg bg-[var(--primary)] px-5 py-3 text-[15px] font-semibold text-white hover:opacity-90">
+        <Link href="/register" className="mk-cta rounded-xl px-5 py-3 text-[15px] font-semibold">
           Start free
         </Link>
       </p>

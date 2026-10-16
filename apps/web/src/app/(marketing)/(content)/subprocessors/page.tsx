@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 function SubprocessorTable({ caption, rows }: { caption: string; rows: Subprocessor[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-[var(--outline-variant)] bg-white" tabIndex={0}>
+    <div className="overflow-x-auto rounded-lg border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)]" tabIndex={0}>
       <table className="w-full min-w-[640px] text-left text-[13px]">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-[var(--surface-container-low)] text-[12px] text-[var(--on-surface-variant)]">
