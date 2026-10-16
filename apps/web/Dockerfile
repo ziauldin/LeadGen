@@ -2,12 +2,12 @@
 # Build:  docker build --build-arg API_INTERNAL_URL=http://api:8000 -t leadsgen-web apps/web
 # API_INTERNAL_URL is baked into the /api rewrite at build time.
 
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 ARG API_INTERNAL_URL=http://api:8000
 ARG NEXT_PUBLIC_SENTRY_DSN=""
@@ -17,7 +17,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-FROM node:20-alpine AS runtime
+FROM node:25-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 RUN addgroup -S app && adduser -S app -G app
