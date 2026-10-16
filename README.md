@@ -35,6 +35,15 @@ The stack:
 
 See [Agents.md](Agents.md) for the full guidelines.
 
+## Run everything with Docker
+
+```bash
+docker compose up --build        # web :3000, API :8000, Mailpit (all email) :8025
+docker compose exec api python scripts/seed.py   # optional demo data
+```
+
+The compose stack runs PostgreSQL, Redis, the API, a Celery worker, beat, the web app and Mailpit. Mailpit catches every email, including verification links and mock outreach. Ports can be changed with `API_PORT`, `WEB_PORT` and so on. `make up`, `make test` and `make e2e` are shortcuts.
+
 ## Local development
 
 You need Python 3.12+, Node.js 20+ and Redis 7+ (Redis is only needed for background jobs). SQLite is the default database locally; no Docker required.

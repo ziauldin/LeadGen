@@ -1,0 +1,89 @@
+# Full local stack: PostgreSQL, Redis, Mailpit (catches every email), API, worker, beat, web.
+#   docker compose up --build
+# Web: http://localhost:3000   API: http://localhost:8000   Mail: http://localhost:8025
+# Seed demo data: docker compose exec api python scripts/seed.py
+
+x-api-env: &api-env
+  ENVIRONMENT: development
+  DATABASE_URL: postgresql://leadsgen:leadsgen@postgres:5432/leadsgen
+  REDIS_URL: redis://redis:6379/0
+  SECRET_KEY: ${SECRET_KEY:-local-compose-secret-key-change-me-0123456789}
+  # Local-only default key; never reuse outside docker compose.
+  SECRET_ENCRYPTION_KEY: ${SECRET_ENCRYPTION_KEY:-78f9aiheSkIoGU3UQ63IbM9B5hiARLa4dTdyRNeCW1g=}
+  FRONTEND_URL: http://localhost:3000
+  API_PUBLIC_URL: http://localhost:8000
+  CORS_ORIGINS: http://localhost:3000
+  REFRESH_COOKIE_SECURE: "false"
+  PLATFORM_EMAIL_PROVIDER: smtp
+  PLATFORM_EMAIL_FROM: LeadsGen <no-reply@leadsgen.test>
+  PLATFORM_SMTP_HOST: mailpit
+  PLATFORM_SMTP_PORT: "1025"
+  PLATFORM_SMTP_USE_TLS: "false"
+  FEATURE_AI_EMAILS: "true"
+  FEATURE_INBOUND_WEBHOOKS: "true"
+  FEATURE_IMAP: "true"
+  PLATFORM_LLM_PROVIDER: ${PLATFORM_LLM_PROVIDER:-mock}
+  LOG_JSON: "false"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: leadsgen
+      POSTGRES_PASSWORD: leadsgen
+      POSTGRES_DB: leadsgen
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    ports: ["${PG_PORT:-5432}:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leadsgen"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["${REDIS_PORT:-6379}:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports: ["${MAIL_UI_PORT:-8025}:8025", "${SMTP_PORT:-1025}:1025"]
+
+  api:
+    build: ./services/api
+    environment: *api-env
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes: ["./services/api/app:/app/app"]
+    ports: ["${API_PORT:-8000}:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  worker:
+    build: ./services/api
+    environment: *api-env
+    healthcheck:
+      disable: true  # no HTTP server; readiness tracks the worker heartbeat
+    command: celery -A app.core.celery_app worker -l info -Q default,sending,inbound,enrichment
+    depends_on: [api]
+
+  beat:
+    build: ./services/api
+    environment: *api-env
+    healthcheck:
+      disable: true  # no HTTP server; readiness tracks the worker heartbeat
+    command: celery -A app.core.celery_app beat -l info --schedule /tmp/celerybeat-schedule
+    depends_on: [api]
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        API_INTERNAL_URL: http://api:8000
+    ports: ["${WEB_PORT:-3000}:3000"]
+    depends_on: [api]
+
+volumes:
+  postgres-data:

@@ -162,3 +162,23 @@ jobs:
             apps/web/test-results
             services/api/e2e-api.log
           retention-days: 7
+
+  docker:
+    name: Docker images build and the stack becomes ready
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the compose stack
+        run: docker compose up --build -d
+      - name: Wait for readiness (database, Redis, migrations, worker heartbeat)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/health/ready | grep -q '"status":"ready"'; then exit 0; fi
+            sleep 5
+          done
+          docker compose logs api worker beat
+          exit 1
+      - name: Web app responds
+        run: curl -sf http://localhost:3000/healthz
+      - if: always()
+        run: docker compose down -v

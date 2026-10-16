@@ -103,6 +103,8 @@ class Settings(BaseSettings):
     platform_smtp_port: int = 587
     platform_smtp_username: str = ""
     platform_smtp_password: str = ""
+    # Off only for a local catch-all server such as Mailpit; required in production.
+    platform_smtp_use_tls: bool = True
 
     # Domain whose MX routes to our inbound webhook/IMAP (reply+token@, unsubscribe+token@).
     inbound_email_domain: str = ""
@@ -214,6 +216,8 @@ def production_config_errors(config: Settings) -> list[str]:
         errors.append("CORS_ORIGINS must list the https frontend origin(s) explicitly")
     if config.platform_email_provider == "console":
         errors.append("PLATFORM_EMAIL_PROVIDER must be resend or smtp in production")
+    if config.platform_email_provider == "smtp" and not config.platform_smtp_use_tls:
+        errors.append("PLATFORM_SMTP_USE_TLS must be on in production")
     if config.platform_llm_provider == "mock":
         errors.append("PLATFORM_LLM_PROVIDER must not be mock in production")
     if config.celery_task_always_eager:
