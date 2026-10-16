@@ -21,6 +21,7 @@ import {
   setSessionExpiredHandler,
   setWorkspaceId,
 } from "@/lib/api/client";
+import { track } from "@/lib/analytics";
 import { authApi } from "@/lib/api/endpoints";
 import type { User } from "@/lib/api/types";
 
@@ -132,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       captchaToken?: string | null,
     ) => {
       await authApi.register({ name, email, password, captcha_token: captchaToken });
+      track("signed_up");
       await login(email, password, next);
     },
     [login],

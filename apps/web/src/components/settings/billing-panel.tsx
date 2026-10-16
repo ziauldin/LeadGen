@@ -7,6 +7,7 @@ import { AlertTriangle, Check, CreditCard, ExternalLink, Info } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/components/settings/settings-card";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { track } from "@/lib/analytics";
 import { billingApi } from "@/lib/api/endpoints";
 import type { BillingSummary } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
@@ -71,7 +72,10 @@ export function BillingPanel({ data }: { data: BillingSummary }) {
 
   const checkout = useMutation({
     mutationFn: ({ plan }: { plan: string }) => billingApi.checkout(plan, interval),
-    onSuccess: (result) => window.location.assign(result.url),
+    onSuccess: (result, { plan }) => {
+      track("checkout_started", { plan, interval });
+      window.location.assign(result.url);
+    },
   });
   const portal = useMutation({
     mutationFn: billingApi.portal,

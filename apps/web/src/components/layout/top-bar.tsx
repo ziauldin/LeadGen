@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { authApi } from "@/lib/api/endpoints";
 import { getErrorMessage } from "@/lib/api/client";
+import { HelpMenu } from "@/components/layout/help-menu";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import {
   DropdownMenu,
@@ -82,6 +83,7 @@ export function TopBar() {
       <WorkspaceSwitcher />
 
       <div className="ml-auto flex items-center gap-3">
+        <HelpMenu />
         <DropdownMenu>
           <DropdownMenuTrigger
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"

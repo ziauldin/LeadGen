@@ -4,6 +4,7 @@ import { BillingBanner } from "@/components/layout/billing-banner";
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { VerifyEmailBanner } from "@/components/layout/verify-email-banner";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { CookieConsent } from "@/components/marketing/cookie-consent";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+      <CookieConsent />
     </AuthGuard>
   );
 }

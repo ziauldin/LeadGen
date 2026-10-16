@@ -53,3 +53,31 @@ def test_contact_is_rate_limited():
     statuses = [client.post("/contact", json=MESSAGE).status_code for _ in range(6)]
     assert statuses[:5] == [200] * 5
     assert statuses[5] == 429
+
+
+def test_feedback_needs_sign_in_and_reaches_support(monkeypatch):
+    from tests.conftest import auth_headers
+
+    monkeypatch.setattr(settings, "support_email", "product@leadsgen-test.co.uk")
+    client = get_client()
+    assert (
+        client.post("/feedback", json={"kind": "idea", "message": "Dark mode please"}).status_code
+        == 401
+    )
+    headers = auth_headers(client)
+    response = client.post(
+        "/feedback",
+        headers=headers,
+        json={"kind": "bug", "message": "Export button does nothing", "page": "/leads"},
+    )
+    assert response.status_code == 200
+    sent = [m for m in OUTBOX if m.tags.get("kind") == "feedback"][-1]
+    assert sent.to == "product@leadsgen-test.co.uk"
+    assert "[feedback:bug]" in sent.subject
+    assert "Page: /leads" in sent.text
+    assert (
+        client.post(
+            "/feedback", headers=headers, json={"kind": "rant", "message": "x" * 10}
+        ).status_code
+        == 422
+    )

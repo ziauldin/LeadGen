@@ -4,6 +4,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@ta
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AnalyticsBridge } from "@/components/analytics-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/use-auth";
 import { WorkspaceProvider } from "@/hooks/use-workspace";
@@ -64,7 +65,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WorkspaceProvider>{children}</WorkspaceProvider>
+        <WorkspaceProvider>
+          {children}
+          <AnalyticsBridge />
+        </WorkspaceProvider>
       </AuthProvider>
       <Toaster richColors closeButton position="top-right" />
       <Devtools initialIsOpen={false} />

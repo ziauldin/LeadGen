@@ -17,7 +17,7 @@ export const MARKETING_NAV = [
   { href: "/features", label: "Features" },
   { href: "/use-cases", label: "Use cases" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/docs/api", label: "API" },
+  { href: "/help", label: "Help" },
 ];
 
 export const FOOTER_LINKS: { heading: string; links: { href: string; label: string }[] }[] = [
@@ -28,6 +28,14 @@ export const FOOTER_LINKS: { heading: string; links: { href: string; label: stri
       { href: "/pricing", label: "Pricing" },
       { href: "/use-cases", label: "Use cases" },
       { href: "/docs/api", label: "API" },
+      { href: "/changelog", label: "Changelog" },
+    ],
+  },
+  {
+    heading: "Resources",
+    links: [
+      { href: "/help", label: "Help center" },
+      { href: "/blog", label: "Blog" },
     ],
   },
   {

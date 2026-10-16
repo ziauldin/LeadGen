@@ -6,11 +6,13 @@ import json
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, EmailStr, Field
 
+from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.rate_limit import client_ip, enforce
+from app.models.user import User
 from app.schemas.auth import MessageResponse
 from app.services.auth.protection import verify_captcha
 from app.services.billing.plans import PLAN_FEATURES, PLANS
@@ -94,3 +96,33 @@ def contact(payload: ContactRequest, request: Request) -> MessageResponse:
         )
     )
     return MessageResponse(message="Thanks, we'll be in touch.")
+
+
+class FeedbackRequest(BaseModel):
+    kind: str = Field(default="idea", pattern="^(bug|idea|question|praise)$")
+    message: str = Field(min_length=3, max_length=5000)
+    page: str | None = Field(default=None, max_length=500)
+
+
+@router.post("/feedback", response_model=MessageResponse)
+def feedback(
+    payload: FeedbackRequest,
+    request: Request,
+    user: User = Depends(get_current_user),
+) -> MessageResponse:
+    """In-app feedback: emailed to the support inbox with enough context to follow up."""
+    enforce("20/hour", "feedback", str(user.id))
+    header = request.headers.get("X-Workspace-Id", "")
+    workspace_id = int(header) if header.isdigit() else user.last_workspace_id
+    send_platform_email(
+        TransactionalEmail(
+            to=settings.support_email,
+            subject=f"[feedback:{payload.kind}] from {user.email}",
+            text=(
+                f"From: {user.name} <{user.email}> (user {user.id})\n"
+                f"Workspace: {workspace_id}\nPage: {payload.page or '-'}\n\n{payload.message}\n"
+            ),
+            tags={"kind": "feedback"},
+        )
+    )
+    return MessageResponse(message="Thanks for the feedback!")

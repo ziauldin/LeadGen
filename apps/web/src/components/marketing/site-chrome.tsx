@@ -53,7 +53,7 @@ export function MarketingHeader() {
 export function MarketingFooter() {
   return (
     <footer className="mt-20 border-t border-[var(--outline-variant)] bg-white">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         <div>
           <p className="text-[15px] font-bold text-[var(--primary)]">{SITE.name}</p>
           <p className="mt-2 text-[13px] text-[var(--on-surface-variant)]">{SITE.tagline}</p>
