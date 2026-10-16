@@ -1,5 +1,6 @@
 from collections.abc import Callable
 
+import jwt
 from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
@@ -12,7 +13,7 @@ from app.core.errors import PermissionDeniedError
 from app.core.permissions import DESCRIPTIONS, Permission, permissions_for
 from app.core.rate_limit import enforce
 from app.core.request_context import user_id_var, workspace_id_var
-from app.core.security import read_access_token
+from app.core.security import decode_access_token
 from app.core.tenancy import WorkspaceContext, bind_session
 from app.models.lead import Lead
 from app.models.niche import Niche
@@ -39,18 +40,74 @@ def get_current_user(
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise _unauthorized("Not authenticated")
 
-    claims = read_access_token(credentials.credentials)
-    if claims is None:
-        raise _unauthorized("Invalid or expired token")
-    user_id, token_version = claims
+    try:
+        payload = decode_access_token(credentials.credentials)
+        user_id, token_version = int(payload["sub"]), int(payload.get("ver", 0))
+    except (jwt.PyJWTError, ValueError, KeyError):
+        raise _unauthorized("Invalid or expired token") from None
 
     user = db.get(User, user_id)
     if user is None or not user.is_active or user.token_version != token_version:
         raise _unauthorized("Invalid or expired token")
 
+    if payload.get("imp") is not None:
+        _check_impersonation(request, db, payload)
     request.state.user_id = user.id
     user_id_var.set(user.id)
     return user
+
+
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+# Never changeable while impersonating, even with write access: credentials, sign-in and access.
+IMPERSONATION_BLOCKED = (
+    "/auth/",
+    "/api-keys",
+    "/webhook-endpoints",
+    "/webhook-deliveries",
+    "/sso/",
+    "/roles",
+    "/privacy/",
+    "/billing",
+    "/workspaces/current/members",
+    "/workspaces/current/invitations",
+)
+
+
+def _check_impersonation(request: Request, db: Session, payload: dict) -> None:
+    """A platform admin viewing the app as this user. Read-only unless they asked otherwise."""
+    admin = db.get(User, int(payload["imp"]))
+    if admin is None or not admin.is_active or not admin.is_superuser:
+        raise _unauthorized("This impersonation session has ended")
+    read_only = bool(payload.get("ro", True))
+    if request.method not in SAFE_METHODS and request.url.path.startswith(IMPERSONATION_BLOCKED):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account security, access and data requests can't be changed while impersonating.",
+        )
+    if read_only and request.method not in SAFE_METHODS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You're viewing this account read-only. Changes are disabled.",
+        )
+    request.state.impersonation = {
+        "admin_id": admin.id,
+        "admin_email": admin.email,
+        "read_only": read_only,
+        "workspace_id": payload.get("wsp"),
+        "expires_at": int(payload["exp"]),
+    }
+
+
+def require_superuser(request: Request, current_user: User = Depends(get_current_user)) -> User:
+    """Platform admin back office. Hidden (404) from everyone else."""
+    if getattr(request.state, "impersonation", None) or not current_user.is_superuser:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    if settings.superuser_require_mfa and not current_user.mfa_enabled:
+        raise PermissionDeniedError(
+            "Turn on two-factor authentication to use the admin area.",
+            extra={"code": "mfa_required"},
+        )
+    return current_user
 
 
 def get_current_workspace(
@@ -60,6 +117,9 @@ def get_current_workspace(
     x_workspace_id: int | None = Header(default=None, alias="X-Workspace-Id"),
 ) -> WorkspaceContext:
     """Resolve and authorise the workspace for this request, and scope the DB session to it."""
+    impersonation = getattr(request.state, "impersonation", None)
+    if impersonation and impersonation.get("workspace_id"):
+        x_workspace_id = int(impersonation["workspace_id"])
     membership = resolve_membership(db, current_user, x_workspace_id)
     if membership.workspace.require_2fa and not current_user.mfa_enabled:
         raise PermissionDeniedError(

@@ -237,8 +237,10 @@ def logout_all(
 
 
 @router.get("/me", response_model=UserRead)
-def me(current_user: User = Depends(get_current_user)) -> User:
-    return current_user
+def me(request: Request, current_user: User = Depends(get_current_user)) -> UserRead:
+    user = UserRead.model_validate(current_user)
+    user.impersonation = getattr(request.state, "impersonation", None)
+    return user
 
 
 @router.post("/verify-email", response_model=UserRead)

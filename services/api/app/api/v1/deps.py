@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.flags import feature_enabled
 from app.core.permissions import permissions_for
 from app.core.rate_limit import client_ip, enforce
 from app.core.request_context import workspace_id_var
@@ -46,8 +47,6 @@ def get_api_context(
     authorization: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ) -> ApiContext:
-    if not settings.feature_public_api:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     scheme, _, raw = (authorization or "").partition(" ")
     if scheme.lower() != "bearer" or not raw.strip():
         raise _unauthorized("Send your API key as: Authorization: Bearer <key>")
@@ -69,6 +68,8 @@ def get_api_context(
         )
     if workspace is None or workspace.deleted_at is not None:
         raise _unauthorized("Invalid, expired or revoked API key")
+    if not feature_enabled("public_api", workspace):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
     # A key stops working when the person who created it leaves the workspace.
     if member is None:
         raise _unauthorized("The person who created this key is no longer in the workspace")

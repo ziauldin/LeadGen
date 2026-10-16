@@ -10,9 +10,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_workspace, require_permission
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.errors import NotFoundError
+from app.core.flags import feature_enabled
 from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.developer import ApiKey, WebhookDelivery, WebhookEndpoint
@@ -36,7 +36,7 @@ MANAGE = Depends(require_permission(Permission.API_KEYS_MANAGE))
 
 
 def _enabled(ctx: WorkspaceContext) -> None:
-    if not settings.feature_public_api:
+    if not feature_enabled("public_api", ctx.workspace):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="The public API isn't enabled"
         )
@@ -148,9 +148,9 @@ def _endpoint_read(endpoint: WebhookEndpoint) -> dict:
 
 
 @router.get("/developer/options", response_model=DeveloperOptions)
-def developer_options(_ctx: WorkspaceContext = Depends(get_current_workspace)) -> DeveloperOptions:
+def developer_options(ctx: WorkspaceContext = Depends(get_current_workspace)) -> DeveloperOptions:
     return DeveloperOptions(
-        enabled=settings.feature_public_api,
+        enabled=feature_enabled("public_api", ctx.workspace),
         scopes=[OptionRead(key=k, description=v[0]) for k, v in SCOPES.items()],
         events=[OptionRead(key=k, description=v) for k, v in EVENTS.items()],
     )

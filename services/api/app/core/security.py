@@ -33,6 +33,7 @@ def create_access_token(
     *,
     token_version: int = 0,
     expires_delta: timedelta | None = None,
+    extra_claims: dict[str, Any] | None = None,
 ) -> str:
     now = datetime.now(UTC)
     expire = now + (expires_delta or timedelta(minutes=settings.jwt_access_token_expire_minutes))
@@ -43,6 +44,7 @@ def create_access_token(
         "iat": now,
         "exp": expire,
         "jti": secrets.token_hex(8),
+        **(extra_claims or {}),
     }
     return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
 

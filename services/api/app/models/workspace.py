@@ -54,6 +54,9 @@ class Workspace(Base, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    sending_suspended_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Per-workspace overrides of FEATURE_* flags, e.g. {"public_api": true} (see core/flags.py).
+    feature_flags: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Members must have two-factor authentication on to use this workspace.
     require_2fa: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

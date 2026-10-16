@@ -4,6 +4,266 @@
  */
 
 export interface paths {
+    "/admin/abuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Abuse */
+        get: operations["get_abuse_admin_abuse_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin Audit Logs */
+        get: operations["admin_audit_logs_admin_audit_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Flags */
+        get: operations["list_flags_admin_flags_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Health */
+        get: operations["get_health_admin_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Overview */
+        get: operations["get_overview_admin_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/suppressions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Global Suppressions */
+        get: operations["list_global_suppressions_admin_suppressions_get"];
+        put?: never;
+        /** Create Global Suppression */
+        post: operations["create_global_suppression_admin_suppressions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/suppressions/{suppression_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Global Suppression */
+        delete: operations["delete_global_suppression_admin_suppressions__suppression_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Users */
+        get: operations["list_users_admin_users_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{user_id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Disable User */
+        post: operations["disable_user_admin_users__user_id__disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{user_id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enable User */
+        post: operations["enable_user_admin_users__user_id__enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Workspaces */
+        get: operations["list_workspaces_admin_workspaces_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/workspaces/{workspace_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workspace */
+        get: operations["get_workspace_admin_workspaces__workspace_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Workspace */
+        patch: operations["update_workspace_admin_workspaces__workspace_id__patch"];
+        trace?: never;
+    };
+    "/admin/workspaces/{workspace_id}/impersonate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Impersonate
+         * @description A short-lived token to view the app as a member. Read-only unless ``write`` is set.
+         */
+        post: operations["impersonate_admin_workspaces__workspace_id__impersonate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/workspaces/{workspace_id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend Workspace */
+        post: operations["suspend_workspace_admin_workspaces__workspace_id__suspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/workspaces/{workspace_id}/unsuspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unsuspend Workspace */
+        post: operations["unsuspend_workspace_admin_workspaces__workspace_id__unsuspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api-keys": {
         parameters: {
             query?: never;
@@ -2491,6 +2751,30 @@ export interface components {
             /** Skipped */
             skipped: number;
         };
+        /** AdminAuditRow */
+        AdminAuditRow: {
+            /** Action */
+            action: string;
+            /** Actor Email */
+            actor_email: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Entity Id */
+            entity_id: number | null;
+            /** Entity Type */
+            entity_type: string;
+            /** Id */
+            id: number;
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            } | null;
+            /** Workspace Id */
+            workspace_id: number | null;
+        };
         /** ApiKeyCreate */
         ApiKeyCreate: {
             /** Expires In Days */
@@ -3676,6 +3960,15 @@ export interface components {
             /** Queries */
             queries: string[];
         };
+        /** GlobalSuppressionCreate */
+        GlobalSuppressionCreate: {
+            /** Domain */
+            domain?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
         /** GovernanceSettings */
         GovernanceSettings: {
             /**
@@ -3714,6 +4007,43 @@ export interface components {
             last_used_at: string | null;
             /** Provider */
             provider: string;
+        };
+        /** ImpersonateRequest */
+        ImpersonateRequest: {
+            /**
+             * Minutes
+             * @default 30
+             */
+            minutes?: number;
+            /** Reason */
+            reason: string;
+            /** User Id */
+            user_id?: number | null;
+            /**
+             * Write
+             * @default false
+             */
+            write?: boolean;
+        };
+        /** ImpersonationToken */
+        ImpersonationToken: {
+            /** Access Token */
+            access_token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Read Only */
+            read_only: boolean;
+            /** User Email */
+            user_email: string;
+            /** User Name */
+            user_name: string;
+            /** Workspace Id */
+            workspace_id: number;
+            /** Workspace Name */
+            workspace_name: string;
         };
         /** InvitationCreate */
         InvitationCreate: {
@@ -3990,6 +4320,19 @@ export interface components {
             /** Name */
             name: string;
             role: components["schemas"]["WorkspaceRole"];
+            /** User Id */
+            user_id: number;
+        };
+        /** MemberRow */
+        MemberRow: {
+            /** Email */
+            email: string;
+            /** Mfa Enabled */
+            mfa_enabled: boolean;
+            /** Name */
+            name: string;
+            /** Role */
+            role: string;
             /** User Id */
             user_id: number;
         };
@@ -4601,6 +4944,11 @@ export interface components {
             /** Source */
             source: string | null;
         };
+        /** SuspendRequest */
+        SuspendRequest: {
+            /** Reason */
+            reason: string;
+        };
         /** TemplateCreate */
         TemplateCreate: {
             /** Body */
@@ -4704,6 +5052,13 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** UserPage */
+        UserPage: {
+            /** Items */
+            items: components["schemas"]["UserRow"][];
+            /** Total */
+            total: number;
+        };
         /** UserRead */
         UserRead: {
             /**
@@ -4720,6 +5075,15 @@ export interface components {
             email_verified_at: string | null;
             /** Id */
             id: number;
+            /** Impersonation */
+            impersonation: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Is Superuser
+             * @default false
+             */
+            is_superuser: boolean;
             /**
              * Mfa Enabled
              * @default false
@@ -4748,6 +5112,30 @@ export interface components {
          * @enum {string}
          */
         UserRole: "admin" | "operator";
+        /** UserRow */
+        UserRow: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /** Email Verified At */
+            email_verified_at: string | null;
+            /** Id */
+            id: number;
+            /** Is Active */
+            is_active: boolean;
+            /** Is Superuser */
+            is_superuser: boolean;
+            /** Mfa Enabled */
+            mfa_enabled: boolean;
+            /** Name */
+            name: string;
+            /** Workspaces */
+            workspaces: number;
+        };
         /** UserSettingsRead */
         UserSettingsRead: {
             /**
@@ -4854,12 +5242,96 @@ export interface components {
              */
             timezone?: string;
         };
+        /** WorkspaceDetail */
+        WorkspaceDetail: {
+            /** Bounce Rate 30D */
+            bounce_rate_30d: number;
+            /** Complaint Rate 30D */
+            complaint_rate_30d: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at: string | null;
+            /** Effective Flags */
+            effective_flags: {
+                [key: string]: boolean;
+            };
+            /** Feature Flags */
+            feature_flags: {
+                [key: string]: boolean;
+            } | null;
+            /** Features */
+            features: {
+                [key: string]: boolean | number;
+            };
+            /** Id */
+            id: number;
+            /** Leads */
+            leads: number;
+            /** Limits */
+            limits: {
+                [key: string]: number;
+            };
+            /** Members */
+            members: number;
+            /** Members List */
+            members_list: components["schemas"]["MemberRow"][];
+            /** Name */
+            name: string;
+            /** Owner Email */
+            owner_email: string | null;
+            /** Plan */
+            plan: string;
+            /** Plan Overrides */
+            plan_overrides: {
+                [key: string]: unknown;
+            } | null;
+            /** Sending Suspended At */
+            sending_suspended_at: string | null;
+            /** Sending Suspended Reason */
+            sending_suspended_reason: string | null;
+            /** Sent 30D */
+            sent_30d: number;
+            /** Usage */
+            usage: {
+                [key: string]: number;
+            };
+        };
         /** WorkspaceListResponse */
         WorkspaceListResponse: {
             /** Current Workspace Id */
             current_workspace_id: number | null;
             /** Items */
             items: components["schemas"]["WorkspaceWithRole"][];
+        };
+        /** WorkspacePage */
+        WorkspacePage: {
+            /** Items */
+            items: components["schemas"]["WorkspaceRow"][];
+            /** Limit */
+            limit: number;
+            /** Skip */
+            skip: number;
+            /** Total */
+            total: number;
+        };
+        /** WorkspacePatch */
+        WorkspacePatch: {
+            /** Feature Flags */
+            feature_flags?: {
+                [key: string]: boolean | null;
+            } | null;
+            /** Note */
+            note?: string | null;
+            /** Plan */
+            plan?: string | null;
+            /** Plan Overrides */
+            plan_overrides?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** WorkspaceRead */
         WorkspaceRead: {
@@ -4889,6 +5361,38 @@ export interface components {
          * @enum {string}
          */
         WorkspaceRole: "owner" | "admin" | "member";
+        /** WorkspaceRow */
+        WorkspaceRow: {
+            /** Bounce Rate 30D */
+            bounce_rate_30d: number;
+            /** Complaint Rate 30D */
+            complaint_rate_30d: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at: string | null;
+            /** Id */
+            id: number;
+            /** Leads */
+            leads: number;
+            /** Members */
+            members: number;
+            /** Name */
+            name: string;
+            /** Owner Email */
+            owner_email: string | null;
+            /** Plan */
+            plan: string;
+            /** Sending Suspended At */
+            sending_suspended_at: string | null;
+            /** Sending Suspended Reason */
+            sending_suspended_reason: string | null;
+            /** Sent 30D */
+            sent_30d: number;
+        };
         /** WorkspaceUpdate */
         WorkspaceUpdate: {
             /** Name */
@@ -4977,6 +5481,520 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_abuse_admin_abuse_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    admin_audit_logs_admin_audit_logs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminAuditRow"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_flags_admin_flags_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_health_admin_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    get_overview_admin_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_global_suppressions_admin_suppressions_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuppressionRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_global_suppression_admin_suppressions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GlobalSuppressionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuppressionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_global_suppression_admin_suppressions__suppression_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                suppression_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_users_admin_users_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disable_user_admin_users__user_id__disable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enable_user_admin_users__user_id__enable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workspaces_admin_workspaces_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                plan?: string | null;
+                suspended?: boolean | null;
+                skip?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspacePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workspace_admin_workspaces__workspace_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_workspace_admin_workspaces__workspace_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspacePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    impersonate_admin_workspaces__workspace_id__impersonate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImpersonateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImpersonationToken"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suspend_workspace_admin_workspaces__workspace_id__suspend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unsuspend_workspace_admin_workspaces__workspace_id__unsuspend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_api_keys_api_keys_get: {
         parameters: {
             query?: never;

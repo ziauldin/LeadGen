@@ -9,6 +9,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes import (
+    admin,
     approvals,
     auth,
     billing,
@@ -112,6 +113,7 @@ app.state.limiter = limiter
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(health.router)
+app.include_router(admin.router)
 app.include_router(auth.router)
 app.include_router(sso.router)
 app.include_router(roles.router)

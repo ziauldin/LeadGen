@@ -1,3 +1,5 @@
+import AxeBuilder from "@axe-core/playwright";
+import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -46,4 +48,28 @@ export function totp(secret: string, stepsAhead = 0): string {
   const offset = hmac[hmac.length - 1] & 0xf;
   const value = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
   return String(value).padStart(6, "0");
+}
+
+// Fail on serious or critical WCAG 2.1 A/AA problems; report the rest in the test output.
+export async function expectAccessible(page: Page, name: string) {
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+  const blocking = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+  const summary = blocking.map(
+    (v) =>
+      `${v.id} (${v.impact}): ${v.help} — ${v.nodes.length} element(s): ` +
+      v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | "),
+  );
+  expect(summary, `${name} has accessibility problems`).toEqual([]);
+}
+
+
+/** Run the API's superuser CLI against the end-to-end database. */
+export function grantSuperuser(email: string) {
+  const api = resolve(__dirname, "../../../services/api");
+  execFileSync(process.env.E2E_PYTHON ?? "python", ["-m", "scripts.manage_superusers", "grant", email], {
+    cwd: api,
+    env: { ...process.env, DATABASE_URL: `sqlite:///${resolve(api, "data/e2e.db").split("\\").join("/")}` },
+  });
 }

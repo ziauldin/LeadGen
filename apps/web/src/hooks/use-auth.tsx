@@ -13,7 +13,9 @@ import { useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  endImpersonation,
   getErrorMessage,
+  getImpersonation,
   refreshAccessToken,
   setAccessToken,
   setSessionExpiredHandler,
@@ -136,6 +138,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    if (getImpersonation()) {
+      // Ending an impersonation session never signs the admin out.
+      endImpersonation();
+      queryClient.clear();
+      window.location.assign("/admin/workspaces");
+      return;
+    }
     try {
       await authApi.logout();
     } catch {

@@ -133,6 +133,10 @@ class Settings(BaseSettings):
     feature_sso: bool = False
     feature_public_api: bool = False
 
+    # Platform admins must use two-factor authentication to open the back office.
+    superuser_require_mfa: bool = True
+    impersonation_max_minutes: int = 60
+
     # Public API (/v1) and outbound webhooks
     rate_limit_api: str = "120/minute"  # per API key
     outbound_webhook_timeout_seconds: float = 10.0

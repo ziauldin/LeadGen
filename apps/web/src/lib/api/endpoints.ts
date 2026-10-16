@@ -237,6 +237,71 @@ export const developerApi = {
     apiFetch<S["DeliveryRead"]>(`/webhook-deliveries/${deliveryId}/replay`, { method: "POST" }),
 };
 
+export type AdminOverview = {
+  users: number;
+  new_users_7d: number;
+  workspaces: number;
+  workspaces_by_plan: Record<string, number>;
+  active_workspaces_7d: number;
+  suspended_workspaces: number;
+  emails_sent_24h: number;
+  emails_sent_7d: number;
+  replies_7d: number;
+};
+export type AdminHealth = {
+  checks: Record<string, { ok: boolean; detail: string | null }>;
+  failed_emails_24h: number;
+  queued_emails: number;
+  provider_errors: number;
+  webhooks_pending: number;
+  webhooks_failed_24h: number;
+  data_requests_open: number;
+};
+export type AdminAbuse = {
+  sending: {
+    workspace_id: number;
+    name: string;
+    plan: string;
+    sent_7d: number;
+    bounced_7d: number;
+    complained_7d: number;
+    suspended: boolean;
+    reasons: string[];
+  }[];
+  signups: { user_id: number; email: string; name: string; created_at: string; is_active: boolean; reasons: string[] }[];
+};
+export type AdminFlags = { flags: { key: string; description: string; default: boolean }[]; plans: string[] };
+
+export const adminApi = {
+  overview: () => apiFetch<AdminOverview>("/admin/overview"),
+  health: () => apiFetch<AdminHealth>("/admin/health"),
+  abuse: () => apiFetch<AdminAbuse>("/admin/abuse"),
+  flags: () => apiFetch<AdminFlags>("/admin/flags"),
+  workspaces: (params: ListParams = {}) =>
+    apiFetch<S["WorkspacePage"]>(`/admin/workspaces${queryString(params)}`),
+  workspace: (id: number) => apiFetch<S["WorkspaceDetail"]>(`/admin/workspaces/${id}`),
+  updateWorkspace: (id: number, data: S["WorkspacePatch"]) =>
+    apiFetch<S["WorkspaceDetail"]>(`/admin/workspaces/${id}`, { method: "PATCH", body: json(data) }),
+  suspend: (id: number, reason: string) =>
+    apiFetch<S["WorkspaceDetail"]>(`/admin/workspaces/${id}/suspend`, { method: "POST", body: json({ reason }) }),
+  unsuspend: (id: number) =>
+    apiFetch<S["WorkspaceDetail"]>(`/admin/workspaces/${id}/unsuspend`, { method: "POST" }),
+  impersonate: (id: number, data: S["ImpersonateRequest"]) =>
+    apiFetch<S["ImpersonationToken"]>(`/admin/workspaces/${id}/impersonate`, {
+      method: "POST",
+      body: json(data),
+    }),
+  users: (params: ListParams = {}) => apiFetch<S["UserPage"]>(`/admin/users${queryString(params)}`),
+  setUserActive: (id: number, active: boolean) =>
+    apiFetch<{ is_active: boolean }>(`/admin/users/${id}/${active ? "enable" : "disable"}`, { method: "POST" }),
+  suppressions: (search?: string) =>
+    apiFetch<Suppression[]>(`/admin/suppressions${queryString({ search })}`),
+  addSuppression: (data: S["GlobalSuppressionCreate"]) =>
+    apiFetch<Suppression>("/admin/suppressions", { method: "POST", body: json(data) }),
+  removeSuppression: (id: number) => apiFetch<void>(`/admin/suppressions/${id}`, { method: "DELETE" }),
+  auditLogs: () => apiFetch<S["AdminAuditRow"][]>("/admin/audit-logs"),
+};
+
 /** Where the browser goes to start "Continue with Google/Microsoft". */
 export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";

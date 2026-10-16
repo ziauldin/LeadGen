@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/healthz",
   "/auth/complete",
   "/subprocessors",
+  "/impersonate",
 ];
 
 const SESSION_HINT = "lg_session";

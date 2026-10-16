@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core import metrics
-from app.core.config import settings
+from app.core.flags import feature_enabled
 from app.models.campaign import Campaign
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
@@ -27,7 +27,7 @@ from app.models.inbound import EmailEvent
 from app.models.lead import Lead
 from app.models.reply import Reply
 from app.models.suppression import Suppression
-from app.models.workspace import WorkspaceSettings
+from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.campaigns.sequences import stop_enrollment, stop_enrollments_for_email
 from app.services.compliance.opt_out import (
     cancel_pending_messages,
@@ -54,7 +54,7 @@ SENT_LIKE = (EmailMessageStatus.SENT, EmailMessageStatus.BOUNCED, EmailMessageSt
 
 
 def _ai_labelling_on(db: Session, workspace_id: int) -> bool:
-    if not settings.feature_ai_emails:
+    if not feature_enabled("ai_emails", db.get(Workspace, workspace_id)):
         return False
     mode = db.scalar(
         select(WorkspaceSettings.ai_mode).where(WorkspaceSettings.workspace_id == workspace_id),

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Activity, Database, Plus } from "lucide-react";
+import { Activity, Database, Plus, ShieldHalf } from "lucide-react";
 import { NavLinks } from "@/components/layout/nav-links";
+import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/hooks/use-workspace";
 
 export function Brand() {
@@ -38,6 +39,8 @@ export function NewCampaignButton({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function AppSidebar() {
+  const { user } = useAuth();
+  const showAdmin = Boolean(user?.is_superuser && !user.impersonation);
   return (
     <aside
       className="fixed left-0 top-0 z-20 hidden h-screen w-[260px] flex-col border-r border-[var(--outline-variant)] bg-[var(--surface)] lg:flex"
@@ -51,6 +54,15 @@ export function AppSidebar() {
       </div>
       <NavLinks />
       <div className="mt-auto border-t border-[var(--outline-variant)] px-4 py-4">
+        {showAdmin ? (
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"
+          >
+            <ShieldHalf className="size-4" aria-hidden />
+            Admin
+          </Link>
+        ) : null}
         <Link
           href="/health"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)]"

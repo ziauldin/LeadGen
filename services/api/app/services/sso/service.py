@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.errors import ConflictError, NotFoundError, ValidationFailedError
+from app.core.flags import feature_enabled
 from app.core.security import decrypt_secret_payload, encrypt_secret_payload, get_password_hash
 from app.core.tenancy import bind_session, system_session
 from app.models.audit_log import AuditLog
@@ -297,7 +298,7 @@ def complete_enterprise_login(
 
 def _usable(db: Session, connection: SsoConnection) -> bool:
     workspace = db.get(Workspace, connection.workspace_id)
-    if workspace is None or not connection.is_active or not settings.feature_sso:
+    if workspace is None or not connection.is_active or not feature_enabled("sso", workspace):
         return False
     features = features_for(workspace)
     return features.saml if connection.protocol == "saml" else features.sso

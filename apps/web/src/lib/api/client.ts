@@ -38,8 +38,57 @@ export function setSessionExpiredHandler(handler: (() => void) | null): void {
   onSessionExpired = handler;
 }
 
+/**
+ * Impersonation: a platform admin viewing the app as a customer, in one browser tab.
+ * The short-lived token lives in this tab's sessionStorage and never touches the refresh
+ * cookie, so the admin's own session (and other tabs) are unaffected.
+ */
+const IMPERSONATION_KEY = "lg_impersonation";
+
+export type Impersonation = {
+  token: string;
+  workspaceId: number;
+  workspaceName: string;
+  userName: string;
+  userEmail: string;
+  readOnly: boolean;
+  expiresAt: string;
+};
+
+export function getImpersonation(): Impersonation | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(IMPERSONATION_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Impersonation;
+    if (new Date(value.expiresAt).getTime() <= Date.now()) {
+      window.sessionStorage.removeItem(IMPERSONATION_KEY);
+      return null;
+    }
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+export function startImpersonation(value: Impersonation): void {
+  window.sessionStorage.setItem(IMPERSONATION_KEY, JSON.stringify(value));
+  accessToken = value.token;
+}
+
+export function endImpersonation(): void {
+  try {
+    window.sessionStorage.removeItem(IMPERSONATION_KEY);
+  } catch {
+    // Nothing stored.
+  }
+  accessToken = null;
+}
+
 export function getWorkspaceId(): string | null {
   if (typeof window === "undefined") return null;
+  const impersonation = getImpersonation();
+  if (impersonation) return String(impersonation.workspaceId);
   try {
     return window.localStorage.getItem(WORKSPACE_KEY);
   } catch {
@@ -48,7 +97,7 @@ export function getWorkspaceId(): string | null {
 }
 
 export function setWorkspaceId(id: number | null): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || getImpersonation()) return;
   try {
     if (id === null) window.localStorage.removeItem(WORKSPACE_KEY);
     else window.localStorage.setItem(WORKSPACE_KEY, String(id));
@@ -59,6 +108,12 @@ export function setWorkspaceId(id: number | null): void {
 
 /** Swap the refresh cookie for a new access token. Concurrent callers share one request. */
 export function refreshAccessToken(): Promise<string | null> {
+  if (typeof window !== "undefined" && window.sessionStorage?.getItem(IMPERSONATION_KEY)) {
+    // Impersonation sessions can't be renewed: they end when the token expires.
+    const impersonation = getImpersonation();
+    accessToken = impersonation?.token ?? null;
+    return Promise.resolve(accessToken);
+  }
   if (!refreshing) {
     refreshing = fetch(`${API_BASE}/auth/refresh`, {
       method: "POST",

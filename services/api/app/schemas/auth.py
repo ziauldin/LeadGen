@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -117,4 +118,7 @@ class UserRead(BaseModel):
     role: UserRole
     email_verified_at: datetime | None = None
     mfa_enabled: bool = False
+    is_superuser: bool = False
     created_at: datetime
+    # Set while a platform admin is viewing the app as this user.
+    impersonation: dict[str, Any] | None = None
