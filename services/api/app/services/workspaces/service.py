@@ -93,9 +93,11 @@ def create_workspace(
     audit(db, workspace.id, owner.id, "workspace_created", "workspace", workspace.id)
     db.flush()
 
+    from app.core.tenancy import workspace_scope
     from app.services.provider_credentials.service import ensure_default_mock_credentials
 
-    ensure_default_mock_credentials(db, workspace.id, owner.id)
+    with workspace_scope(db, workspace.id):
+        ensure_default_mock_credentials(db, workspace.id, owner.id)
     return workspace
 
 

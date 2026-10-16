@@ -48,6 +48,11 @@ def run_migrations_online() -> None:
             # table would cascade-delete child rows. Must be set outside a transaction.
             connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
             connection.commit()
+        if connection.dialect.name == "postgresql":
+            # Data migrations work across every workspace, so row-level security must not
+            # hide rows from them (session-level setting, for this connection only).
+            connection.exec_driver_sql("SELECT set_config('app.bypass_rls', 'on', false)")
+            connection.commit()
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

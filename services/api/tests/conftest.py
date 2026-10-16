@@ -40,13 +40,18 @@ engine = (
         poolclass=StaticPool,
     )
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Sessions the app uses for requests: strictly workspace-scoped, like production.
+AppSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Sessions tests use to set up and inspect data: see every workspace (and bypass RLS).
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine, info={"tenant_bypass": True}
+)
 # Background tasks run eagerly in tests and open sessions via SessionLocal: point it here too.
 core_database.SessionLocal.configure(bind=engine)
 
 
 def override_get_db():
-    db = TestingSessionLocal()
+    db = AppSessionLocal()
     try:
         yield db
     finally:
@@ -110,6 +115,36 @@ def setup_db():
     else:
         Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+    if IS_POSTGRES:
+        _apply_row_level_security()
+
+
+def _apply_row_level_security() -> None:
+    """Same policies as the RLS migration, so the suite runs with them on PostgreSQL."""
+    import importlib.util
+    from pathlib import Path
+
+    path = (
+        Path(__file__).resolve().parents[1] / "alembic/versions/c5d6e7f8a9b0_row_level_security.py"
+    )
+    spec = importlib.util.spec_from_file_location("rls_migration", path)
+    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    with engine.begin() as conn:
+        for table in module.TENANT_TABLES:
+            conn.exec_driver_sql(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
+            conn.exec_driver_sql(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY")
+            conn.exec_driver_sql(
+                f"CREATE POLICY tenant_isolation ON {table} USING ({module.BYPASS} OR "
+                f"{module.OWN}) WITH CHECK ({module.BYPASS} OR {module.OWN})",
+            )
+        conn.exec_driver_sql("ALTER TABLE suppressions ENABLE ROW LEVEL SECURITY")
+        conn.exec_driver_sql("ALTER TABLE suppressions FORCE ROW LEVEL SECURITY")
+        conn.exec_driver_sql(
+            "CREATE POLICY tenant_isolation ON suppressions USING "
+            f"({module.BYPASS} OR workspace_id IS NULL OR {module.OWN}) WITH CHECK "
+            f"({module.BYPASS} OR workspace_id IS NULL OR {module.OWN})",
+        )
 
 
 def get_client() -> TestClient:

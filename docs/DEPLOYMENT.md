@@ -59,6 +59,23 @@ The error message lists what to fix.
 
 The browser only talks to the web service. `/api/*` is proxied to the API over Railway's private network, so the refresh-token cookie is first-party and httpOnly.
 
+## 2b. Use a non-superuser database role (row-level security)
+
+PostgreSQL enforces workspace isolation with row-level security, as a second line of defence behind the application's own filters. **Superusers bypass row-level security.** Railway's default `postgres` user is a superuser, so the app should connect as its own role instead.
+
+Run this once in the Railway Postgres console, choosing your own password:
+
+```sql
+CREATE ROLE leadsgen_app LOGIN PASSWORD 'change-me' NOSUPERUSER;
+CREATE DATABASE leadsgen OWNER leadsgen_app;
+```
+
+Then set `DATABASE_URL=postgresql://leadsgen_app:<password>@<host>:<port>/leadsgen` on api, worker and beat.
+
+For an existing database, transfer ownership instead: `ALTER DATABASE … OWNER TO leadsgen_app;` and `REASSIGN OWNED BY postgres TO leadsgen_app;`. Run that as the superuser.
+
+Migrations turn the bypass on for their own connection, so they still work across every workspace.
+
 ## 3. Deploy order and migrations
 
 Every API deploy runs `alembic upgrade head` first. Most migrations are additive and safe while old workers are still running.

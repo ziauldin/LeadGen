@@ -123,6 +123,15 @@ def test_upgrade_moves_legacy_data_into_workspaces(database_url):
     cfg = _config(database_url)
     command.upgrade(cfg, PRE_WORKSPACES)
     engine = sa.create_engine(database_url)
+    if engine.dialect.name == "postgresql":
+        # Read every workspace's rows to check the migrated data (row-level security is on).
+        sa.event.listen(
+            engine,
+            "connect",
+            lambda dbapi_conn, _record: dbapi_conn.cursor().execute(
+                "SELECT set_config('app.bypass_rls', 'on', false)"
+            ),
+        )
     _seed_legacy(engine)
 
     command.upgrade(cfg, "head")

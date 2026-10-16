@@ -1,6 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.tenancy import bind_session, system_session
 from app.models.audit_log import AuditLog
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
@@ -10,9 +11,22 @@ from app.models.suppression import Suppression
 
 
 def find_message_by_unsubscribe_token(db: Session, token: str) -> EmailMessage | None:
+    """Find the email an unsubscribe token belongs to.
+
+    From a public link the session isn't scoped yet: the token identifies the workspace, so
+    look it up across workspaces and then scope the session to it. A session that is already
+    scoped (inbound processing) only searches its own workspace.
+    """
     if not token or len(token) > 128:
         return None
-    return db.scalar(select(EmailMessage).where(EmailMessage.unsubscribe_token == token))
+    query = select(EmailMessage).where(EmailMessage.unsubscribe_token == token)
+    if db.info.get("workspace_id") is not None or db.info.get("tenant_bypass"):
+        return db.scalar(query)
+    with system_session(db):
+        message = db.scalar(query)
+    if message is not None:
+        bind_session(db, message.workspace_id)
+    return message
 
 
 def cancel_pending_messages(db: Session, *, workspace_id: int, email: str, reason: str) -> int:
