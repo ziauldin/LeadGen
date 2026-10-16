@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// Worker name. WORKER_SELF_REFERENCE below must match this value exactly.
+	"name": "leadgen",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference binding used by OpenNext for ISR revalidation.
+			// The service name MUST match the "name" field above.
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "leadgen"
+		}
+	],
+	// Optional: R2 bucket for persistent ISR/incremental cache across deploys.
+	// Create with: npx wrangler r2 bucket create leadgen-opennext-cache
+	// Then uncomment:
+	// "r2_buckets": [
+	// 	{
+	// 		"binding": "NEXT_INC_CACHE_R2_BUCKET",
+	// 		"bucket_name": "leadgen-opennext-cache"
+	// 	}
+	// ],
+	"images": {
+		// Cloudflare image optimization (resizing via /cdn-cgi/image/...)
+		"binding": "IMAGES"
+	},
+	"observability": {
+		"enabled": true
+	}
+}

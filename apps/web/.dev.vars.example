@@ -1,0 +1,24 @@
+# Cloudflare local development variables.
+# Copy to .dev.vars (never commit that file — it is gitignored).
+# Used by `wrangler dev` and `npx opennextjs-cloudflare build` locally.
+# In production, set these as Cloudflare Worker secrets or plain vars
+# in the dashboard or via `wrangler secret put VAR_NAME`.
+
+# ── API proxy ──────────────────────────────────────────────────────────────
+# Where the Next.js rewrite forwards /api/* calls.
+# Must be the public HTTPS URL of your Railway API in production.
+API_INTERNAL_URL=http://localhost:8000
+
+# ── Public site ────────────────────────────────────────────────────────────
+NEXT_PUBLIC_SITE_URL=https://leadgen.workers.dev
+NEXT_PUBLIC_LEGAL_ENTITY=Future Connect
+NEXT_PUBLIC_LEGAL_ADDRESS=Registered address available on request
+NEXT_PUBLIC_CONTACT_EMAIL=hello@example.com
+NEXT_PUBLIC_PRIVACY_EMAIL=privacy@example.com
+# NEXT_PUBLIC_STATUS_URL=
+
+# ── Optional integrations (leave blank to disable) ─────────────────────────
+# NEXT_PUBLIC_SENTRY_DSN=
+# NEXT_PUBLIC_POSTHOG_KEY=
+# NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
+# NEXT_PUBLIC_TURNSTILE_SITE_KEY=

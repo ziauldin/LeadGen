@@ -1,0 +1,53 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/cloudflare.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for Cloudflare
+        run: npm run build:cf
+        env:
+          # Baked into the JS bundle at build time — must be NEXT_PUBLIC_ to be available in the browser.
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          NEXT_PUBLIC_LEGAL_ENTITY: ${{ secrets.NEXT_PUBLIC_LEGAL_ENTITY }}
+          NEXT_PUBLIC_LEGAL_ADDRESS: ${{ secrets.NEXT_PUBLIC_LEGAL_ADDRESS }}
+          NEXT_PUBLIC_CONTACT_EMAIL: ${{ secrets.NEXT_PUBLIC_CONTACT_EMAIL }}
+          NEXT_PUBLIC_PRIVACY_EMAIL: ${{ secrets.NEXT_PUBLIC_PRIVACY_EMAIL }}
+          NEXT_PUBLIC_STATUS_URL: ${{ secrets.NEXT_PUBLIC_STATUS_URL }}
+          # Optional integrations — build succeeds and the feature is simply disabled when blank.
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+          # Server-side proxy target compiled into the rewrite rule.
+          API_INTERNAL_URL: ${{ secrets.API_INTERNAL_URL }}
+
+      - name: Deploy
+        run: npm run deploy:cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
