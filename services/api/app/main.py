@@ -24,6 +24,7 @@ from app.api.routes import (
     niches,
     privacy,
     provider_settings,
+    public,
     replies,
     roles,
     scoring,
@@ -113,6 +114,7 @@ app.state.limiter = limiter
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(health.router)
+app.include_router(public.router)
 app.include_router(admin.router)
 app.include_router(auth.router)
 app.include_router(sso.router)

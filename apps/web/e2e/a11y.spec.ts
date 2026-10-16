@@ -2,7 +2,22 @@ import { test } from "@playwright/test";
 import { expectAccessible, signUp } from "./helpers";
 
 test("public pages are accessible", async ({ page }) => {
-  for (const path of ["/login", "/login/sso", "/register", "/forgot-password", "/subprocessors"]) {
+  for (const path of [
+    "/",
+    "/features",
+    "/use-cases",
+    "/pricing",
+    "/about",
+    "/contact",
+    "/docs/api",
+    "/legal/terms",
+    "/legal/privacy",
+    "/login",
+    "/login/sso",
+    "/register",
+    "/forgot-password",
+    "/subprocessors",
+  ]) {
     await page.goto(path);
     await expectAccessible(page, path);
   }

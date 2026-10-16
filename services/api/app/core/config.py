@@ -144,6 +144,11 @@ class Settings(BaseSettings):
     billing_trial_days: int = 14
     billing_grace_days: int = 7
 
+    # Marketing site: prices shown on /pricing (Stripe stays the source of truth for charges)
+    # and where contact-form messages go.
+    plan_display_prices: str = '{"currency": "USD", "free": {"month": 0, "year": 0}}'
+    support_email: str = "support@localhost"
+
     # Platform admins must use two-factor authentication to open the back office.
     superuser_require_mfa: bool = True
     impersonation_max_minutes: int = 60
