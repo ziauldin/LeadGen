@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_workspace
+from app.api.deps import get_current_workspace, require_permission
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.lead import Lead
 from app.models.niche import Niche
@@ -38,6 +39,7 @@ def recalculate_scores(
     payload: RecalculateRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> RecalculateResponse:
     if payload.niche_id is None and not payload.lead_ids:
         raise HTTPException(

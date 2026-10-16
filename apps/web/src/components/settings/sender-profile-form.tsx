@@ -48,7 +48,7 @@ const EMPTY: Values = {
 
 function CharCount({ value, max }: { value: string; max: number }) {
   return (
-    <span className="float-right text-[11px] text-[var(--outline)]">
+    <span className="float-right text-[11px] text-[var(--on-surface-variant)]">
       {value.length.toLocaleString()}/{max.toLocaleString()}
     </span>
   );

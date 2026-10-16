@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { SITE } from "@/lib/marketing";
 import "./globals.css";
 
 const inter = Inter({
@@ -10,8 +11,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "LeadsGen — Compliant B2B Lead Intelligence",
-  description: "Compliance-first B2B lead-intelligence and outreach workflow system.",
+  metadataBase: new URL(SITE.url),
+  title: `${SITE.name}: ${SITE.tagline}`,
+  description: SITE.description,
+  openGraph: { siteName: SITE.name, type: "website" },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

@@ -10,7 +10,9 @@ os.environ.setdefault("REFRESH_COOKIE_PATH", "/auth")
 os.environ.setdefault("FEATURE_INBOUND_WEBHOOKS", "true")
 os.environ.setdefault("FEATURE_IMAP", "true")
 os.environ.setdefault("FEATURE_AI_EMAILS", "true")
+os.environ.setdefault("FEATURE_SSO", "true")
 os.environ.setdefault("PLATFORM_LLM_PROVIDER", "mock")
+os.environ.setdefault("PASSWORD_BREACH_CHECK", "false")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-for-hs256-signing")
 
 from fastapi.testclient import TestClient
@@ -40,13 +42,18 @@ engine = (
         poolclass=StaticPool,
     )
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Sessions the app uses for requests: strictly workspace-scoped, like production.
+AppSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Sessions tests use to set up and inspect data: see every workspace (and bypass RLS).
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine, info={"tenant_bypass": True}
+)
 # Background tasks run eagerly in tests and open sessions via SessionLocal: point it here too.
 core_database.SessionLocal.configure(bind=engine)
 
 
 def override_get_db():
-    db = TestingSessionLocal()
+    db = AppSessionLocal()
     try:
         yield db
     finally:
@@ -110,6 +117,40 @@ def setup_db():
     else:
         Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
+    if IS_POSTGRES:
+        _apply_row_level_security()
+
+
+def tenant_table_names() -> list[str]:
+    """Every table whose model uses the TenantScoped mixin."""
+    from app.models.workspace import TenantScoped
+
+    return sorted(
+        mapper.class_.__tablename__
+        for mapper in Base.registry.mappers
+        if issubclass(mapper.class_, TenantScoped)
+    )
+
+
+def _apply_row_level_security() -> None:
+    """The same policies the migrations create, so the suite runs with them on PostgreSQL."""
+    bypass = "current_setting('app.bypass_rls', true) = 'on'"
+    own = "workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::integer"
+    with engine.begin() as conn:
+        for table in tenant_table_names():
+            conn.exec_driver_sql(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
+            conn.exec_driver_sql(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY")
+            conn.exec_driver_sql(
+                f"CREATE POLICY tenant_isolation ON {table} USING ({bypass} OR {own}) "
+                f"WITH CHECK ({bypass} OR {own})",
+            )
+        conn.exec_driver_sql("ALTER TABLE suppressions ENABLE ROW LEVEL SECURITY")
+        conn.exec_driver_sql("ALTER TABLE suppressions FORCE ROW LEVEL SECURITY")
+        conn.exec_driver_sql(
+            "CREATE POLICY tenant_isolation ON suppressions USING "
+            f"({bypass} OR workspace_id IS NULL OR {own}) WITH CHECK "
+            f"({bypass} OR workspace_id IS NULL OR {own})",
+        )
 
 
 def get_client() -> TestClient:

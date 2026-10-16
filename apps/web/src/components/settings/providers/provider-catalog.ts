@@ -2,7 +2,7 @@
  * What each provider needs. Required fields mirror the API's `_required_fields`; webhook
  * verification fields mirror `WEBHOOK_SECRET_FIELDS` (services/provider_credentials/service.py).
  */
-import { Bot, Inbox, Mail, Search, UserSearch, type LucideIcon } from "lucide-react";
+import { BadgeCheck, Bot, Inbox, Mail, Search, UserSearch, type LucideIcon } from "lucide-react";
 import type { ProviderName, ProviderType } from "@/lib/api/types";
 
 export type FieldKind = "text" | "secret" | "number" | "email" | "url" | "checkbox";
@@ -256,6 +256,33 @@ export const PROVIDER_TYPES: ProviderTypeDefinition[] = [
         label: "Hunter.io",
         description: "Domain search for professional email addresses, with confidence scores.",
         fields: [apiKey()],
+      },
+    ],
+  },
+  {
+    type: "email_verification",
+    label: "Email verification",
+    description:
+      "Checks addresses before you email them. New contacts are verified automatically, invalid ones are never sent to, and each check uses your plan's verification credits.",
+    icon: BadgeCheck,
+    providers: [
+      {
+        name: "zerobounce",
+        label: "ZeroBounce",
+        description: "Validates mailboxes and flags catch-all, spam-trap and abuse addresses.",
+        fields: [apiKey()],
+      },
+      {
+        name: "neverbounce",
+        label: "NeverBounce",
+        description: "Real-time verification with catch-all and disposable detection.",
+        fields: [apiKey()],
+      },
+      {
+        name: "mock",
+        label: "Test verifier",
+        description: "Marks addresses starting with invalid/bounce as invalid and risky/catchall as risky.",
+        fields: [],
       },
     ],
   },

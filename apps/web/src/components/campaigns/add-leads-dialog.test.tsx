@@ -17,6 +17,8 @@ function lead(id: number, name: string, overrides: Partial<Lead> = {}): Lead {
     company_id: null,
     company: { id: id * 10, name: `${name} Co`, domain: null, website: null, enrichment_status: null },
     compliance_source_note: null,
+    lawful_basis: "legitimate_interest",
+    lawful_basis_note: null,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
     email_contacts: [],

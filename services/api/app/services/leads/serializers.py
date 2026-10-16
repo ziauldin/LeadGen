@@ -19,6 +19,8 @@ def serialize_lead(lead: Lead) -> LeadRead:
         score=lead.score,
         qualification_notes=lead.qualification_notes,
         compliance_source_note=lead.compliance_source_note,
+        lawful_basis=lead.lawful_basis,  # type: ignore[arg-type]
+        lawful_basis_note=lead.lawful_basis_note,
         created_at=lead.created_at,
         updated_at=lead.updated_at,
         company=company,

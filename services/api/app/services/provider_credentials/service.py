@@ -29,6 +29,10 @@ DISPLAY_NAMES: dict[ProviderName, str] = {
     ProviderName.GROQ: "Groq",
     ProviderName.OPENAI: "OpenAI",
     ProviderName.GEMINI: "Google Gemini",
+    ProviderName.GMAIL: "Gmail / Google Workspace",
+    ProviderName.OUTLOOK: "Microsoft 365 / Outlook",
+    ProviderName.ZEROBOUNCE: "ZeroBounce",
+    ProviderName.NEVERBOUNCE: "NeverBounce",
 }
 
 SEARCH_PROVIDERS = {
@@ -50,6 +54,7 @@ EMAIL_DISCOVERY_PROVIDERS = {
 }
 
 INBOX_PROVIDERS = {ProviderName.IMAP}
+VERIFICATION_PROVIDERS = {ProviderName.ZEROBOUNCE, ProviderName.NEVERBOUNCE}
 LLM_PROVIDERS = {ProviderName.GROQ, ProviderName.OPENAI, ProviderName.GEMINI}
 
 ALLOWED_PROVIDERS: dict[ProviderType, set[ProviderName]] = {
@@ -58,6 +63,7 @@ ALLOWED_PROVIDERS: dict[ProviderType, set[ProviderName]] = {
     ProviderType.EMAIL_DISCOVERY: EMAIL_DISCOVERY_PROVIDERS,
     ProviderType.INBOX: INBOX_PROVIDERS,
     ProviderType.LLM: {*LLM_PROVIDERS, ProviderName.MOCK},
+    ProviderType.EMAIL_VERIFICATION: {*VERIFICATION_PROVIDERS, ProviderName.MOCK},
 }
 
 # Config fields holding webhook verification material, per sending provider.
@@ -173,7 +179,10 @@ def _required_fields(provider_name: ProviderName) -> list[str]:
         return ["api_key", "from_email"]
     if provider_name == ProviderName.MAILGUN:
         return ["api_key", "domain", "from_email"]
-    if provider_name == ProviderName.HUNTER or provider_name in LLM_PROVIDERS:
+    if (
+        provider_name == ProviderName.HUNTER
+        or provider_name in LLM_PROVIDERS | VERIFICATION_PROVIDERS
+    ):
         return ["api_key"]
     if provider_name == ProviderName.IMAP:
         return ["host", "username", "password"]

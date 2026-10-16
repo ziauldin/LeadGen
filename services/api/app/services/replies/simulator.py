@@ -48,8 +48,13 @@ def sync_mock_replies(db: Session, workspace_id: int) -> int:
                 text=MOCK_REPLIES[index % len(MOCK_REPLIES)],
                 message_id=f"mock-reply-{message.id}@leadsgen.local",
                 in_reply_to=message.rfc_message_id,
-                received_at=now - timedelta(hours=index + 1),
+                # After the email it answers, but never in the future.
+                received_at=min(now, _aware(message.sent_at or now) + timedelta(minutes=5 + index)),
             ),
         )
         synced += 1
     return synced
+
+
+def _aware(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=UTC)

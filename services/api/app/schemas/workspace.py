@@ -16,6 +16,7 @@ class WorkspaceRead(BaseModel):
     slug: str
     plan: str
     timezone: str
+    require_2fa: bool = False
     created_at: datetime
 
 
@@ -43,6 +44,7 @@ class WorkspaceCreate(BaseModel):
 class WorkspaceUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     timezone: str | None = Field(default=None, max_length=64)
+    require_2fa: bool | None = None
 
     @field_validator("timezone")
     @classmethod
@@ -58,10 +60,14 @@ class MemberRead(BaseModel):
     email: str
     role: WorkspaceRole
     joined_at: datetime
+    custom_role_id: int | None = None
+    custom_role: str | None = None
 
 
 class MemberUpdate(BaseModel):
-    role: WorkspaceRole
+    role: WorkspaceRole | None = None
+    # Send null to clear. Leave it out to keep the current custom role.
+    custom_role_id: int | None = None
 
 
 class InvitationCreate(BaseModel):

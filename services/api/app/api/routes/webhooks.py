@@ -18,9 +18,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core import metrics
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
+from app.core.tenancy import bind_session, system_session
 from app.models.enums import ProviderName, ProviderType
 from app.models.provider_credential import ProviderCredential
 from app.services.inbound.ingest import store_event
@@ -41,14 +43,18 @@ MAX_BODY_BYTES = 10_000_000
 def _credential(db: Session, provider: ProviderName, token: str) -> ProviderCredential:
     if not settings.feature_inbound_webhooks:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-    credential = db.scalar(
-        select(ProviderCredential).where(
-            ProviderCredential.webhook_token == token,
-            ProviderCredential.provider_type == ProviderType.EMAIL,
-        ),
-    )
+    # The secret token in the URL identifies the workspace, so the lookup spans workspaces;
+    # everything after it is scoped to that workspace.
+    with system_session(db):
+        credential = db.scalar(
+            select(ProviderCredential).where(
+                ProviderCredential.webhook_token == token,
+                ProviderCredential.provider_type == ProviderType.EMAIL,
+            ),
+        )
     if credential is None or _as_str(credential.provider_name) != provider.value:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    bind_session(db, credential.workspace_id)
     return credential
 
 
@@ -98,6 +104,7 @@ def _store(
         if event is not None:
             stored.append(event.id)
     _enqueue(stored)
+    metrics.WEBHOOKS_RECEIVED.labels(provider).inc(len(stored))
     return {"received": len(items), "stored": len(stored)}
 
 

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthAlert, AuthField, AuthShell, AuthSubmit } from "@/components/auth/auth-shell";
+import { Captcha, captchaConfigured } from "@/components/auth/captcha";
 import { getAuthErrorMessage, useAuth } from "@/hooks/use-auth";
 import { registerSchema, type RegisterFormValues } from "@/lib/validations/forms";
 
@@ -13,6 +14,8 @@ function RegisterForm() {
   const { register: signUp } = useAuth();
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
   const {
     register,
     handleSubmit,
@@ -22,8 +25,9 @@ function RegisterForm() {
   async function onSubmit(values: RegisterFormValues) {
     setError(null);
     try {
-      await signUp(values.name, values.email, values.password, params.get("next"));
+      await signUp(values.name, values.email, values.password, params.get("next"), captchaToken);
     } catch (err) {
+      setCaptchaReset((value) => value + 1);
       setError(getAuthErrorMessage(err));
     }
   }
@@ -51,8 +55,9 @@ function RegisterForm() {
         error={errors.password?.message}
         {...register("password")}
       />
+      <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
       {error && <AuthAlert kind="error">{error}</AuthAlert>}
-      <AuthSubmit loading={isSubmitting}>
+      <AuthSubmit loading={isSubmitting || (captchaConfigured && !captchaToken)}>
         {isSubmitting ? "Creating account…" : "Create account"}
       </AuthSubmit>
       <p className="text-[12px] text-[var(--on-surface-variant)]">

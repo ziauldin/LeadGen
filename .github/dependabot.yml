@@ -1,0 +1,24 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /services/api
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      opentelemetry: { patterns: ["opentelemetry-*"] }
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      testing: { patterns: ["vitest", "@vitest/*", "@testing-library/*", "msw", "@playwright/test", "jsdom"] }
+      sentry: { patterns: ["@sentry/*"] }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /services/api
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /apps/web
+    schedule: { interval: weekly }

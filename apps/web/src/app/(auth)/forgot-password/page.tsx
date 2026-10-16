@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AuthAlert, AuthField, AuthShell, AuthSubmit } from "@/components/auth/auth-shell";
+import { Captcha, captchaConfigured } from "@/components/auth/captcha";
 import { authApi } from "@/lib/api/endpoints";
 import { getErrorMessage } from "@/lib/api/client";
 
@@ -14,6 +15,8 @@ const schema = z.object({ email: z.string().email("Enter a valid email") });
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
   const {
     register,
     handleSubmit,
@@ -23,9 +26,10 @@ export default function ForgotPasswordPage() {
   async function onSubmit({ email }: z.infer<typeof schema>) {
     setError(null);
     try {
-      await authApi.forgotPassword(email);
+      await authApi.forgotPassword(email, captchaToken);
       setSent(true);
     } catch (err) {
+      setCaptchaReset((value) => value + 1);
       setError(getErrorMessage(err));
     }
   }
@@ -54,8 +58,9 @@ export default function ForgotPasswordPage() {
             error={errors.email?.message}
             {...register("email")}
           />
+          <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />
           {error && <AuthAlert kind="error">{error}</AuthAlert>}
-          <AuthSubmit loading={isSubmitting}>
+          <AuthSubmit loading={isSubmitting || (captchaConfigured && !captchaToken)}>
             {isSubmitting ? "Sending…" : "Send reset link"}
           </AuthSubmit>
         </form>

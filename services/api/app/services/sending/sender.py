@@ -20,6 +20,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import Select, func, select, update
 from sqlalchemy.orm import Session, selectinload
 
+from app.core import metrics
 from app.core.tenancy import system_session
 from app.models.audit_log import AuditLog
 from app.models.campaign import Campaign
@@ -29,6 +30,8 @@ from app.models.lead import Lead
 from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.billing.usage import record_usage
 from app.services.campaigns.sequences import on_message_sent
+from app.services.developer import events as webhook_events
+from app.services.mailboxes.service import choose_credential
 from app.services.sending.base import SendKind
 from app.services.sending.gate import GateKind, campaign_sent_today, evaluate_send_gate
 from app.services.sending.mime import build_outbound, make_message_id
@@ -129,7 +132,10 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
     campaign, lead = message.campaign, message.lead
     workspace = db.get(Workspace, message.workspace_id)
     ws_settings = _workspace_settings(db, message.workspace_id)
-    sender, credential = resolve_sender(db, message.workspace_id, campaign.sender_credential_id)
+    chosen = choose_credential(db, campaign, message, now)
+    sender, credential = resolve_sender(
+        db, message.workspace_id, chosen.id if chosen else campaign.sender_credential_id
+    )
 
     decision = evaluate_send_gate(
         db,
@@ -174,6 +180,7 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
         message.next_attempt_at = None
         record_usage(db, message.workspace_id, "monthly_sends")
         on_message_sent(db, message, message.sent_at)
+        webhook_events.email_sent(db, message)
         if lead.status not in {LeadStatus.REPLIED, LeadStatus.MEETING_BOOKED, LeadStatus.CLIENT}:
             lead.status = LeadStatus.CONTACTED
         db.add(
@@ -189,9 +196,11 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
             ),
         )
         db.commit()
+        metrics.EMAILS_SENT.labels(sender.provider_name).inc()
         return "sent"
 
     message.last_error = (result.error or "Send failed")[:2000]
+    metrics.EMAIL_SEND_FAILURES.labels(sender.provider_name, str(result.kind)).inc()
     if result.kind == SendKind.TRANSIENT and message.send_attempts < MAX_ATTEMPTS:
         transition(db, message, EmailMessageStatus.APPROVED, audit=False)
         message.next_attempt_at = _now() + _retry_delay(message.send_attempts)

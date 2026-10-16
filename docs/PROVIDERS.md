@@ -40,6 +40,49 @@ If you set `INBOUND_EMAIL_DOMAIN` (for example `in.example.com`, with MX records
 
 Without it, replies are matched by `In-Reply-To` and `References`, then the provider's message id, then the sender address (low confidence). Anything left unmatched can be linked by hand on the reply page.
 
+## Mailboxes: Gmail and Microsoft 365 (OAuth)
+
+Turn this on with `FEATURE_MAILBOX_OAUTH=true`, or for one workspace from the admin area. People connect their own inboxes under **Settings → Providers → Mailboxes**. LeadsGen then sends through the Gmail API or Microsoft Graph, and syncs replies from the same mailbox.
+
+**Operator setup.** It reuses the OAuth apps from "Continue with Google / Microsoft" (`GOOGLE_OAUTH_CLIENT_ID/SECRET`, `MICROSOFT_OAUTH_CLIENT_ID/SECRET`).
+
+- **Redirect URIs:** add `https://<web>/api/mailboxes/oauth/gmail/callback` and `https://<web>/api/mailboxes/oauth/outlook/callback`.
+- **Google:** enable the Gmail API. Add the scopes `gmail.send` and `gmail.readonly`. These are *restricted* scopes:
+  - Until the app passes Google's OAuth verification and the CASA security assessment, only the test users listed on the consent screen can connect (up to 100).
+  - Plan for the verification before a public launch.
+- **Microsoft:** add the delegated Graph permissions `Mail.Send`, `Mail.Read`, `User.Read` and `offline_access`. Complete publisher verification so tenants don't see an "unverified" warning. Some tenants also need an admin to consent.
+
+**How it works**
+
+- **Connecting:** uses the authorization code flow with PKCE. The short-lived state is signed and carries the encrypted PKCE verifier. Refresh tokens are stored encrypted, and access tokens refresh automatically. Microsoft's rotated refresh tokens are saved too.
+- **Sending:** each email goes out as a full MIME message, so our `Message-ID`, `In-Reply-To` and `References` headers survive and threads stay intact.
+- **Reply sync:** runs every 5 minutes with the inbox poll, using Gmail history and the Graph delta query. The first sync only records a starting point; old mail isn't imported. New messages go through the normal reply pipeline (matching, labelling, stopping sequences).
+- **Limits:** new mailboxes start with warm-up on and a daily limit of 50, which can be changed per mailbox. The send gate uses the lower of the warm-up cap and the daily limit.
+- **Health:** a mailbox is paused when more than 8% of its last 50 sends bounce, or more than 0.5% are marked as spam (after at least 20 sends). Revoked access marks it **Reconnect needed**, and paused mailboxes are skipped. Admins can resume a mailbox paused for health. Reconnecting fixes an access problem.
+
+**Rotation.** On a campaign's **Sequence** tab, choose several sending accounts:
+
+- Each new lead's first email goes from the healthy account with the most room left today.
+- Follow-ups always come from the mailbox that sent that lead's first email.
+- With no accounts selected, the campaign uses its default sender, as before.
+
+## Email verification
+
+Under **Providers → Email verification**, connect **ZeroBounce** or **NeverBounce** with an API key (or the test verifier).
+
+Each contact gets a verification status:
+
+| Status | Meaning |
+|---|---|
+| `valid` | The mailbox exists |
+| `risky` | Catch-all, disposable or abuse addresses |
+| `invalid` | Bad syntax, no mail server, the mailbox doesn't exist, or a spam trap |
+| `unknown` | The check couldn't decide |
+
+- **When contacts are checked:** with a provider connected, new contacts are checked in the background after CSV imports and when leads are added to a campaign. Anyone can also select leads and choose **Verify emails**. Without a provider, **Verify emails** runs a free DNS-only check (syntax, disposable domains, and whether the domain accepts mail at all), which can mark addresses invalid but never valid.
+- **What gets blocked:** the approval checks and the send gate never email `invalid` addresses. Turn on **Settings → Deliverability → Don't send to risky addresses** to block `risky` ones too.
+- **Credits:** each paid check uses one of the plan's `monthly_verifications` credits (Free 100, Starter 2,000, Pro 20,000, Enterprise 100,000). DNS-only checks and provider errors are free. Results older than 90 days are re-checked when verified again.
+
 ## Reply inbox (IMAP)
 
 For SMTP senders, or as a backup to webhooks. Add an **IMAP** account under *Reply inbox* with host, port (993), username, password, folder (`INBOX`) and SSL. LeadsGen polls every 5 minutes and remembers where it got to, so messages are never processed twice. Needs `FEATURE_IMAP=true`.

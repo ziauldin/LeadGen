@@ -10,6 +10,23 @@ const PUBLIC_PATHS = [
   "/invite",
   "/health",
   "/healthz",
+  "/auth/complete",
+  "/subprocessors",
+  // Marketing site
+  "/features",
+  "/use-cases",
+  "/pricing",
+  "/about",
+  "/contact",
+  "/docs",
+  "/help",
+  "/blog",
+  "/changelog",
+  "/legal",
+  "/sitemap.xml",
+  "/robots.txt",
+  "/opengraph-image",
+  "/impersonate",
 ];
 
 const SESSION_HINT = "lg_session";
@@ -25,7 +42,8 @@ export function middleware(request: NextRequest) {
     url.search = `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(url);
   }
-  if (hasSession && (pathname === "/login" || pathname === "/register")) {
+  // Signed-in visitors go straight to the app from the home page and auth pages.
+  if (hasSession && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";

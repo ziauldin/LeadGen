@@ -7,6 +7,7 @@ import { AuthAlert, AuthShell } from "@/components/auth/auth-shell";
 import { authApi } from "@/lib/api/endpoints";
 import { getErrorMessage } from "@/lib/api/client";
 import { useAuth } from "@/hooks/use-auth";
+import { track } from "@/lib/analytics";
 
 function Verify() {
   const token = useSearchParams().get("token");
@@ -24,6 +25,7 @@ function Verify() {
       .verifyEmail(token)
       .then(async () => {
         setState("done");
+        track("email_verified");
         if (user) await refreshUser();
       })
       .catch((err) => {

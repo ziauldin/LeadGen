@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_workspace, require_admin
+from app.api.deps import get_current_workspace, require_permission
 from app.core.config import settings as app_settings
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.rate_limit import enforce
 from app.core.tenancy import WorkspaceContext
 from app.models.enums import ProviderType
@@ -35,12 +36,13 @@ def get_settings(
 @router.patch("", response_model=UserSettingsRead)
 def update_settings(
     payload: UserSettingsUpdate,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SETTINGS_MANAGE)),
 ) -> WorkspaceSettings:
     workspace_settings = get_or_create_settings(db, ctx.workspace_id)
     for field, value in payload.model_dump(exclude_unset=True).items():
-        if field == "ai_mode" and value is None:
+        if field in ("ai_mode", "block_risky_emails", "auto_create_deals") and value is None:
             continue
         setattr(workspace_settings, field, value)
     db.commit()
@@ -164,8 +166,9 @@ def create_suppression(
 @suppressions_router.delete("/{suppression_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_suppression(
     suppression_id: int,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SETTINGS_MANAGE)),
 ) -> None:
     suppression = db.scalar(
         select(Suppression).where(

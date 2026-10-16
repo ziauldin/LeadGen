@@ -27,6 +27,7 @@ from app.services.billing.usage import current_usage
 from app.services.compliance.outreach import validate_lead_for_outreach
 from app.services.sending.schedule import SendingSchedule, schedule_for
 from app.services.sending.warmup import daily_cap
+from app.services.verification.service import blocks_outreach
 
 SENT_STATES = (EmailMessageStatus.SENT, EmailMessageStatus.BOUNCED, EmailMessageStatus.COMPLAINED)
 
@@ -130,6 +131,17 @@ def evaluate_send_gate(
     if lead.status in {LeadStatus.OPTED_OUT, LeadStatus.DISQUALIFIED}:
         blocks.append(f"Lead is {lead.status}")
     blocks.extend(validate_lead_for_outreach(lead, db))
+    recipient = next(
+        (
+            c
+            for c in (lead.email_contacts or [])
+            if c.email.lower() == (message.recipient_email or "").lower()
+        ),
+        None,
+    )
+    reason = blocks_outreach(db, message.workspace_id, recipient) if recipient is not None else None
+    if reason and reason not in blocks:
+        blocks.append(reason)
     if message.enrollment_id is not None:
         enrollment = db.get(CampaignEnrollment, message.enrollment_id)
         if enrollment is not None and enrollment.status != EnrollmentStatus.ACTIVE:
@@ -172,7 +184,17 @@ def evaluate_send_gate(
             schedule.next_day_open(now),
         )
 
-    cap = daily_cap(credential, now.astimezone(UTC).date())
+    if credential is not None and credential.disabled_at is not None:
+        return GateDecision(
+            GateKind.DEFER,
+            [credential.disabled_reason or "This sending account is paused"],
+            now + timedelta(hours=1),
+        )
+    warmup_cap = daily_cap(credential, now.astimezone(UTC).date())
+    account_limit = credential.daily_limit if credential is not None else None
+    caps = [c for c in (warmup_cap, account_limit) if c is not None]
+    cap = min(caps) if caps else None
+    warmup_bound = warmup_cap is not None and (account_limit is None or warmup_cap <= account_limit)
     if (
         credential is not None
         and cap is not None
@@ -180,7 +202,11 @@ def evaluate_send_gate(
     ):
         return GateDecision(
             GateKind.DEFER,
-            ["Warm-up daily cap reached for this sending account"],
+            [
+                "Warm-up daily cap reached for this sending account"
+                if warmup_bound
+                else "Daily limit reached for this sending account"
+            ],
             schedule.next_day_open(now),
         )
 

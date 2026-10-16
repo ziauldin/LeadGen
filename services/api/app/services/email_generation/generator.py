@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
 from app.core.errors import NotFoundError, QuotaExceededError, ValidationFailedError
+from app.core.flags import feature_enabled
 from app.models.campaign import Campaign
 from app.models.email_message import EmailMessage
 from app.models.enums import EmailMessageStatus
@@ -99,7 +100,8 @@ def _api_base_url() -> str:
 
 
 def ai_disabled_reason(workspace_settings: WorkspaceSettings | None) -> str | None:
-    if not settings.feature_ai_emails:
+    workspace = workspace_settings.workspace if workspace_settings is not None else None
+    if not feature_enabled("ai_emails", workspace):
         return "AI writing is not enabled on this server"
     if workspace_settings is None or workspace_settings.ai_mode == "off":
         return "AI writing is turned off in workspace settings"

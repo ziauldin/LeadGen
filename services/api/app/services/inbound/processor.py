@@ -9,7 +9,8 @@ import re
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core import metrics
+from app.core.flags import feature_enabled
 from app.models.campaign import Campaign
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
@@ -26,16 +27,21 @@ from app.models.inbound import EmailEvent
 from app.models.lead import Lead
 from app.models.reply import Reply
 from app.models.suppression import Suppression
-from app.models.workspace import WorkspaceSettings
+from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.campaigns.sequences import stop_enrollment, stop_enrollments_for_email
 from app.services.compliance.opt_out import (
     cancel_pending_messages,
     process_unsubscribe_for_message,
     suppress_email,
 )
+from app.services.crm import service as crm_service
+from app.services.developer import events as webhook_events
 from app.services.inbound import normalize
 from app.services.inbound.normalize import DeliveryEvent, InboundEmail
 from app.services.inbound.text import is_auto_reply, is_bounce_report, strip_quoted
+from app.services.inbox import service as inbox_service
+from app.services.integrations import service as integrations_service
+from app.services.notifications import events as notify_events
 from app.services.replies.classification import classify_reply
 from app.services.replies.llm_classifier import RULE_CONFIDENCE_THRESHOLD, classify_with_llm
 from app.services.sending.state import InvalidTransitionError, transition
@@ -52,7 +58,7 @@ SENT_LIKE = (EmailMessageStatus.SENT, EmailMessageStatus.BOUNCED, EmailMessageSt
 
 
 def _ai_labelling_on(db: Session, workspace_id: int) -> bool:
-    if not settings.feature_ai_emails:
+    if not feature_enabled("ai_emails", db.get(Workspace, workspace_id)):
         return False
     mode = db.scalar(
         select(WorkspaceSettings.ai_mode).where(WorkspaceSettings.workspace_id == workspace_id),
@@ -208,6 +214,7 @@ def _safety_check(db: Session, campaign_id: int | None) -> None:
             f"complaint rate {complaint_rate:.2%} over {total} sends"
         )
         logger.warning("Campaign %s auto-paused: %s", campaign_id, campaign.auto_paused_reason)
+        notify_events.campaign_paused(db, campaign)
 
 
 def _record_event(
@@ -231,6 +238,7 @@ def process_delivery_event(db: Session, workspace_id: int, event: DeliveryEvent)
     message = match_delivery(db, workspace_id, event)
     recipient = (event.recipient or (message.recipient_email if message else "") or "").lower()
     _record_event(db, workspace_id, message, event)
+    metrics.DELIVERY_EVENTS.labels(event.kind).inc()
 
     if event.kind == normalize.DELIVERED or not recipient:
         db.commit()
@@ -241,6 +249,7 @@ def process_delivery_event(db: Session, workspace_id: int, event: DeliveryEvent)
             with contextlib.suppress(InvalidTransitionError):
                 transition(db, message, EmailMessageStatus.BOUNCED, reason=event.reason)
             message.bounce_status = BounceStatus.HARD
+            webhook_events.email_bounced(db, message, "hard_bounce")
         for contact in db.scalars(
             select(EmailContact).where(
                 EmailContact.workspace_id == workspace_id,
@@ -295,6 +304,7 @@ def process_delivery_event(db: Session, workspace_id: int, event: DeliveryEvent)
         if message is not None:
             with contextlib.suppress(InvalidTransitionError):
                 transition(db, message, EmailMessageStatus.COMPLAINED, reason="spam complaint")
+            webhook_events.email_bounced(db, message, "complaint")
         suppress_email(
             db,
             workspace_id=workspace_id,
@@ -404,7 +414,13 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
     db.add(reply)
     db.flush()
     apply_reply_effects(db, reply, message, lead)
+    webhook_events.reply_received(db, reply)
+    notify_events.reply_received(db, reply, lead)
+    inbox_service.on_reply(db, reply)
+    crm_service.maybe_auto_deal(db, reply)
+    integrations_service.on_positive_reply(db, reply)
     db.commit()
+    metrics.REPLIES_RECEIVED.labels(str(classification)).inc()
     return reply
 
 

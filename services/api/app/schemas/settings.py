@@ -14,6 +14,9 @@ class UserSettingsRead(BaseModel):
     product_description: str | None = None
     tone_guidelines: str | None = None
     ai_mode: str = "off"
+    block_risky_emails: bool = False
+    auto_create_deals: bool = True
+    meeting_link: str | None = None
 
 
 class UserSettingsUpdate(BaseModel):
@@ -25,6 +28,9 @@ class UserSettingsUpdate(BaseModel):
     tone_guidelines: str | None = Field(default=None, max_length=1000)
     # "assist": AI drafts and reply labelling are available on request; "off": templates only.
     ai_mode: AIMode | None = None
+    block_risky_emails: bool | None = None
+    auto_create_deals: bool | None = None
+    meeting_link: str | None = Field(default=None, max_length=500, pattern=r"^(https://\S+)?$")
 
 
 class DeliverabilityCheck(BaseModel):

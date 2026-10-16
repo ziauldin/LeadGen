@@ -85,6 +85,10 @@ class Settings(BaseSettings):
     refresh_cookie_samesite: str = "lax"  # use "none" only for a cross-site API without proxy
     refresh_cookie_domain: str | None = None
     require_email_verification: bool = True
+    # Reject passwords found in known breaches (Have I Been Pwned range API, k-anonymity).
+    password_breach_check: bool = True
+    # Cloudflare Turnstile CAPTCHA on sign-up, password reset and repeated failed logins.
+    turnstile_secret_key: str = ""
 
     # Rate limiting (slowapi). Use Redis in production so limits hold across instances.
     rate_limit_enabled: bool = True
@@ -103,6 +107,8 @@ class Settings(BaseSettings):
     platform_smtp_port: int = 587
     platform_smtp_username: str = ""
     platform_smtp_password: str = ""
+    # Off only for a local catch-all server such as Mailpit; required in production.
+    platform_smtp_use_tls: bool = True
 
     # Domain whose MX routes to our inbound webhook/IMAP (reply+token@, unsubscribe+token@).
     inbound_email_domain: str = ""
@@ -113,12 +119,57 @@ class Settings(BaseSettings):
 
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.0
+    # OpenTelemetry: OTLP/HTTP endpoint (e.g. https://otlp.example.com) to export traces to.
+    otel_exporter_otlp_endpoint: str = ""
+    otel_sample_ratio: float = 0.1
+    # Bearer token for GET /metrics (Prometheus). Empty disables the endpoint.
+    metrics_token: str = ""
     railway_git_commit_sha: str = ""
 
     # Dark-launch flags for the new production features.
     feature_ai_emails: bool = False
     feature_imap: bool = False
     feature_inbound_webhooks: bool = False
+    feature_sso: bool = False
+    feature_public_api: bool = False
+    feature_billing: bool = False
+    feature_mailbox_oauth: bool = False
+    feature_crm: bool = False
+    feature_analytics_v2: bool = False
+    feature_integrations: bool = False
+
+    # Stripe billing (FEATURE_BILLING). STRIPE_PRICES maps "plan:interval" to a Stripe price id,
+    # e.g. {"starter:month": "price_123", "starter:year": "price_456", "pro:month": "price_789"}.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_prices: str = "{}"
+    stripe_automatic_tax: bool = False
+    stripe_api_base: str = "https://api.stripe.com/v1"
+    billing_trial_days: int = 14
+    billing_grace_days: int = 7
+
+    # Marketing site: prices shown on /pricing (Stripe stays the source of truth for charges)
+    # and where contact-form messages go.
+    plan_display_prices: str = '{"currency": "USD", "free": {"month": 0, "year": 0}}'
+    support_email: str = "support@localhost"
+
+    # Platform admins must use two-factor authentication to open the back office.
+    superuser_require_mfa: bool = True
+    impersonation_max_minutes: int = 60
+
+    # Public API (/v1) and outbound webhooks
+    rate_limit_api: str = "120/minute"  # per API key
+    outbound_webhook_timeout_seconds: float = 10.0
+
+    # "Continue with Google / Microsoft" (OIDC apps you register with each provider).
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+    microsoft_oauth_client_id: str = ""
+    microsoft_oauth_client_secret: str = ""
+
+    # CRM integrations. HubSpot needs a public app (OAuth); Pipedrive uses each workspace's API token.
+    hubspot_client_id: str = ""
+    hubspot_client_secret: str = ""
 
     # Platform-paid LLM, used when a workspace has no key of its own: groq | openai | gemini |
     # mock | "" (off). Workspace keys are stored encrypted as "llm" provider credentials.
@@ -144,6 +195,14 @@ class Settings(BaseSettings):
     enrichment_max_response_bytes: int = 2_000_000
 
     csv_max_bytes: int = 5_000_000
+    # File storage for exports: "local" (disk, development) or "s3" (S3 / Cloudflare R2 / MinIO).
+    storage_backend: str = "local"
+    storage_local_dir: str = ""
+    s3_bucket: str = ""
+    s3_region: str = "auto"
+    s3_endpoint_url: str = ""
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
     csv_max_rows: int = 10_000
 
     @field_validator("cors_origins", mode="before")
@@ -214,6 +273,8 @@ def production_config_errors(config: Settings) -> list[str]:
         errors.append("CORS_ORIGINS must list the https frontend origin(s) explicitly")
     if config.platform_email_provider == "console":
         errors.append("PLATFORM_EMAIL_PROVIDER must be resend or smtp in production")
+    if config.platform_email_provider == "smtp" and not config.platform_smtp_use_tls:
+        errors.append("PLATFORM_SMTP_USE_TLS must be on in production")
     if config.platform_llm_provider == "mock":
         errors.append("PLATFORM_LLM_PROVIDER must not be mock in production")
     if config.celery_task_always_eager:
@@ -222,6 +283,10 @@ def production_config_errors(config: Settings) -> list[str]:
         host in config.cors_origin_regex.lower() for host in ("railway", "vercel")
     ):
         errors.append("CORS_ORIGIN_REGEX must not allow every Railway/Vercel subdomain")
+    if config.feature_billing and not (config.stripe_secret_key and config.stripe_webhook_secret):
+        errors.append("FEATURE_BILLING needs STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET")
+    if config.stripe_secret_key.startswith("sk_test_"):
+        errors.append("STRIPE_SECRET_KEY is a test key; use a live key in production")
     return errors
 
 

@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.models.enums import LeadStatus
 from app.schemas.common import MAX_BULK
 
+LawfulBasis = Literal["legitimate_interest", "consent", "contract"]
+
 
 class CompanySummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -26,6 +28,8 @@ class LeadBase(BaseModel):
     company_id: int | None = None
     qualification_notes: str | None = Field(default=None, max_length=5000)
     compliance_source_note: str | None = Field(default=None, max_length=2000)
+    lawful_basis: LawfulBasis = "legitimate_interest"
+    lawful_basis_note: str | None = Field(default=None, max_length=2000)
 
 
 class LeadCreate(LeadBase):
@@ -45,6 +49,8 @@ class LeadUpdate(BaseModel):
     status: LeadStatus | None = None
     qualification_notes: str | None = Field(default=None, max_length=5000)
     compliance_source_note: str | None = Field(default=None, max_length=2000)
+    lawful_basis: LawfulBasis | None = None
+    lawful_basis_note: str | None = Field(default=None, max_length=2000)
 
 
 class EmailContactRead(BaseModel):
@@ -58,6 +64,9 @@ class EmailContactRead(BaseModel):
     source_provider: str | None = None
     is_role_based: bool = False
     opted_out: bool
+    verification_status: str | None = None
+    verification_detail: str | None = None
+    verified_at: datetime | None = None
     created_at: datetime
 
 
@@ -89,7 +98,7 @@ class LeadImportResult(BaseModel):
     errors: list[str]
 
 
-BulkLeadAction = Literal["add_to_campaign", "enrich", "set_status", "delete", "rescore"]
+BulkLeadAction = Literal["add_to_campaign", "enrich", "set_status", "delete", "rescore", "verify"]
 
 
 class LeadBulkRequest(BaseModel):

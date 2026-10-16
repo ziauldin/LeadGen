@@ -1,8 +1,13 @@
-from fastapi import APIRouter, Depends, Response, status
+import hmac
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import settings as app_settings
 from app.core.database import get_db
+from app.core.metrics import render_metrics
+from app.core.storage import LocalStorage, StorageError, get_storage, verify_signed_download
 from app.schemas.health import DependencyStatus, HealthReadyResponse
 from app.services.health.checks import (
     check_database,
@@ -18,6 +23,35 @@ router = APIRouter(tags=["health"])
 def health_check() -> dict[str, str]:
     """Liveness: the process is up. Used by the platform's health check."""
     return {"status": "ok", "environment": app_settings.environment}
+
+
+@router.get("/metrics", include_in_schema=False)
+def metrics(authorization: str | None = Header(default=None)) -> Response:
+    """Prometheus metrics. Needs METRICS_TOKEN set and sent as a bearer token."""
+    token = app_settings.metrics_token
+    if not token:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    if not authorization or not hmac.compare_digest(authorization, f"Bearer {token}"):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    body, content_type = render_metrics()
+    return Response(content=body, media_type=content_type)
+
+
+@router.get("/files/{key:path}", include_in_schema=False)
+def download_file(key: str, expires: int, filename: str, sig: str) -> Response:
+    """Signed, expiring downloads for files in local storage (development)."""
+    if not verify_signed_download(key, expires, filename, sig):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Link expired or invalid")
+    storage = get_storage()
+    if not isinstance(storage, LocalStorage):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    try:
+        path = storage.path_for(key)
+    except StorageError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found") from None
+    if not path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return FileResponse(path, filename=filename)
 
 
 @router.get("/health/ready", response_model=HealthReadyResponse)

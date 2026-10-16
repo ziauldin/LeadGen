@@ -42,6 +42,9 @@ _OBJECTION = (
 )
 _POSITIVE = (
     "interested",
+    "sounds interesting",
+    "keen to",
+    "would love to",
     "happy to chat",
     "sounds good",
     "let's talk",
@@ -86,7 +89,8 @@ def classify_reply(
         return C.WRONG_PERSON, 0.8
     if _has(text, _OBJECTION):
         return C.OBJECTION, 0.8
-    if _has(text, _POSITIVE) or re.search(r"^\s*(yes|sure|ok|okay)\b", text):
+    # A body that starts with a plain "yes" counts; the subject line comes first in ``text``.
+    if _has(text, _POSITIVE) or re.search(r"^\s*(yes|sure|ok|okay)\b", body.lower()):
         return C.POSITIVE, 0.7
     if _has(text, _NEUTRAL):
         return C.NEUTRAL, 0.6

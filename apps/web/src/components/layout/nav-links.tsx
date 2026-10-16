@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { approvalsApi } from "@/lib/api/endpoints";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS, isActive } from "@/components/layout/nav-items";
+import { useFlags } from "@/hooks/use-flags";
 import { useWorkspace } from "@/hooks/use-workspace";
 
 export function useApprovalCount() {
@@ -22,10 +23,11 @@ export function useApprovalCount() {
 export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const approvals = useApprovalCount();
+  const flags = useFlags();
 
   return (
     <nav aria-label="Main" className="flex-1 space-y-0.5 overflow-y-auto px-2">
-      {NAV_ITEMS.map((item) => {
+      {NAV_ITEMS.filter((item) => !item.flag || flags[item.flag]).map((item) => {
         const active = isActive(pathname, item.href);
         const Icon = item.icon;
         const count = item.badge === "approvals" ? approvals : 0;

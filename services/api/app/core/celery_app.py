@@ -1,4 +1,6 @@
 from celery import Celery
+from celery.schedules import crontab
+from celery.signals import beat_init, worker_process_init
 from kombu import Queue
 
 from app.core.config import settings
@@ -15,6 +17,13 @@ celery_app = Celery(
         "app.workers.platform_email_jobs",
         "app.workers.inbound_jobs",
         "app.workers.ops_jobs",
+        "app.workers.privacy_jobs",
+        "app.workers.outbound_webhook_jobs",
+        "app.workers.billing_jobs",
+        "app.workers.notification_jobs",
+        "app.workers.verification_jobs",
+        "app.workers.crm_jobs",
+        "app.workers.integration_jobs",
     ],
 )
 
@@ -77,5 +86,58 @@ celery_app.conf.update(
             "task": "ops.heartbeat",
             "schedule": 60.0,
         },
+        "purge-audit-logs": {
+            "task": "ops.purge_audit_logs",
+            "schedule": 86400.0,
+        },
+        "apply-retention": {
+            "task": "privacy.apply_retention",
+            "schedule": 86400.0,
+        },
+        "retry-outbound-webhooks": {
+            "task": "outbound_webhooks.retry_due",
+            "schedule": 60.0,
+        },
+        "billing-daily": {
+            "task": "billing.daily",
+            "schedule": 3600.0,
+        },
+        "task-reminders": {
+            "task": "crm.task_reminders",
+            "schedule": 300.0,
+        },
+        "integration-deal-status": {
+            "task": "integrations.pull_statuses",
+            "schedule": 900.0,
+        },
+        "wake-snoozed-conversations": {
+            "task": "inbox.wake_snoozed",
+            "schedule": 300.0,
+        },
+        "notifications-daily": {
+            "task": "notifications.daily",
+            "schedule": 3600.0,
+        },
+        "weekly-digest": {
+            "task": "notifications.weekly_digest",
+            "schedule": crontab(hour=8, minute=0, day_of_week="mon"),
+        },
     },
 )
+
+
+@worker_process_init.connect
+def _init_worker_observability(**_kwargs: object) -> None:
+    """Error reporting and tracing inside each worker process (beat included)."""
+    from app.core.observability import init_sentry
+    from app.core.tracing import init_tracing
+
+    init_sentry("worker")
+    init_tracing("worker")
+
+
+@beat_init.connect
+def _init_beat_observability(**_kwargs: object) -> None:
+    from app.core.observability import init_sentry
+
+    init_sentry("beat")

@@ -71,5 +71,7 @@ class CampaignStep(Base, TenantScoped):
     ai_instructions: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     # Send follow-ups as replies in the same thread (In-Reply-To / "Re:" subject).
     thread_with_previous: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # A/B test: extra versions of this step, [{"key": "B", "subject_template": ..., "body_template": ...}].
+    variants: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     campaign: Mapped[Campaign] = relationship(back_populates="steps")

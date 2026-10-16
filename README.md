@@ -20,6 +20,29 @@ A multi-tenant SaaS for compliant B2B outreach. Teams find leads for a niche, en
   - Each message is delivered at most once; retries back off.
   - One-click unsubscribe (RFC 8058) and a server-added footer.
 - **Deliverability check:** SPF, DKIM, DMARC and MX for your sending domain.
+- **Mailboxes and verification:** connect Gmail and Microsoft 365 mailboxes (OAuth) and rotate sending across them. Verify addresses with ZeroBounce or NeverBounce before sending.
+- **Unified inbox and CRM-lite:**
+  - Every conversation in one keyboard-first inbox: assign, snooze, label, and reply through the original mailbox.
+  - A deals pipeline that opens deals from interested replies, plus tasks with reminders, notes, and a per-lead timeline.
+  - Sync with HubSpot and Pipedrive.
+- **A/B tests and analytics:**
+  - Step versions split evenly across leads, with a significance-checked winner suggestion.
+  - Daily series and breakdowns by campaign, step, version, mailbox and template.
+  - A weekly report email.
+- **Business:**
+  - Stripe plans with trials, checkout, the customer portal and dunning.
+  - A public marketing site with pricing, legal pages, a help center, a blog and a changelog.
+  - Consent-gated product analytics, onboarding, a notifications center, and Slack alerts.
+- **Trust:**
+  - Two-factor sign-in, active sessions, breached-password checks and CAPTCHA.
+  - Google/Microsoft sign-in, plus workspace SSO (OIDC and SAML).
+  - Granular permissions and custom roles, and an audit log.
+  - GDPR tools: data subject export and erasure, retention policies, and lawful basis.
+  - PostgreSQL row-level security.
+- **Platform:**
+  - A public REST API with scoped keys and signed outbound webhooks.
+  - A super-admin back office with read-only impersonation.
+  - Docker Compose, OpenTelemetry, Prometheus metrics and runbooks.
 
 The stack:
 - **API** (`services/api`): FastAPI, SQLAlchemy 2, Alembic, Celery and Redis, with PostgreSQL in production.
@@ -34,6 +57,15 @@ The stack:
 - Outreach only goes through the workspace's own sending account; the platform mailer is used for account emails only.
 
 See [Agents.md](Agents.md) for the full guidelines.
+
+## Run everything with Docker
+
+```bash
+docker compose up --build        # web :3000, API :8000, Mailpit (all email) :8025
+docker compose exec api python scripts/seed.py   # optional demo data
+```
+
+The compose stack runs PostgreSQL, Redis, the API, a Celery worker, beat, the web app and Mailpit. Mailpit catches every email, including verification links and mock outreach. Ports can be changed with `API_PORT`, `WEB_PORT` and so on. `make up`, `make test` and `make e2e` are shortcuts.
 
 ## Local development
 
@@ -78,6 +110,7 @@ TEST_DATABASE_URL=postgresql://... pytest -q # the same suite on PostgreSQL
 # Web app (from apps/web)
 npm run lint && npm run typecheck && npm test && npm run build
 npm run gen:api   # regenerate TypeScript API types after changing the API
+npm run e2e       # Playwright journeys with axe checks (starts a throwaway API and web app)
 ```
 
 CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs all of these, plus:
@@ -111,8 +144,24 @@ New capabilities are dark-launched and off by default:
 | `FEATURE_AI_EMAILS` | AI drafts, AI regeneration, AI reply labelling |
 | `FEATURE_INBOUND_WEBHOOKS` | Provider webhooks for replies, bounces and complaints |
 | `FEATURE_IMAP` | IMAP inbox polling for replies |
+| `FEATURE_SSO` | Workspace single sign-on (OIDC, SAML) |
+| `FEATURE_PUBLIC_API` | `/v1` REST API, API keys and outbound webhooks |
+| `FEATURE_BILLING` | Stripe checkout, portal, trials and dunning |
+| `FEATURE_MAILBOX_OAUTH` | Gmail and Microsoft 365 mailbox connections and sender rotation |
+| `FEATURE_CRM` | Deals, tasks, notes and the lead timeline |
+| `FEATURE_ANALYTICS_V2` | Analytics page and the weekly report additions |
+| `FEATURE_INTEGRATIONS` | HubSpot and Pipedrive sync |
+
+A super-admin can also switch any flag on or off for a single workspace from `/admin`. Some features also depend on the plan: SSO, SAML, custom roles, API access and integrations.
 
 ## More documentation
 
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): Railway services, environment, migrations, backups, health checks.
-- [docs/PROVIDERS.md](docs/PROVIDERS.md): setting up sending accounts, webhooks, IMAP, AI and search providers.
+- [docs/SSO.md](docs/SSO.md): Google/Microsoft sign-in and workspace single sign-on.
+- [docs/RUNBOOKS.md](docs/RUNBOOKS.md): what to do when something breaks.
+- [docs/PROVIDERS.md](docs/PROVIDERS.md): setting up sending accounts, mailboxes, verification, webhooks, IMAP, AI and search providers.
+- [docs/BILLING.md](docs/BILLING.md): Stripe plans, trials and dunning.
+- [docs/API.md](docs/API.md): the public REST API and outbound webhooks.
+- [docs/PERMISSIONS.md](docs/PERMISSIONS.md), [docs/PRIVACY.md](docs/PRIVACY.md), [docs/ADMIN.md](docs/ADMIN.md): roles, data protection and the back office.
+- [docs/INBOX.md](docs/INBOX.md), [docs/CRM.md](docs/CRM.md), [docs/ANALYTICS.md](docs/ANALYTICS.md), [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md): product features.
+- [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md), [docs/MARKETING.md](docs/MARKETING.md), [docs/CONTENT.md](docs/CONTENT.md): lifecycle messages, the public site and its content.

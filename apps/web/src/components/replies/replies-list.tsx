@@ -154,7 +154,7 @@ export function RepliesList() {
               {row.original.snippet || "(empty message)"}
             </p>
             {row.original.campaign_id ? (
-              <p className="mt-0.5 truncate text-[11px] text-[var(--outline)]">
+              <p className="mt-0.5 truncate text-[11px] text-[var(--on-surface-variant)]">
                 {campaignNames.get(row.original.campaign_id) ?? `Campaign #${row.original.campaign_id}`}
               </p>
             ) : null}

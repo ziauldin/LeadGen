@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_workspace, get_owned_niche
+from app.api.deps import get_current_workspace, get_owned_niche, require_permission
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.niche import Niche
 from app.schemas.niche import NicheCreate, NicheListResponse, NicheRead, NicheUpdate
@@ -40,6 +41,7 @@ def create_niche(
     payload: NicheCreate,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> Niche:
     niche = Niche(workspace_id=ctx.workspace_id, user_id=ctx.user_id, **payload.model_dump())
     db.add(niche)
@@ -58,6 +60,7 @@ def update_niche(
     payload: NicheUpdate,
     niche: Niche = Depends(get_owned_niche),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> Niche:
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(niche, field, value)
@@ -70,6 +73,7 @@ def update_niche(
 def delete_niche(
     niche: Niche = Depends(get_owned_niche),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_DELETE)),
 ) -> None:
     db.delete(niche)
     db.commit()

@@ -6,14 +6,13 @@ import { AdminOnlyNotice } from "@/components/settings/settings-card";
 import { useWorkspace } from "@/hooks/use-workspace";
 
 export default function MembersSettingsPage() {
-  const { hasRole, loading } = useWorkspace();
-  const isAdmin = hasRole("admin");
+  const { can, permissionsLoading } = useWorkspace();
   return (
     <div className="space-y-6">
       <MembersTable />
-      {isAdmin ? (
+      {can("members.manage") ? (
         <InvitationsPanel />
-      ) : loading ? null : (
+      ) : permissionsLoading ? null : (
         <AdminOnlyNotice what="invite people, change roles or remove members" />
       )}
     </div>

@@ -31,6 +31,13 @@ env = {
     "CORS_ORIGINS": WEB,
     "SECRET_KEY": "e2e-secret-key-that-is-long-enough-for-signing-tokens",
     "SECRET_ENCRYPTION_KEY": Fernet.generate_key().decode(),
+    "FEATURE_SSO": "true",
+    # The admin journey grants a superuser from the CLI; it skips the 2FA requirement here.
+    "SUPERUSER_REQUIRE_MFA": "false",
+    "FEATURE_CRM": "true",
+    "FEATURE_ANALYTICS_V2": "true",
+    "FEATURE_INTEGRATIONS": "true",
+    "FEATURE_PUBLIC_API": "true",
 }
 
 

@@ -1,0 +1,25 @@
+name: Load test (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Web URL to test (staging, never production)"
+        required: true
+      vus:
+        description: "Peak virtual users"
+        default: "50"
+
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - name: Run the load test
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          VUS: ${{ inputs.vus }}
+          EMAIL: ${{ secrets.LOAD_TEST_EMAIL }}
+          PASSWORD: ${{ secrets.LOAD_TEST_PASSWORD }}
+        run: k6 run -e BASE_URL="$BASE_URL" -e VUS="$VUS" -e EMAIL="$EMAIL" -e PASSWORD="$PASSWORD" ops/k6/smoke.js

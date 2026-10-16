@@ -12,6 +12,7 @@ from app.services.search.external_providers import (
     SerpApiSearchProvider,
 )
 from app.services.search.mock_provider import MockSearchProvider
+from app.services.verification.providers import Verifier
 
 
 def test_search_provider(credential: ProviderCredential) -> tuple[bool, str]:
@@ -129,6 +130,32 @@ def test_inbox_provider(credential: ProviderCredential) -> tuple[bool, str]:
         return False, f"IMAP connection failed: {exc.__class__.__name__}"
 
 
+def test_verification_provider(credential: ProviderCredential) -> tuple[bool, str]:
+    from app.services.verification.providers import UNKNOWN
+
+    verifier = verifier_for_credential(credential)
+    result = verifier.verify("postmaster@gmail.com")
+    if result.status == UNKNOWN and not result.billable:
+        return False, f"{verifier.name} check failed: {result.detail}"
+    return True, f"{verifier.name} answered ({result.status})"
+
+
+def verifier_for_credential(credential: ProviderCredential) -> Verifier:
+    from app.services.verification.providers import (
+        MockVerifier,
+        NeverBounceVerifier,
+        ZeroBounceVerifier,
+    )
+
+    name = ProviderName(_as_str(credential.provider_name))
+    api_key = str(decrypt_provider_config(credential).get("api_key", ""))
+    if name == ProviderName.ZEROBOUNCE:
+        return ZeroBounceVerifier(api_key)
+    if name == ProviderName.NEVERBOUNCE:
+        return NeverBounceVerifier(api_key)
+    return MockVerifier()
+
+
 def test_provider_credential(credential: ProviderCredential) -> tuple[bool, str, datetime]:
     provider_type = _as_str(credential.provider_type)
     if provider_type == "search":
@@ -137,6 +164,8 @@ def test_provider_credential(credential: ProviderCredential) -> tuple[bool, str,
         success, message = test_email_discovery_provider(credential)
     elif provider_type == "inbox":
         success, message = test_inbox_provider(credential)
+    elif provider_type == "email_verification":
+        success, message = test_verification_provider(credential)
     elif provider_type == "llm":
         from app.services.llm.factory import test_llm_credential
 

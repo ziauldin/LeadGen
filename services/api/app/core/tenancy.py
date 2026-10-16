@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from sqlalchemy import Select, event, select
+from sqlalchemy import Connection, Select, event, select, text
 from sqlalchemy.orm import ORMExecuteState, Session, with_loader_criteria
 
 from app.core.errors import NotFoundError
@@ -38,18 +38,58 @@ class WorkspaceContext:
     user_id: int
     role: WorkspaceRole
     workspace: Workspace
+    permissions: frozenset[str] = frozenset()
 
     def has_role(self, minimum: WorkspaceRole) -> bool:
         return ROLE_RANK[self.role] >= ROLE_RANK[minimum]
+
+    def can(self, permission: str) -> bool:
+        return permission in self.permissions
+
+
+def _rls_settings(session: Session) -> tuple[str, str]:
+    workspace_id = session.info.get("workspace_id")
+    bypass = "on" if session.info.get("tenant_bypass") else "off"
+    return (str(workspace_id) if workspace_id is not None else ""), bypass
+
+
+def _apply_rls_settings(session: Session, connection: Connection) -> None:
+    if connection.dialect.name != "postgresql":
+        return
+    workspace_id, bypass = _rls_settings(session)
+    connection.execute(
+        text(
+            "SELECT set_config('app.workspace_id', :ws, true), "
+            "set_config('app.bypass_rls', :bypass, true)",
+        ),
+        {"ws": workspace_id, "bypass": bypass},
+    )
+
+
+def sync_rls(session: Session) -> None:
+    """Push the session's tenant scope to PostgreSQL row-level security right away.
+
+    New transactions pick it up in ``after_begin``; this covers scope changes made in the
+    middle of a transaction.
+    """
+    if session.in_transaction():
+        _apply_rls_settings(session, session.connection())
+
+
+@event.listens_for(Session, "after_begin")
+def _set_rls_on_begin(session: Session, _transaction: Any, connection: Connection) -> None:
+    _apply_rls_settings(session, connection)
 
 
 def bind_session(session: Session, workspace_id: int) -> None:
     session.info["workspace_id"] = workspace_id
     session.info.pop("tenant_bypass", None)
+    sync_rls(session)
 
 
 def unbind_session(session: Session) -> None:
     session.info.pop("workspace_id", None)
+    sync_rls(session)
 
 
 @contextmanager
@@ -65,20 +105,25 @@ def workspace_scope(session: Session, workspace_id: int) -> Iterator[Session]:
             session.info.pop("workspace_id", None)
         if previous[1] is None:
             session.info.pop("tenant_bypass", None)
+        sync_rls(session)
 
 
 @contextmanager
 def system_session(session: Session) -> Iterator[Session]:
     """Explicitly mark a session as cross-tenant (e.g. the send dispatcher)."""
     previous = session.info.get("workspace_id")
+    previous_bypass = session.info.get("tenant_bypass")
     session.info.pop("workspace_id", None)
     session.info["tenant_bypass"] = True
+    sync_rls(session)
     try:
         yield session
     finally:
-        session.info.pop("tenant_bypass", None)
+        if not previous_bypass:
+            session.info.pop("tenant_bypass", None)
         if previous is not None:
             session.info["workspace_id"] = previous
+        sync_rls(session)
 
 
 def scoped(stmt: Select[Any], model: type[TenantScoped], workspace_id: int) -> Select[Any]:

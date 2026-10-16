@@ -98,6 +98,30 @@ def authenticate(db: Session, *, email: str, password: str) -> User:
     return user
 
 
+CAPTCHA_AFTER_FAILURES = 3
+
+
+def needs_captcha(db: Session, email: str) -> bool:
+    """After a few failed sign-ins for an address, a CAPTCHA is required (when configured)."""
+    from app.services.auth.protection import captcha_enabled
+
+    if not captcha_enabled():
+        return False
+    failed = db.scalar(select(User.failed_login_count).where(User.email == email.strip().lower()))
+    return (failed or 0) >= CAPTCHA_AFTER_FAILURES
+
+
+def change_password(db: Session, user: User, *, current: str, new: str) -> None:
+    if not verify_password(current, user.hashed_password):
+        raise AuthenticationError("Your current password is incorrect")
+    user.hashed_password = get_password_hash(new)
+    user.password_changed_at = _now()
+    user.token_version += 1
+    tokens.revoke_all_for_user(db, user.id)
+    _audit(db, user.id, "password_changed")
+    db.commit()
+
+
 def send_verification(db: Session, user: User) -> None:
     if user.email_verified_at is not None:
         return
@@ -108,10 +132,15 @@ def send_verification(db: Session, user: User) -> None:
 
 def verify_email(db: Session, raw_token: str) -> User:
     user = tokens.consume_email_action_token(db, raw_token, tokens.PURPOSE_VERIFY)
-    if user.email_verified_at is None:
+    first_time = user.email_verified_at is None
+    if first_time:
         user.email_verified_at = _now()
         _audit(db, user.id, "email_verified")
     db.commit()
+    if first_time:
+        from app.services.notifications.lifecycle import send_welcome
+
+        send_welcome(db, user)
     return user
 
 
@@ -129,6 +158,7 @@ def request_password_reset(db: Session, email: str) -> None:
 def reset_password(db: Session, raw_token: str, new_password: str) -> User:
     user = tokens.consume_email_action_token(db, raw_token, tokens.PURPOSE_RESET)
     user.hashed_password = get_password_hash(new_password)
+    user.password_changed_at = _now()
     user.token_version += 1  # invalidates every outstanding access token
     user.failed_login_count = 0
     user.locked_until = None

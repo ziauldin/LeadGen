@@ -17,7 +17,7 @@ const STATUS: Record<Status, { label: string; icon: typeof CheckCircle2; classNa
   pass: { label: "Pass", icon: CheckCircle2, className: "text-[var(--secondary)]" },
   warn: { label: "Warning", icon: AlertTriangle, className: "text-[var(--tertiary)]" },
   fail: { label: "Fail", icon: XCircle, className: "text-[var(--error)]" },
-  unknown: { label: "Couldn't check", icon: HelpCircle, className: "text-[var(--outline)]" },
+  unknown: { label: "Couldn't check", icon: HelpCircle, className: "text-[var(--on-surface-variant)]" },
 };
 
 const OVERALL: Record<DeliverabilityReport["overall"], { title: string; text: string; className: string }> = {
@@ -141,14 +141,14 @@ export function DeliverabilityCheck() {
                         </span>
                       </div>
                       {checkAbout(item.name) ? (
-                        <p className="text-[12px] text-[var(--outline)]">{checkAbout(item.name)}</p>
+                        <p className="text-[12px] text-[var(--on-surface-variant)]">{checkAbout(item.name)}</p>
                       ) : null}
                       <p className="mt-1 text-[13px] leading-[20px] text-[var(--on-surface)]">
                         {item.detail}
                       </p>
                       {item.records.length > 0 ? (
                         <div className="mt-3">
-                          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--outline)]">
+                          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--on-surface-variant)]">
                             Records found
                           </p>
                           <ul className="space-y-1">
@@ -163,7 +163,7 @@ export function DeliverabilityCheck() {
                           </ul>
                         </div>
                       ) : (
-                        <p className="mt-2 text-[12px] italic text-[var(--outline)]">No records found.</p>
+                        <p className="mt-2 text-[12px] italic text-[var(--on-surface-variant)]">No records found.</p>
                       )}
                     </div>
                   </div>

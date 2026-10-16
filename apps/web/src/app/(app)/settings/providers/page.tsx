@@ -1,5 +1,6 @@
 "use client";
 
+import { MailboxesCard } from "@/components/settings/mailboxes-card";
 import { ProviderSettingsPanel } from "@/components/settings/provider-settings-panel";
 
 export default function ProvidersSettingsPage() {
@@ -12,6 +13,7 @@ export default function ProvidersSettingsPage() {
           arrive, and which search, email-finding and AI services to use.
         </p>
       </div>
+      <MailboxesCard />
       <ProviderSettingsPanel />
     </div>
   );

@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { ErrorState } from "@/components/shared/loading-error";
+import { BillingPanel } from "@/components/settings/billing-panel";
 import { SettingsCard } from "@/components/settings/settings-card";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { billingApi, campaignsApi, workspacesApi } from "@/lib/api/endpoints";
@@ -65,7 +65,7 @@ function UsageBar({
           <div className={cn("h-full rounded-full transition-[width]", tone)} style={{ width: `${percent}%` }} />
         </div>
       ) : null}
-      <p className="text-[11px] text-[var(--outline)]">
+      <p className="text-[11px] text-[var(--on-surface-variant)]">
         {percent >= 100
           ? `Limit reached. ${note ?? ""}`
           : percent >= 80
@@ -107,16 +107,7 @@ export function UsageOverview() {
         {!data ? (
           <div className="h-12 animate-pulse rounded-md bg-[var(--surface-container-high)]" role="status" aria-label="Loading plan" />
         ) : (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[12px] uppercase tracking-wide text-[var(--on-surface-variant)]">Current plan</p>
-              <p className="text-[22px] font-bold capitalize text-[var(--on-surface)]">{data.plan}</p>
-            </div>
-            <p className="flex max-w-md items-start gap-2 rounded-md bg-[var(--surface-container-low)] px-3 py-2 text-[12px] text-[var(--on-surface-variant)]">
-              <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-              Upgrades aren&apos;t available yet. If you need higher limits, contact support.
-            </p>
-          </div>
+          <BillingPanel data={data} />
         )}
       </SettingsCard>
 

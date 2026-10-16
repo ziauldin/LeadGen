@@ -138,3 +138,72 @@ def safe_get(
         except httpx.HTTPError as exc:
             raise FetchError(f"Request failed: {exc.__class__.__name__}") from exc
     raise FetchError("Too many redirects")
+
+
+def _safe_post(
+    client: httpx.Client,
+    url: str,
+    *,
+    timeout: float,
+    max_bytes: int,
+    headers: dict[str, str] | None,
+    data: dict[str, str] | None = None,
+    content: bytes | None = None,
+) -> FetchResult:
+    validate_url(url)
+    try:
+        with client.stream(
+            "POST",
+            url,
+            data=data,
+            content=content,
+            headers=headers,
+            timeout=timeout,
+            follow_redirects=False,
+        ) as response:
+            if not _peer_is_public(response):
+                raise UnsafeURLError("Connected address is not publicly routable")
+            chunks: list[bytes] = []
+            size = 0
+            for chunk in response.iter_bytes():
+                size += len(chunk)
+                if size > max_bytes:
+                    raise FetchError("Response is larger than the allowed size")
+                chunks.append(chunk)
+            raw = b"".join(chunks)
+            return FetchResult(
+                url=str(response.url),
+                status_code=response.status_code,
+                text=raw.decode(response.encoding or "utf-8", errors="replace"),
+                content_type=response.headers.get("content-type", ""),
+            )
+    except httpx.HTTPError as exc:
+        raise FetchError(f"Request failed: {exc.__class__.__name__}") from exc
+
+
+def safe_post_form(
+    client: httpx.Client,
+    url: str,
+    data: dict[str, str],
+    *,
+    timeout: float,
+    max_bytes: int,
+    headers: dict[str, str] | None = None,
+) -> FetchResult:
+    """POST a form to a validated public URL. Redirects are not followed."""
+    return _safe_post(client, url, timeout=timeout, max_bytes=max_bytes, headers=headers, data=data)
+
+
+def safe_post_bytes(
+    client: httpx.Client,
+    url: str,
+    content: bytes,
+    *,
+    timeout: float,
+    max_bytes: int,
+    headers: dict[str, str] | None = None,
+) -> FetchResult:
+    """POST a raw body (e.g. signed JSON) to a validated public URL. Redirects are not followed."""
+    return _safe_post(
+        client, url, timeout=timeout, max_bytes=max_bytes, headers=headers, content=content
+    )

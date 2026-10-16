@@ -101,6 +101,7 @@ class ProviderType(StrEnum):
     EMAIL_DISCOVERY = "email_discovery"
     INBOX = "inbox"
     LLM = "llm"
+    EMAIL_VERIFICATION = "email_verification"
 
 
 class ProviderName(StrEnum):
@@ -117,6 +118,10 @@ class ProviderName(StrEnum):
     GROQ = "groq"
     OPENAI = "openai"
     GEMINI = "gemini"
+    GMAIL = "gmail"
+    OUTLOOK = "outlook"
+    ZEROBOUNCE = "zerobounce"
+    NEVERBOUNCE = "neverbounce"
 
 
 class ProviderCredentialStatus(StrEnum):

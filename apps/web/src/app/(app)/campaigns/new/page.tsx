@@ -16,6 +16,7 @@ import {
 } from "@/components/campaigns/campaign-form-schema";
 import { getErrorMessage } from "@/lib/api/client";
 import { campaignsApi } from "@/lib/api/endpoints";
+import { track } from "@/lib/analytics";
 
 function NewCampaign() {
   const router = useRouter();
@@ -29,6 +30,7 @@ function NewCampaign() {
     onMutate: () => setServerError(null),
     onSuccess: (campaign) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      track("campaign_created");
       toast.success("Campaign created", {
         description: "Add leads to start drafting emails for approval.",
       });

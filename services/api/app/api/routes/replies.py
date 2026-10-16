@@ -3,10 +3,11 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_workspace
+from app.api.deps import get_current_workspace, require_permission
 from app.api.paging import PageParams, order_by, page_params
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.email_message import EmailMessage
 from app.models.lead import Lead
@@ -127,6 +128,7 @@ def patch_reply(
     payload: ReplyUpdate,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.REPLIES_MANAGE)),
 ) -> ReplyRead:
     try:
         reply = update_reply(
@@ -153,6 +155,7 @@ def patch_reply(
 def sync_replies(
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.REPLIES_MANAGE)),
 ) -> ReplySyncResponse:
     """Development helper: simulate replies to emails sent with the mock provider.
 
@@ -171,6 +174,7 @@ def sync_replies(
 def export_replies_csv(
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.DATA_EXPORT)),
 ) -> PlainTextResponse:
     return PlainTextResponse(
         content=export_replies_to_csv(db, ctx.workspace_id),
@@ -224,6 +228,7 @@ def link_reply_endpoint(
     payload: ReplyLinkRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.REPLIES_MANAGE)),
 ) -> ReplyRead:
     reply = _get_reply(db, reply_id, ctx)
     message = db.scalar(

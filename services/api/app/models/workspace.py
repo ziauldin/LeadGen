@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     DateTime,
     ForeignKey,
     Integer,
@@ -53,7 +54,14 @@ class Workspace(Base, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    sending_suspended_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Set while the workspace is on a free trial of a paid plan (FEATURE_BILLING).
+    trial_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Per-workspace overrides of FEATURE_* flags, e.g. {"public_api": true} (see core/flags.py).
+    feature_flags: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Members must have two-factor authentication on to use this workspace.
+    require_2fa: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     __table_args__ = (UniqueConstraint("slug", name="uq_workspaces_slug"),)
 
@@ -81,9 +89,34 @@ class WorkspaceMember(Base, TimestampMixin):
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     role: Mapped[str] = mapped_column(String(20), default=WorkspaceRole.MEMBER, nullable=False)
+    # Members can be given a custom role (Enterprise) instead of the built-in member set.
+    custom_role_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "workspace_roles.id", ondelete="SET NULL", name="fk_workspace_members_custom_role_id"
+        ),
+        index=True,
+        nullable=True,
+    )
 
     workspace: Mapped[Workspace] = relationship(back_populates="members")
     user: Mapped[User] = relationship()
+    custom_role: Mapped[CustomRole | None] = relationship()
+
+
+class CustomRole(Base, TimestampMixin):
+    """A named set of permissions an Enterprise workspace defines for its members."""
+
+    __tablename__ = "workspace_roles"
+    __table_args__ = (UniqueConstraint("workspace_id", "name", name="uq_workspace_roles_name"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    permissions: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
 
 
 class WorkspaceInvitation(Base, TimestampMixin):
@@ -141,6 +174,19 @@ class WorkspaceSettings(Base):
         default=lambda: list(DEFAULT_SENDING_DAYS),
         nullable=False,
     )
+    # Data governance
+    require_lia_note: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Don't send to addresses verification marks as risky (catch-all, disposable...).
+    block_risky_emails: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # CRM: open a deal automatically when someone replies with interest.
+    auto_create_deals: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Booking link for the {{meeting_link}} template variable (Calendly, Cal.com...).
+    meeting_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    retention_uncontacted_lead_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    retention_reply_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Slack incoming webhook (encrypted) and which notification kinds to post there.
+    slack_webhook_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    slack_events: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     workspace: Mapped[Workspace] = relationship(back_populates="settings")
 

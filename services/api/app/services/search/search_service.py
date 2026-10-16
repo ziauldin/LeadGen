@@ -8,6 +8,7 @@ from app.models.enums import LeadStatus, SearchProvider, SearchStatus
 from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.search_query import SearchQuery
+from app.services.developer import events as webhook_events
 from app.services.search.base import SearchResult
 from app.services.search.provider_factory import get_search_provider_for_workspace
 
@@ -128,6 +129,8 @@ def save_search_results(
             status=LeadStatus.NEW,
         )
         db.add(lead)
+        db.flush()
+        webhook_events.lead_created(db, lead)
         created += 1
 
     db.commit()

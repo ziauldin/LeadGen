@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Gauge, ListChecks, Send, Sparkles, Trash2 } from "lucide-react";
+import { BadgeCheck, Gauge, ListChecks, Send, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { toastBulkResult } from "@/components/data-table/bulk-result";
@@ -19,6 +19,7 @@ const VERBS: Record<Action, string> = {
   enrich: "queued for enrichment",
   set_status: "updated",
   rescore: "rescored",
+  verify: "queued for verification",
   delete: "deleted",
 };
 
@@ -90,6 +91,15 @@ export function LeadBulkActions({
       >
         <Gauge aria-hidden />
         {running === "rescore" ? "Rescoring…" : "Rescore"}
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => bulk.mutate({ action: "verify" })}
+        disabled={bulk.isPending}
+      >
+        <BadgeCheck aria-hidden />
+        {running === "verify" ? "Verifying…" : "Verify emails"}
       </Button>
       <Button size="sm" variant="destructive" onClick={() => setDialog("delete")}>
         <Trash2 aria-hidden />

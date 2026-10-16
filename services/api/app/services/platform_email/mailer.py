@@ -68,7 +68,17 @@ class ResendMailer:
 
 
 class SmtpMailer:
-    def __init__(self, host: str, port: int, username: str, password: str, from_address: str):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        username: str,
+        password: str,
+        from_address: str,
+        *,
+        use_tls: bool = True,
+    ):
+        self.use_tls = use_tls
         self.host = host
         self.port = port
         self.username = username
@@ -82,7 +92,8 @@ class SmtpMailer:
         message["Subject"] = email.subject
         message.set_content(email.text)
         with smtplib.SMTP(self.host, self.port, timeout=20) as server:
-            server.starttls()
+            if self.use_tls:
+                server.starttls()
             if self.username:
                 server.login(self.username, self.password)
             server.send_message(message)
@@ -99,5 +110,6 @@ def get_platform_mailer() -> TransactionalMailer:
             settings.platform_smtp_username,
             settings.platform_smtp_password,
             settings.platform_email_from,
+            use_tls=settings.platform_smtp_use_tls,
         )
     return ConsoleMailer()

@@ -110,6 +110,25 @@ def _per_lead(
     db.flush()
 
 
+def _verify(db: Session, ctx: WorkspaceContext, ids: list[int], result: BulkResult) -> None:
+    """Queue verification of the leads' email addresses (runs in the background)."""
+    from app.workers.verification_jobs import verify_leads_task
+
+    owned = list(
+        db.scalars(
+            select(Lead.id).where(Lead.id.in_(ids), Lead.workspace_id == ctx.workspace_id)
+        ).all()
+    )
+    for lead_id in ids:
+        if lead_id in owned:
+            result.ok(lead_id, "Verification queued")
+        else:
+            result.fail(lead_id, "Lead not found")
+    if owned:
+        db.commit()
+        verify_leads_task.delay(ctx.workspace_id, owned, True)
+
+
 def run_bulk_action(db: Session, ctx: WorkspaceContext, payload: LeadBulkRequest) -> BulkResult:
     ids = list(dict.fromkeys(payload.lead_ids))
     if payload.action == "add_to_campaign":
@@ -119,6 +138,8 @@ def run_bulk_action(db: Session, ctx: WorkspaceContext, payload: LeadBulkRequest
         result = BulkResult()
         if payload.action == "enrich":
             _enrich(db, ctx, ids, result)
+        elif payload.action == "verify":
+            _verify(db, ctx, ids, result)
         else:
             _per_lead(db, ctx, payload, ids, result)
     audit(

@@ -245,7 +245,7 @@ export function CampaignForm({
                           key={day.value}
                           type="button"
                           aria-pressed={on}
-                          aria-label={day.long}
+                          title={day.long}
                           onClick={() =>
                             field.onChange(
                               on
