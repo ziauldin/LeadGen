@@ -117,6 +117,8 @@ class ProviderName(StrEnum):
     GROQ = "groq"
     OPENAI = "openai"
     GEMINI = "gemini"
+    GMAIL = "gmail"
+    OUTLOOK = "outlook"
 
 
 class ProviderCredentialStatus(StrEnum):

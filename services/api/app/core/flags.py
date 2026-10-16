@@ -19,6 +19,7 @@ FLAGS: dict[str, str] = {
     "inbound_webhooks": "Provider webhooks for bounces and replies",
     "sso": "Single sign-on",
     "public_api": "Public API and outbound webhooks",
+    "mailbox_oauth": "Connect Gmail and Microsoft 365 mailboxes",
 }
 
 

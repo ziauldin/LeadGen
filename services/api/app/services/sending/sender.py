@@ -31,6 +31,7 @@ from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.billing.usage import record_usage
 from app.services.campaigns.sequences import on_message_sent
 from app.services.developer import events as webhook_events
+from app.services.mailboxes.service import choose_credential
 from app.services.sending.base import SendKind
 from app.services.sending.gate import GateKind, campaign_sent_today, evaluate_send_gate
 from app.services.sending.mime import build_outbound, make_message_id
@@ -131,7 +132,10 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
     campaign, lead = message.campaign, message.lead
     workspace = db.get(Workspace, message.workspace_id)
     ws_settings = _workspace_settings(db, message.workspace_id)
-    sender, credential = resolve_sender(db, message.workspace_id, campaign.sender_credential_id)
+    chosen = choose_credential(db, campaign, message, now)
+    sender, credential = resolve_sender(
+        db, message.workspace_id, chosen.id if chosen else campaign.sender_credential_id
+    )
 
     decision = evaluate_send_gate(
         db,

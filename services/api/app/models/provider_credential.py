@@ -60,5 +60,10 @@ class ProviderCredential(Base, TenantScoped, TimestampUpdatedMixin):
     warmup_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Random token in inbound webhook URLs: identifies the workspace and signing secret.
     webhook_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Per-account daily sending limit (on top of warm-up), e.g. for connected mailboxes.
+    daily_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Set when the account is paused: needs reconnecting, or poor bounce/complaint health.
+    disabled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    disabled_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     user: Mapped[User | None] = relationship(back_populates="provider_credentials")

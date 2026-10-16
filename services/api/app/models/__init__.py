@@ -27,6 +27,7 @@ from app.models.enums import (
 from app.models.inbound import EmailEvent, InboxCursor, WebhookEvent
 from app.models.lead import Lead
 from app.models.llm_usage import LLMUsage
+from app.models.mailbox import CampaignSender
 from app.models.niche import Niche
 from app.models.notification import LifecycleEmail, Notification, NotificationPreference
 from app.models.privacy import DataRequest
@@ -53,6 +54,7 @@ __all__ = [
     "BounceStatus",
     "Campaign",
     "CampaignEnrollment",
+    "CampaignSender",
     "CampaignStatus",
     "CampaignStep",
     "Company",

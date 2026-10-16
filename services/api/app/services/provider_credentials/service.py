@@ -29,6 +29,8 @@ DISPLAY_NAMES: dict[ProviderName, str] = {
     ProviderName.GROQ: "Groq",
     ProviderName.OPENAI: "OpenAI",
     ProviderName.GEMINI: "Google Gemini",
+    ProviderName.GMAIL: "Gmail / Google Workspace",
+    ProviderName.OUTLOOK: "Microsoft 365 / Outlook",
 }
 
 SEARCH_PROVIDERS = {

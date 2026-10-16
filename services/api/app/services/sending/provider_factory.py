@@ -29,6 +29,10 @@ def _sender_from_credential(credential: ProviderCredential | None) -> EmailSende
     from_email = str(config.get("from_email", ""))
     from_name = str(config.get("from_name") or "") or None
 
+    if provider_name in (ProviderName.GMAIL, ProviderName.OUTLOOK):
+        from app.services.mailboxes.service import MailboxEmailSender
+
+        return MailboxEmailSender(credential, from_email, from_name)
     if provider_name == ProviderName.SMTP:
         return SmtpEmailSender(
             host=str(config.get("host", "")),

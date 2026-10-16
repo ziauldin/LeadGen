@@ -40,6 +40,32 @@ If you set `INBOUND_EMAIL_DOMAIN` (for example `in.example.com`, with MX records
 
 Without it, replies are matched by `In-Reply-To` and `References`, then the provider's message id, then the sender address (low confidence). Anything left unmatched can be linked by hand on the reply page.
 
+## Mailboxes: Gmail and Microsoft 365 (OAuth)
+
+Turn this on with `FEATURE_MAILBOX_OAUTH=true`, or for one workspace from the admin area. People connect their own inboxes under **Settings → Providers → Mailboxes**. LeadsGen then sends through the Gmail API or Microsoft Graph, and syncs replies from the same mailbox.
+
+**Operator setup.** It reuses the OAuth apps from "Continue with Google / Microsoft" (`GOOGLE_OAUTH_CLIENT_ID/SECRET`, `MICROSOFT_OAUTH_CLIENT_ID/SECRET`).
+
+- **Redirect URIs:** add `https://<web>/api/mailboxes/oauth/gmail/callback` and `https://<web>/api/mailboxes/oauth/outlook/callback`.
+- **Google:** enable the Gmail API. Add the scopes `gmail.send` and `gmail.readonly`. These are *restricted* scopes:
+  - Until the app passes Google's OAuth verification and the CASA security assessment, only the test users listed on the consent screen can connect (up to 100).
+  - Plan for the verification before a public launch.
+- **Microsoft:** add the delegated Graph permissions `Mail.Send`, `Mail.Read`, `User.Read` and `offline_access`. Complete publisher verification so tenants don't see an "unverified" warning. Some tenants also need an admin to consent.
+
+**How it works**
+
+- **Connecting:** uses the authorization code flow with PKCE. The short-lived state is signed and carries the encrypted PKCE verifier. Refresh tokens are stored encrypted, and access tokens refresh automatically. Microsoft's rotated refresh tokens are saved too.
+- **Sending:** each email goes out as a full MIME message, so our `Message-ID`, `In-Reply-To` and `References` headers survive and threads stay intact.
+- **Reply sync:** runs every 5 minutes with the inbox poll, using Gmail history and the Graph delta query. The first sync only records a starting point; old mail isn't imported. New messages go through the normal reply pipeline (matching, labelling, stopping sequences).
+- **Limits:** new mailboxes start with warm-up on and a daily limit of 50, which can be changed per mailbox. The send gate uses the lower of the warm-up cap and the daily limit.
+- **Health:** a mailbox is paused when more than 8% of its last 50 sends bounce, or more than 0.5% are marked as spam (after at least 20 sends). Revoked access marks it **Reconnect needed**, and paused mailboxes are skipped. Admins can resume a mailbox paused for health. Reconnecting fixes an access problem.
+
+**Rotation.** On a campaign's **Sequence** tab, choose several sending accounts:
+
+- Each new lead's first email goes from the healthy account with the most room left today.
+- Follow-ups always come from the mailbox that sent that lead's first email.
+- With no accounts selected, the campaign uses its default sender, as before.
+
 ## Reply inbox (IMAP)
 
 For SMTP senders, or as a backup to webhooks. Add an **IMAP** account under *Reply inbox* with host, port (993), username, password, folder (`INBOX`) and SSL. LeadsGen polls every 5 minutes and remembers where it got to, so messages are never processed twice. Needs `FEATURE_IMAP=true`.

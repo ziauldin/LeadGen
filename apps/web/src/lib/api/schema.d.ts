@@ -1076,6 +1076,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/campaigns/{campaign_id}/senders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Campaign Senders */
+        get: operations["campaign_senders_campaigns__campaign_id__senders_get"];
+        /** Update Campaign Senders */
+        put: operations["update_campaign_senders_campaigns__campaign_id__senders_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/campaigns/{campaign_id}/start": {
         parameters: {
             query?: never;
@@ -1570,6 +1588,40 @@ export interface paths {
         get: operations["get_lead_outreach_readiness_leads__lead_id__outreach_readiness_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mailboxes/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mailbox Providers */
+        get: operations["mailbox_providers_mailboxes_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mailboxes/{provider}/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Mailbox */
+        post: operations["connect_mailbox_mailboxes__provider__connect_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2074,6 +2126,43 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/sending-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sending Accounts
+         * @description Every email-sending account in the workspace, with today's cap and health.
+         */
+        get: operations["sending_accounts_sending_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sending-accounts/{credential_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Sending Account */
+        patch: operations["update_sending_account_sending_accounts__credential_id__patch"];
         trace?: never;
     };
     "/settings": {
@@ -3597,6 +3686,11 @@ export interface components {
             /** Website */
             website?: string | null;
         };
+        /** ConnectResponse */
+        ConnectResponse: {
+            /** Url */
+            url: string;
+        };
         /** ConnectionRead */
         ConnectionRead: {
             /** Acs Url */
@@ -4561,6 +4655,25 @@ export interface components {
              */
             token_type: string;
         };
+        /** MailboxProvider */
+        MailboxProvider: {
+            /** Available */
+            available: boolean;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+        };
+        /** MailboxUpdate */
+        MailboxUpdate: {
+            /** Daily Limit */
+            daily_limit?: number | null;
+            /**
+             * Resume
+             * @default false
+             */
+            resume?: boolean;
+        };
         /** MarkRead */
         MarkRead: {
             /**
@@ -4890,7 +5003,7 @@ export interface components {
          * ProviderName
          * @enum {string}
          */
-        ProviderName: "mock" | "google_cse" | "bing" | "serpapi" | "smtp" | "resend" | "sendgrid" | "mailgun" | "hunter" | "imap" | "groq" | "openai" | "gemini";
+        ProviderName: "mock" | "google_cse" | "bing" | "serpapi" | "smtp" | "resend" | "sendgrid" | "mailgun" | "hunter" | "imap" | "groq" | "openai" | "gemini" | "gmail" | "outlook";
         /** ProviderTestResponse */
         ProviderTestResponse: {
             /** Message */
@@ -5217,6 +5330,32 @@ export interface components {
         SecretRead: {
             /** Secret */
             secret: string;
+        };
+        /** SenderAccount */
+        SenderAccount: {
+            /** Cap Today */
+            cap_today: number | null;
+            /** Daily Limit */
+            daily_limit: number | null;
+            /** Email */
+            email: string | null;
+            /** Healthy */
+            healthy: boolean;
+            /** Id */
+            id: number;
+            /** Is Mailbox */
+            is_mailbox: boolean;
+            /** Label */
+            label: string;
+            /** Problem */
+            problem: string | null;
+            /** Provider */
+            provider: string;
+        };
+        /** SendersUpdate */
+        SendersUpdate: {
+            /** Credential Ids */
+            credential_ids?: number[];
         };
         /** SentMessageSummary */
         SentMessageSummary: {
@@ -7918,6 +8057,76 @@ export interface operations {
             };
         };
     };
+    campaign_senders_campaigns__campaign_id__senders_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SenderAccount"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_campaign_senders_campaigns__campaign_id__senders_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                campaign_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendersUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SenderAccount"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     start_campaign_endpoint_campaigns__campaign_id__start_post: {
         parameters: {
             query?: never;
@@ -9007,6 +9216,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OutreachReadiness"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mailbox_providers_mailboxes_providers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MailboxProvider"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_mailbox_mailboxes__provider__connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectResponse"];
                 };
             };
             /** @description Validation Error */
@@ -10281,6 +10554,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SaveSearchResultsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sending_accounts_sending_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SenderAccount"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_sending_account_sending_accounts__credential_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                credential_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MailboxUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SenderAccount"];
                 };
             };
             /** @description Validation Error */

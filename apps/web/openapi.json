@@ -2336,6 +2336,19 @@
         "title": "CompanyUpdate",
         "type": "object"
       },
+      "ConnectResponse": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "ConnectResponse",
+        "type": "object"
+      },
       "ConnectionRead": {
         "properties": {
           "acs_url": {
@@ -5446,6 +5459,53 @@
         "title": "LoginResponse",
         "type": "object"
       },
+      "MailboxProvider": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "available",
+          "key",
+          "label"
+        ],
+        "title": "MailboxProvider",
+        "type": "object"
+      },
+      "MailboxUpdate": {
+        "properties": {
+          "daily_limit": {
+            "anyOf": [
+              {
+                "maximum": 2000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Limit"
+          },
+          "resume": {
+            "default": false,
+            "title": "Resume",
+            "type": "boolean"
+          }
+        },
+        "title": "MailboxUpdate",
+        "type": "object"
+      },
       "MarkRead": {
         "properties": {
           "all": {
@@ -6475,7 +6535,9 @@
           "imap",
           "groq",
           "openai",
-          "gemini"
+          "gemini",
+          "gmail",
+          "outlook"
         ],
         "title": "ProviderName",
         "type": "string"
@@ -7490,6 +7552,101 @@
           "secret"
         ],
         "title": "SecretRead",
+        "type": "object"
+      },
+      "SenderAccount": {
+        "properties": {
+          "cap_today": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cap Today"
+          },
+          "daily_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Limit"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "healthy": {
+            "title": "Healthy",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_mailbox": {
+            "title": "Is Mailbox",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cap_today",
+          "daily_limit",
+          "email",
+          "healthy",
+          "id",
+          "is_mailbox",
+          "label",
+          "problem",
+          "provider"
+        ],
+        "title": "SenderAccount",
+        "type": "object"
+      },
+      "SendersUpdate": {
+        "properties": {
+          "credential_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 50,
+            "title": "Credential Ids",
+            "type": "array"
+          }
+        },
+        "title": "SendersUpdate",
         "type": "object"
       },
       "SentMessageSummary": {
@@ -13277,6 +13434,148 @@
         ]
       }
     },
+    "/campaigns/{campaign_id}/senders": {
+      "get": {
+        "operationId": "campaign_senders_campaigns__campaign_id__senders_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SenderAccount"
+                  },
+                  "title": "Response Campaign Senders Campaigns  Campaign Id  Senders Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Campaign Senders",
+        "tags": [
+          "mailboxes"
+        ]
+      },
+      "put": {
+        "operationId": "update_campaign_senders_campaigns__campaign_id__senders_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "title": "Campaign Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendersUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SenderAccount"
+                  },
+                  "title": "Response Update Campaign Senders Campaigns  Campaign Id  Senders Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Campaign Senders",
+        "tags": [
+          "mailboxes"
+        ]
+      }
+    },
     "/campaigns/{campaign_id}/start": {
       "post": {
         "operationId": "start_campaign_endpoint_campaigns__campaign_id__start_post",
@@ -15438,6 +15737,127 @@
         "summary": "Get Lead Outreach Readiness",
         "tags": [
           "leads"
+        ]
+      }
+    },
+    "/mailboxes/providers": {
+      "get": {
+        "operationId": "mailbox_providers_mailboxes_providers_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MailboxProvider"
+                  },
+                  "title": "Response Mailbox Providers Mailboxes Providers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mailbox Providers",
+        "tags": [
+          "mailboxes"
+        ]
+      }
+    },
+    "/mailboxes/{provider}/connect": {
+      "post": {
+        "operationId": "connect_mailbox_mailboxes__provider__connect_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Connect Mailbox",
+        "tags": [
+          "mailboxes"
         ]
       }
     },
@@ -17919,6 +18339,138 @@
         "summary": "Save Results",
         "tags": [
           "searches"
+        ]
+      }
+    },
+    "/sending-accounts": {
+      "get": {
+        "description": "Every email-sending account in the workspace, with today's cap and health.",
+        "operationId": "sending_accounts_sending_accounts_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SenderAccount"
+                  },
+                  "title": "Response Sending Accounts Sending Accounts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sending Accounts",
+        "tags": [
+          "mailboxes"
+        ]
+      }
+    },
+    "/sending-accounts/{credential_id}": {
+      "patch": {
+        "operationId": "update_sending_account_sending_accounts__credential_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credential_id",
+            "required": true,
+            "schema": {
+              "title": "Credential Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MailboxUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SenderAccount"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Sending Account",
+        "tags": [
+          "mailboxes"
         ]
       }
     },

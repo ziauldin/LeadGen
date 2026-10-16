@@ -319,6 +319,22 @@ export const notificationsApi = {
   testSlack: () => apiFetch<{ message: string }>("/workspaces/current/slack/test", { method: "POST" }),
 };
 
+export const mailboxesApi = {
+  providers: () => apiFetch<S["MailboxProvider"][]>("/mailboxes/providers"),
+  connect: (provider: string) =>
+    apiFetch<S["ConnectResponse"]>(`/mailboxes/${provider}/connect`, { method: "POST" }),
+  accounts: () => apiFetch<S["SenderAccount"][]>("/sending-accounts"),
+  updateAccount: (id: number, data: S["MailboxUpdate"]) =>
+    apiFetch<S["SenderAccount"]>(`/sending-accounts/${id}`, { method: "PATCH", body: json(data) }),
+  campaignSenders: (campaignId: number) =>
+    apiFetch<S["SenderAccount"][]>(`/campaigns/${campaignId}/senders`),
+  setCampaignSenders: (campaignId: number, credentialIds: number[]) =>
+    apiFetch<S["SenderAccount"][]>(`/campaigns/${campaignId}/senders`, {
+      method: "PUT",
+      body: json({ credential_ids: credentialIds }),
+    }),
+};
+
 /** Where the browser goes to start "Continue with Google/Microsoft". */
 export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";

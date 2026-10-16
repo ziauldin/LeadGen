@@ -172,7 +172,17 @@ def evaluate_send_gate(
             schedule.next_day_open(now),
         )
 
-    cap = daily_cap(credential, now.astimezone(UTC).date())
+    if credential is not None and credential.disabled_at is not None:
+        return GateDecision(
+            GateKind.DEFER,
+            [credential.disabled_reason or "This sending account is paused"],
+            now + timedelta(hours=1),
+        )
+    warmup_cap = daily_cap(credential, now.astimezone(UTC).date())
+    account_limit = credential.daily_limit if credential is not None else None
+    caps = [c for c in (warmup_cap, account_limit) if c is not None]
+    cap = min(caps) if caps else None
+    warmup_bound = warmup_cap is not None and (account_limit is None or warmup_cap <= account_limit)
     if (
         credential is not None
         and cap is not None
@@ -180,7 +190,11 @@ def evaluate_send_gate(
     ):
         return GateDecision(
             GateKind.DEFER,
-            ["Warm-up daily cap reached for this sending account"],
+            [
+                "Warm-up daily cap reached for this sending account"
+                if warmup_bound
+                else "Daily limit reached for this sending account"
+            ],
             schedule.next_day_open(now),
         )
 
