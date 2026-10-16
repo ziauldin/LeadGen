@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkspaceId, setWorkspaceId } from "@/lib/api/client";
 import { workspacesApi } from "@/lib/api/endpoints";
@@ -40,6 +41,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // Keep the stored id valid (e.g. after being removed from a workspace).
   useEffect(() => {
     if (current && current.id !== storedId) setWorkspaceId(current.id);
+    Sentry.setTag("workspace_id", current ? String(current.id) : undefined);
   }, [current, storedId]);
 
   const switchTo = useCallback(

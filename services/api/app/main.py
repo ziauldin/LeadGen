@@ -41,10 +41,12 @@ from app.core.exceptions import (
     validation_exception_handler,
 )
 from app.core.logging import setup_logging
+from app.core.metrics import MetricsMiddleware
 from app.core.middleware import RequestContextMiddleware
 from app.core.observability import init_sentry
 from app.core.rate_limit import limiter
 from app.core.security import ensure_encryption_key_configured
+from app.core.tracing import init_tracing
 
 logger = logging.getLogger(__name__)
 
@@ -87,8 +89,10 @@ app.add_middleware(
     ],
     expose_headers=["X-Request-ID", "Content-Disposition"],
 )
+app.add_middleware(MetricsMiddleware)
 # Outermost: request ids and security headers apply to every response, including CORS errors.
 app.add_middleware(RequestContextMiddleware, hsts=app_settings.is_production)
+init_tracing("api", app=app)
 
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)

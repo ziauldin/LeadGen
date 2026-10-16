@@ -9,6 +9,7 @@ import re
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core import metrics
 from app.core.config import settings
 from app.models.campaign import Campaign
 from app.models.email_contact import EmailContact
@@ -231,6 +232,7 @@ def process_delivery_event(db: Session, workspace_id: int, event: DeliveryEvent)
     message = match_delivery(db, workspace_id, event)
     recipient = (event.recipient or (message.recipient_email if message else "") or "").lower()
     _record_event(db, workspace_id, message, event)
+    metrics.DELIVERY_EVENTS.labels(event.kind).inc()
 
     if event.kind == normalize.DELIVERED or not recipient:
         db.commit()
@@ -405,6 +407,7 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
     db.flush()
     apply_reply_effects(db, reply, message, lead)
     db.commit()
+    metrics.REPLIES_RECEIVED.labels(str(classification)).inc()
     return reply
 
 

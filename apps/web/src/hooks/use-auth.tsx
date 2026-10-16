@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import * as Sentry from "@sentry/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getErrorMessage,
@@ -52,9 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      setUser(await authApi.me());
+      const me = await authApi.me();
+      setUser(me);
+      Sentry.setUser({ id: String(me.id) });
     } catch {
       setUser(null);
+      Sentry.setUser(null);
     }
   }, []);
 

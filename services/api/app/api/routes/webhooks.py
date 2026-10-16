@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core import metrics
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.rate_limit import limiter
@@ -98,6 +99,7 @@ def _store(
         if event is not None:
             stored.append(event.id)
     _enqueue(stored)
+    metrics.WEBHOOKS_RECEIVED.labels(provider).inc(len(stored))
     return {"received": len(items), "stored": len(stored)}
 
 

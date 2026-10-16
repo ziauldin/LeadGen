@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.signals import beat_init, worker_process_init
 from kombu import Queue
 
 from app.core.config import settings
@@ -79,3 +80,20 @@ celery_app.conf.update(
         },
     },
 )
+
+
+@worker_process_init.connect
+def _init_worker_observability(**_kwargs: object) -> None:
+    """Error reporting and tracing inside each worker process (beat included)."""
+    from app.core.observability import init_sentry
+    from app.core.tracing import init_tracing
+
+    init_sentry("worker")
+    init_tracing("worker")
+
+
+@beat_init.connect
+def _init_beat_observability(**_kwargs: object) -> None:
+    from app.core.observability import init_sentry
+
+    init_sentry("beat")

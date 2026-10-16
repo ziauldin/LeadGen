@@ -115,6 +115,11 @@ class Settings(BaseSettings):
 
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.0
+    # OpenTelemetry: OTLP/HTTP endpoint (e.g. https://otlp.example.com) to export traces to.
+    otel_exporter_otlp_endpoint: str = ""
+    otel_sample_ratio: float = 0.1
+    # Bearer token for GET /metrics (Prometheus). Empty disables the endpoint.
+    metrics_token: str = ""
     railway_git_commit_sha: str = ""
 
     # Dark-launch flags for the new production features.

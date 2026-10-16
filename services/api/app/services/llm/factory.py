@@ -13,6 +13,7 @@ from typing import Any, Literal
 
 from sqlalchemy.orm import Session
 
+from app.core import metrics
 from app.core.config import settings
 from app.models.enums import ProviderType
 from app.models.llm_usage import LLMUsage
@@ -184,6 +185,8 @@ def run_llm(
     if resolved.key_source == "platform":
         record_usage(db, workspace.id, "monthly_llm_tokens", result.total_tokens)
     db.flush()
+    metrics.LLM_TOKENS.labels(purpose, resolved.key_source, "input").inc(result.input_tokens)
+    metrics.LLM_TOKENS.labels(purpose, resolved.key_source, "output").inc(result.output_tokens)
     return result
 
 

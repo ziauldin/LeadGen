@@ -20,6 +20,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import Select, func, select, update
 from sqlalchemy.orm import Session, selectinload
 
+from app.core import metrics
 from app.core.tenancy import system_session
 from app.models.audit_log import AuditLog
 from app.models.campaign import Campaign
@@ -189,9 +190,11 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
             ),
         )
         db.commit()
+        metrics.EMAILS_SENT.labels(sender.provider_name).inc()
         return "sent"
 
     message.last_error = (result.error or "Send failed")[:2000]
+    metrics.EMAIL_SEND_FAILURES.labels(sender.provider_name, str(result.kind)).inc()
     if result.kind == SendKind.TRANSIENT and message.send_attempts < MAX_ATTEMPTS:
         transition(db, message, EmailMessageStatus.APPROVED, audit=False)
         message.next_attempt_at = _now() + _retry_delay(message.send_attempts)

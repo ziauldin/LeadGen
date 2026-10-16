@@ -35,7 +35,7 @@ Railway's shared variables are the easiest way to give api, worker and beat the 
 | `CORS_ORIGINS` | `https://app.example.com` |
 | `PLATFORM_EMAIL_PROVIDER` | `resend` or `smtp`, plus its key/credentials and `PLATFORM_EMAIL_FROM` |
 | `INBOUND_EMAIL_DOMAIN` | optional; see [PROVIDERS.md](PROVIDERS.md#reply-addresses) |
-| `SENTRY_DSN` | optional |
+| `SENTRY_DSN`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `METRICS_TOKEN` | optional observability; see [RUNBOOKS.md](RUNBOOKS.md) |
 | `FEATURE_*`, `PLATFORM_LLM_*` | as needed |
 
 The API refuses to start in production when one of these is unsafe:
@@ -55,6 +55,7 @@ The error message lists what to fix.
 | Variable | Value |
 |---|---|
 | `API_INTERNAL_URL` | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}` |
+| `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | optional browser error reporting and source maps |
 
 The browser only talks to the web service. `/api/*` is proxied to the API over Railway's private network, so the refresh-token cookie is first-party and httpOnly.
 
