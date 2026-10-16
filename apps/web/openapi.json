@@ -339,6 +339,21 @@
       },
       "BillingSummary": {
         "properties": {
+          "features": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "default": {},
+            "title": "Features",
+            "type": "object"
+          },
           "limits": {
             "additionalProperties": {
               "type": "integer"
@@ -359,6 +374,7 @@
           }
         },
         "required": [
+          "features",
           "limits",
           "plan",
           "usage"
@@ -1833,6 +1849,266 @@
         "title": "CompanyUpdate",
         "type": "object"
       },
+      "ConnectionRead": {
+        "properties": {
+          "acs_url": {
+            "title": "Acs Url",
+            "type": "string"
+          },
+          "default_role": {
+            "title": "Default Role",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enforce": {
+            "title": "Enforce",
+            "type": "boolean"
+          },
+          "has_certificate": {
+            "title": "Has Certificate",
+            "type": "boolean"
+          },
+          "has_client_secret": {
+            "title": "Has Client Secret",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "oidc_client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oidc Client Id"
+          },
+          "oidc_issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oidc Issuer"
+          },
+          "oidc_redirect_uri": {
+            "title": "Oidc Redirect Uri",
+            "type": "string"
+          },
+          "protocol": {
+            "title": "Protocol",
+            "type": "string"
+          },
+          "saml_idp_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saml Idp Entity Id"
+          },
+          "saml_idp_sso_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saml Idp Sso Url"
+          },
+          "sp_entity_id": {
+            "title": "Sp Entity Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "acs_url",
+          "default_role",
+          "display_name",
+          "enforce",
+          "has_certificate",
+          "has_client_secret",
+          "id",
+          "is_active",
+          "last_login_at",
+          "oidc_client_id",
+          "oidc_issuer",
+          "oidc_redirect_uri",
+          "protocol",
+          "saml_idp_entity_id",
+          "saml_idp_sso_url",
+          "sp_entity_id"
+        ],
+        "title": "ConnectionRead",
+        "type": "object"
+      },
+      "ConnectionWrite": {
+        "properties": {
+          "default_role": {
+            "anyOf": [
+              {
+                "pattern": "^(member|admin)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Role"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "enforce": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enforce"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "oidc_client_id": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oidc Client Id"
+          },
+          "oidc_client_secret": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oidc Client Secret"
+          },
+          "oidc_issuer": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oidc Issuer"
+          },
+          "protocol": {
+            "anyOf": [
+              {
+                "pattern": "^(oidc|saml)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protocol"
+          },
+          "saml_idp_certificate": {
+            "anyOf": [
+              {
+                "maxLength": 20000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saml Idp Certificate"
+          },
+          "saml_idp_entity_id": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saml Idp Entity Id"
+          },
+          "saml_idp_sso_url": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saml Idp Sso Url"
+          }
+        },
+        "title": "ConnectionWrite",
+        "type": "object"
+      },
       "DashboardSummary": {
         "properties": {
           "active_campaigns": {
@@ -2067,6 +2343,81 @@
           "code"
         ],
         "title": "DisableTwoFactorRequest",
+        "type": "object"
+      },
+      "DiscoverRead": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "display_name",
+          "url"
+        ],
+        "title": "DiscoverRead",
+        "type": "object"
+      },
+      "DiscoverRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "DiscoverRequest",
+        "type": "object"
+      },
+      "DomainCreate": {
+        "properties": {
+          "domain": {
+            "maxLength": 255,
+            "minLength": 3,
+            "title": "Domain",
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "title": "DomainCreate",
+        "type": "object"
+      },
+      "DomainRead": {
+        "properties": {
+          "domain": {
+            "title": "Domain",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "txt_record": {
+            "title": "Txt Record",
+            "type": "string"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain",
+          "id",
+          "txt_record",
+          "verified"
+        ],
+        "title": "DomainRead",
         "type": "object"
       },
       "EmailApproveRequest": {
@@ -2840,6 +3191,53 @@
           "status"
         ],
         "title": "HealthReadyResponse",
+        "type": "object"
+      },
+      "IdentityRead": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "email",
+          "id",
+          "last_used_at",
+          "provider"
+        ],
+        "title": "IdentityRead",
         "type": "object"
       },
       "InvitationCreate": {
@@ -4335,6 +4733,29 @@
         "title": "ProviderType",
         "type": "string"
       },
+      "ProvidersRead": {
+        "properties": {
+          "google": {
+            "title": "Google",
+            "type": "boolean"
+          },
+          "microsoft": {
+            "title": "Microsoft",
+            "type": "boolean"
+          },
+          "sso": {
+            "title": "Sso",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "google",
+          "microsoft",
+          "sso"
+        ],
+        "title": "ProvidersRead",
+        "type": "object"
+      },
       "RecalculateRequest": {
         "properties": {
           "lead_ids": {
@@ -5590,6 +6011,19 @@
           "recovery_codes_left"
         ],
         "title": "TwoFactorStatus",
+        "type": "object"
+      },
+      "UrlRead": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "UrlRead",
         "type": "object"
       },
       "UsageItem": {
@@ -6893,6 +7327,76 @@
         ]
       }
     },
+    "/auth/identities": {
+      "get": {
+        "operationId": "list_identities_auth_identities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IdentityRead"
+                  },
+                  "title": "Response List Identities Auth Identities Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Identities",
+        "tags": [
+          "sso"
+        ]
+      }
+    },
+    "/auth/identities/{identity_id}": {
+      "delete": {
+        "operationId": "unlink_identity_auth_identities__identity_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity_id",
+            "required": true,
+            "schema": {
+              "title": "Identity Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Unlink Identity",
+        "tags": [
+          "sso"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "operationId": "login_auth_login_post",
@@ -7105,6 +7609,75 @@
         "summary": "Me",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/auth/oidc/{provider}/link": {
+      "post": {
+        "description": "Start connecting Google/Microsoft to the signed-in account. Returns where to go next.",
+        "operationId": "social_link_start_auth_oidc__provider__link_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UrlRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Social Link Start",
+        "tags": [
+          "sso"
+        ]
+      }
+    },
+    "/auth/providers": {
+      "get": {
+        "operationId": "sign_in_providers_auth_providers_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProvidersRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign In Providers",
+        "tags": [
+          "sso"
         ]
       }
     },
@@ -7331,6 +7904,48 @@
         "summary": "Revoke Session",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/auth/sso/discover": {
+      "post": {
+        "description": "Find the workspace identity provider for an email address.",
+        "operationId": "sso_discover_auth_sso_discover_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscoverRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiscoverRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sso Discover",
+        "tags": [
+          "sso"
         ]
       }
     },
@@ -12112,6 +12727,492 @@
         "summary": "Deliverability Check",
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/sso/connections": {
+      "get": {
+        "operationId": "list_connections_sso_connections_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConnectionRead"
+                  },
+                  "title": "Response List Connections Sso Connections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Connections",
+        "tags": [
+          "sso"
+        ]
+      },
+      "post": {
+        "operationId": "create_connection_sso_connections_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Connection",
+        "tags": [
+          "sso"
+        ]
+      }
+    },
+    "/sso/connections/{connection_id}": {
+      "delete": {
+        "operationId": "delete_connection_sso_connections__connection_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "title": "Connection Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Connection",
+        "tags": [
+          "sso"
+        ]
+      },
+      "patch": {
+        "operationId": "update_connection_sso_connections__connection_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "title": "Connection Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Connection",
+        "tags": [
+          "sso"
+        ]
+      }
+    },
+    "/sso/domains": {
+      "get": {
+        "operationId": "list_domains_sso_domains_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DomainRead"
+                  },
+                  "title": "Response List Domains Sso Domains Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Domains",
+        "tags": [
+          "sso"
+        ]
+      },
+      "post": {
+        "operationId": "add_domain_sso_domains_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Add Domain",
+        "tags": [
+          "sso"
+        ]
+      }
+    },
+    "/sso/domains/{domain_id}": {
+      "delete": {
+        "operationId": "delete_domain_sso_domains__domain_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "domain_id",
+            "required": true,
+            "schema": {
+              "title": "Domain Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Domain",
+        "tags": [
+          "sso"
+        ]
+      }
+    },
+    "/sso/domains/{domain_id}/verify": {
+      "post": {
+        "operationId": "verify_domain_sso_domains__domain_id__verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "domain_id",
+            "required": true,
+            "schema": {
+              "title": "Domain Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Verify Domain",
+        "tags": [
+          "sso"
         ]
       }
     },

@@ -34,3 +34,12 @@ test("turn on two-factor, sign out, and sign back in with a code", async ({ page
   await page.goto("/settings/security");
   await expect(page.getByText("This device")).toBeVisible();
 });
+
+test("SSO sign-in explains when a domain has no identity provider", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("link", { name: "Sign in with single sign-on (SSO)" }).click();
+  await expect(page).toHaveURL(/\/login\/sso/);
+  await page.getByLabel("Work email").fill("someone@no-sso-here.co.uk");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByText("isn't set up for that email domain", { exact: false })).toBeVisible();
+});

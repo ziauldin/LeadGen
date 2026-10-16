@@ -201,3 +201,25 @@ def test_models_match_migrations(database_url):
     cfg = _config(database_url)
     command.upgrade(cfg, "head")
     command.check(cfg)
+
+
+def test_every_tenant_table_has_row_level_security(database_url):
+    """New tenant tables must get a row-level security policy in their migration."""
+    if not database_url.startswith("postgresql"):
+        pytest.skip("row-level security is PostgreSQL-only")
+    from tests.conftest import tenant_table_names
+
+    command.upgrade(_config(database_url), "head")
+    engine = sa.create_engine(database_url)
+    try:
+        with engine.connect() as conn:
+            protected = {
+                row[0]
+                for row in conn.exec_driver_sql(
+                    "SELECT relname FROM pg_class WHERE relrowsecurity AND relforcerowsecurity"
+                )
+            }
+    finally:
+        engine.dispose()
+    missing = sorted(set(tenant_table_names()) - protected)
+    assert missing == [], f"Tables without row-level security: {missing}"

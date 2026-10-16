@@ -25,6 +25,7 @@ from app.api.routes import (
     scoring,
     searches,
     settings,
+    sso,
     templates,
     webhooks,
     workspaces,
@@ -108,6 +109,7 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(sso.router)
 app.include_router(workspaces.router)
 app.include_router(workspaces.invitations_router)
 app.include_router(billing.router)

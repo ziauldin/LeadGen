@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Ban,
   Building2,
+  Fingerprint,
   Gauge,
   KeyRound,
   MailCheck,
@@ -18,6 +19,7 @@ export const SETTINGS_SECTIONS: { href: string; label: string; icon: LucideIcon 
   { href: "/settings/workspace", label: "Workspace", icon: Building2 },
   { href: "/settings/members", label: "Members", icon: Users },
   { href: "/settings/security", label: "Security", icon: ShieldCheck },
+  { href: "/settings/sso", label: "Single sign-on", icon: Fingerprint },
   { href: "/settings/providers", label: "Providers", icon: KeyRound },
   { href: "/settings/suppressions", label: "Suppressions", icon: Ban },
   { href: "/settings/deliverability", label: "Deliverability", icon: MailCheck },

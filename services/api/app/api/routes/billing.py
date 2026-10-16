@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_workspace, require_owner
 from app.core.database import get_db
 from app.core.tenancy import WorkspaceContext
-from app.services.billing.plans import METRIC_PERIOD, limits_for
+from app.services.billing.plans import METRIC_PERIOD, features_for, limits_for
 from app.services.billing.provider import get_billing_provider
 from app.services.billing.usage import current_usage
 
@@ -22,6 +22,7 @@ class UsageItem(BaseModel):
 class BillingSummary(BaseModel):
     plan: str
     limits: dict[str, int]
+    features: dict[str, bool | int] = {}
     usage: list[UsageItem]
 
 
@@ -38,6 +39,7 @@ def get_billing(
     return BillingSummary(
         plan=ctx.workspace.plan,
         limits=limits.as_dict(),
+        features=features_for(ctx.workspace).as_dict(),
         usage=[
             UsageItem(
                 metric=metric,

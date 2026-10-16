@@ -29,6 +29,7 @@ from app.models.niche import Niche
 from app.models.provider_credential import ProviderCredential
 from app.models.reply import Reply
 from app.models.search_query import SearchQuery
+from app.models.sso import ExternalIdentity, SsoConnection, SsoLoginState, VerifiedDomain
 from app.models.suppression import Suppression
 from app.models.user import User
 from app.models.user_settings import UserSettings
@@ -58,6 +59,7 @@ __all__ = [
     "EmailType",
     "EnrichmentStatus",
     "EnrollmentStatus",
+    "ExternalIdentity",
     "InboxCursor",
     "LLMUsage",
     "Lead",
@@ -74,11 +76,14 @@ __all__ = [
     "SearchProvider",
     "SearchQuery",
     "SearchStatus",
+    "SsoConnection",
+    "SsoLoginState",
     "Suppression",
     "UsageCounter",
     "User",
     "UserRole",
     "UserSettings",
+    "VerifiedDomain",
     "WebhookEvent",
     "Workspace",
     "WorkspaceInvitation",

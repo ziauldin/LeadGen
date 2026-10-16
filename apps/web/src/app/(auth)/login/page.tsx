@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AuthAlert, AuthField, AuthShell, AuthSubmit } from "@/components/auth/auth-shell";
 import { Captcha } from "@/components/auth/captcha";
 import { getAuthErrorMessage, useAuth } from "@/hooks/use-auth";
 import { ApiError } from "@/lib/api/client";
+import { socialSignInUrl, ssoApi } from "@/lib/api/endpoints";
 import { loginSchema, type LoginFormValues } from "@/lib/validations/forms";
 
 function needsCaptcha(error: unknown) {
@@ -73,12 +75,45 @@ function TwoFactorStep({ mfaToken, next }: { mfaToken: string; next: string | nu
   );
 }
 
+function SignInOptions({ next }: { next: string | null }) {
+  const providers = useQuery({ queryKey: ["auth-providers"], queryFn: ssoApi.providers, retry: false });
+  const options = providers.data;
+  if (!options || (!options.google && !options.microsoft && !options.sso)) return null;
+  const linkClass =
+    "flex w-full items-center justify-center gap-2 rounded border border-[var(--outline-variant)] bg-white py-2.5 text-[13px] font-medium text-[var(--on-surface)] hover:bg-[var(--surface-container-low)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]";
+  return (
+    <div className="mt-6 space-y-3">
+      <div className="relative flex items-center justify-center">
+        <span className="absolute inset-x-0 border-t border-[var(--outline-variant)]" />
+        <span className="relative bg-[var(--surface-container-lowest)] px-3 text-[11px] uppercase tracking-wider text-[var(--on-surface-variant)]">
+          or
+        </span>
+      </div>
+      {options.google && (
+        <a href={socialSignInUrl("google", next)} className={linkClass}>
+          Continue with Google
+        </a>
+      )}
+      {options.microsoft && (
+        <a href={socialSignInUrl("microsoft", next)} className={linkClass}>
+          Continue with Microsoft
+        </a>
+      )}
+      {options.sso && (
+        <Link href={next ? `/login/sso?next=${encodeURIComponent(next)}` : "/login/sso"} className={linkClass}>
+          Sign in with single sign-on (SSO)
+        </Link>
+      )}
+    </div>
+  );
+}
+
 function LoginForm() {
   const { login } = useAuth();
   const params = useSearchParams();
   const next = params.get("next");
-  const [error, setError] = useState<string | null>(null);
-  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(params.get("error"));
+  const [mfaToken, setMfaToken] = useState<string | null>(params.get("mfa_token"));
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaReset, setCaptchaReset] = useState(0);
@@ -133,6 +168,7 @@ function LoginForm() {
       {showCaptcha && <Captcha onToken={setCaptchaToken} resetKey={captchaReset} />}
       {error && <AuthAlert kind="error">{error}</AuthAlert>}
       <AuthSubmit loading={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in"}</AuthSubmit>
+      <SignInOptions next={next} />
     </form>
   );
 }

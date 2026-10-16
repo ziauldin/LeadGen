@@ -200,6 +200,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/identities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Identities */
+        get: operations["list_identities_auth_identities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/identities/{identity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink Identity */
+        delete: operations["unlink_identity_auth_identities__identity_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -280,6 +314,43 @@ export interface paths {
         };
         /** Me */
         get: operations["me_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/oidc/{provider}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Social Link Start
+         * @description Start connecting Google/Microsoft to the signed-in account. Returns where to go next.
+         */
+        post: operations["social_link_start_auth_oidc__provider__link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sign In Providers */
+        get: operations["sign_in_providers_auth_providers_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -385,6 +456,26 @@ export interface paths {
         post?: never;
         /** Revoke Session */
         delete: operations["revoke_session_auth_sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sso/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sso Discover
+         * @description Find the workspace identity provider for an email address.
+         */
+        post: operations["sso_discover_auth_sso_discover_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1399,6 +1490,94 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sso/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Connections */
+        get: operations["list_connections_sso_connections_get"];
+        put?: never;
+        /** Create Connection */
+        post: operations["create_connection_sso_connections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sso/connections/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Connection */
+        delete: operations["delete_connection_sso_connections__connection_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Connection */
+        patch: operations["update_connection_sso_connections__connection_id__patch"];
+        trace?: never;
+    };
+    "/sso/domains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Domains */
+        get: operations["list_domains_sso_domains_get"];
+        put?: never;
+        /** Add Domain */
+        post: operations["add_domain_sso_domains_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sso/domains/{domain_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Domain */
+        delete: operations["delete_domain_sso_domains__domain_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sso/domains/{domain_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Domain */
+        post: operations["verify_domain_sso_domains__domain_id__verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/suppressions": {
         parameters: {
             query?: never;
@@ -1848,6 +2027,13 @@ export interface components {
         };
         /** BillingSummary */
         BillingSummary: {
+            /**
+             * Features
+             * @default {}
+             */
+            features: {
+                [key: string]: boolean | number;
+            };
             /** Limits */
             limits: {
                 [key: string]: number;
@@ -2276,6 +2462,66 @@ export interface components {
             /** Website */
             website?: string | null;
         };
+        /** ConnectionRead */
+        ConnectionRead: {
+            /** Acs Url */
+            acs_url: string;
+            /** Default Role */
+            default_role: string;
+            /** Display Name */
+            display_name: string;
+            /** Enforce */
+            enforce: boolean;
+            /** Has Certificate */
+            has_certificate: boolean;
+            /** Has Client Secret */
+            has_client_secret: boolean;
+            /** Id */
+            id: number;
+            /** Is Active */
+            is_active: boolean;
+            /** Last Login At */
+            last_login_at: string | null;
+            /** Oidc Client Id */
+            oidc_client_id: string | null;
+            /** Oidc Issuer */
+            oidc_issuer: string | null;
+            /** Oidc Redirect Uri */
+            oidc_redirect_uri: string;
+            /** Protocol */
+            protocol: string;
+            /** Saml Idp Entity Id */
+            saml_idp_entity_id: string | null;
+            /** Saml Idp Sso Url */
+            saml_idp_sso_url: string | null;
+            /** Sp Entity Id */
+            sp_entity_id: string;
+        };
+        /** ConnectionWrite */
+        ConnectionWrite: {
+            /** Default Role */
+            default_role?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** Enforce */
+            enforce?: boolean | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Oidc Client Id */
+            oidc_client_id?: string | null;
+            /** Oidc Client Secret */
+            oidc_client_secret?: string | null;
+            /** Oidc Issuer */
+            oidc_issuer?: string | null;
+            /** Protocol */
+            protocol?: string | null;
+            /** Saml Idp Certificate */
+            saml_idp_certificate?: string | null;
+            /** Saml Idp Entity Id */
+            saml_idp_entity_id?: string | null;
+            /** Saml Idp Sso Url */
+            saml_idp_sso_url?: string | null;
+        };
         /** DashboardSummary */
         DashboardSummary: {
             /** Active Campaigns */
@@ -2360,6 +2606,37 @@ export interface components {
             code: string;
             /** Password */
             password: string;
+        };
+        /** DiscoverRead */
+        DiscoverRead: {
+            /** Display Name */
+            display_name: string;
+            /** Url */
+            url: string;
+        };
+        /** DiscoverRequest */
+        DiscoverRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** DomainCreate */
+        DomainCreate: {
+            /** Domain */
+            domain: string;
+        };
+        /** DomainRead */
+        DomainRead: {
+            /** Domain */
+            domain: string;
+            /** Id */
+            id: number;
+            /** Txt Record */
+            txt_record: string;
+            /** Verified */
+            verified: boolean;
         };
         /** EmailApproveRequest */
         EmailApproveRequest: {
@@ -2616,6 +2893,19 @@ export interface components {
             environment: string;
             /** Status */
             status: string;
+        };
+        /** IdentityRead */
+        IdentityRead: {
+            /** Created At */
+            created_at: string;
+            /** Email */
+            email: string | null;
+            /** Id */
+            id: number;
+            /** Last Used At */
+            last_used_at: string | null;
+            /** Provider */
+            provider: string;
         };
         /** InvitationCreate */
         InvitationCreate: {
@@ -3078,6 +3368,15 @@ export interface components {
          * @enum {string}
          */
         ProviderType: "search" | "email" | "email_discovery" | "inbox" | "llm";
+        /** ProvidersRead */
+        ProvidersRead: {
+            /** Google */
+            google: boolean;
+            /** Microsoft */
+            microsoft: boolean;
+            /** Sso */
+            sso: boolean;
+        };
         /** RecalculateRequest */
         RecalculateRequest: {
             /** Lead Ids */
@@ -3474,6 +3773,11 @@ export interface components {
             enabled: boolean;
             /** Recovery Codes Left */
             recovery_codes_left: number;
+        };
+        /** UrlRead */
+        UrlRead: {
+            /** Url */
+            url: string;
         };
         /** UsageItem */
         UsageItem: {
@@ -4081,6 +4385,55 @@ export interface operations {
             };
         };
     };
+    list_identities_auth_identities_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityRead"][];
+                };
+            };
+        };
+    };
+    unlink_identity_auth_identities__identity_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identity_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     login_auth_login_post: {
         parameters: {
             query?: {
@@ -4220,6 +4573,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserRead"];
+                };
+            };
+        };
+    };
+    social_link_start_auth_oidc__provider__link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UrlRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_in_providers_auth_providers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProvidersRead"];
                 };
             };
         };
@@ -4380,6 +4784,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sso_discover_auth_sso_discover_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiscoverRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiscoverRead"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -6744,6 +7181,270 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeliverabilityReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_connections_sso_connections_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_connection_sso_connections_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_connection_sso_connections__connection_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_connection_sso_connections__connection_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_domains_sso_domains_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_domain_sso_domains_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DomainCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_domain_sso_domains__domain_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                domain_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_domain_sso_domains__domain_id__verify_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                domain_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainRead"];
                 };
             };
             /** @description Validation Error */

@@ -131,6 +131,14 @@ def login(
     if auth_service.needs_captcha(db, str(payload.email)):
         protection.verify_captcha(payload.captcha_token, remote_ip=client_ip(request))
     user = auth_service.authenticate(db, email=str(payload.email), password=payload.password)
+    from app.services.sso.service import password_login_blocked
+
+    blocked = password_login_blocked(db, user)
+    if blocked is not None:
+        raise AuthenticationError(
+            f"Your organisation requires signing in with {blocked.display_name}.",
+            extra={"code": "sso_required"},
+        )
     if mfa.is_enabled(user):
         return LoginResponse(mfa_required=True, mfa_token=mfa.issue_mfa_token(user))
     return _complete_login(request, response, db, user, delivery)

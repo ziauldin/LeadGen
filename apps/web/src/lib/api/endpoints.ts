@@ -156,6 +156,39 @@ export const workspacesApi = {
     apiFetch<WorkspaceDetail>(`/invitations/${token}/accept`, { method: "POST" }),
 };
 
+export const ssoApi = {
+  providers: () => apiFetch<S["ProvidersRead"]>("/auth/providers", { skipAuthRetry: true }),
+  discover: (email: string) =>
+    apiFetch<S["DiscoverRead"]>("/auth/sso/discover", {
+      method: "POST",
+      body: json({ email }),
+      skipAuthRetry: true,
+    }),
+  identities: () => apiFetch<S["IdentityRead"][]>("/auth/identities"),
+  linkProvider: (provider: "google" | "microsoft") =>
+    apiFetch<S["UrlRead"]>(`/auth/oidc/${provider}/link`, { method: "POST" }),
+  unlinkIdentity: (id: number) => apiFetch<void>(`/auth/identities/${id}`, { method: "DELETE" }),
+  domains: () => apiFetch<S["DomainRead"][]>("/sso/domains"),
+  addDomain: (domain: string) =>
+    apiFetch<S["DomainRead"]>("/sso/domains", { method: "POST", body: json({ domain }) }),
+  verifyDomain: (id: number) =>
+    apiFetch<S["DomainRead"]>(`/sso/domains/${id}/verify`, { method: "POST" }),
+  deleteDomain: (id: number) => apiFetch<void>(`/sso/domains/${id}`, { method: "DELETE" }),
+  connections: () => apiFetch<S["ConnectionRead"][]>("/sso/connections"),
+  createConnection: (data: S["ConnectionWrite"]) =>
+    apiFetch<S["ConnectionRead"]>("/sso/connections", { method: "POST", body: json(data) }),
+  updateConnection: (id: number, data: S["ConnectionWrite"]) =>
+    apiFetch<S["ConnectionRead"]>(`/sso/connections/${id}`, { method: "PATCH", body: json(data) }),
+  deleteConnection: (id: number) =>
+    apiFetch<void>(`/sso/connections/${id}`, { method: "DELETE" }),
+};
+
+/** Where the browser goes to start "Continue with Google/Microsoft". */
+export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
+  const query = next ? `?next=${encodeURIComponent(next)}` : "";
+  return `/api/auth/oidc/${provider}/start${query}`;
+}
+
 export const billingApi = {
   summary: () => apiFetch<BillingSummary>("/billing"),
 };

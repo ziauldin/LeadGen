@@ -120,8 +120,11 @@ New capabilities are dark-launched and off by default:
 | `FEATURE_AI_EMAILS` | AI drafts, AI regeneration, AI reply labelling |
 | `FEATURE_INBOUND_WEBHOOKS` | Provider webhooks for replies, bounces and complaints |
 | `FEATURE_IMAP` | IMAP inbox polling for replies |
+| `FEATURE_SSO` | Workspace single sign-on (OIDC, SAML) |
 
 ## More documentation
 
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): Railway services, environment, migrations, backups, health checks.
+- [docs/SSO.md](docs/SSO.md): Google/Microsoft sign-in and workspace single sign-on.
+- [docs/RUNBOOKS.md](docs/RUNBOOKS.md): what to do when something breaks.
 - [docs/PROVIDERS.md](docs/PROVIDERS.md): setting up sending accounts, webhooks, IMAP, AI and search providers.

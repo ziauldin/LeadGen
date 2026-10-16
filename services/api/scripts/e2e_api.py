@@ -31,6 +31,7 @@ env = {
     "CORS_ORIGINS": WEB,
     "SECRET_KEY": "e2e-secret-key-that-is-long-enough-for-signing-tokens",
     "SECRET_ENCRYPTION_KEY": Fernet.generate_key().decode(),
+    "FEATURE_SSO": "true",
 }
 
 

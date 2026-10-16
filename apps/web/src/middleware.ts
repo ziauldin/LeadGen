@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   "/invite",
   "/health",
   "/healthz",
+  "/auth/complete",
 ];
 
 const SESSION_HINT = "lg_session";

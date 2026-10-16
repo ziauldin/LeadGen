@@ -130,6 +130,13 @@ class Settings(BaseSettings):
     feature_ai_emails: bool = False
     feature_imap: bool = False
     feature_inbound_webhooks: bool = False
+    feature_sso: bool = False
+
+    # "Continue with Google / Microsoft" (OIDC apps you register with each provider).
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+    microsoft_oauth_client_id: str = ""
+    microsoft_oauth_client_secret: str = ""
 
     # Platform-paid LLM, used when a workspace has no key of its own: groq | openai | gemini |
     # mock | "" (off). Workspace keys are stored encrypted as "llm" provider credentials.

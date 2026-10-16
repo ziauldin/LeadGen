@@ -10,6 +10,7 @@ os.environ.setdefault("REFRESH_COOKIE_PATH", "/auth")
 os.environ.setdefault("FEATURE_INBOUND_WEBHOOKS", "true")
 os.environ.setdefault("FEATURE_IMAP", "true")
 os.environ.setdefault("FEATURE_AI_EMAILS", "true")
+os.environ.setdefault("FEATURE_SSO", "true")
 os.environ.setdefault("PLATFORM_LLM_PROVIDER", "mock")
 os.environ.setdefault("PASSWORD_BREACH_CHECK", "false")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-for-hs256-signing")
@@ -120,31 +121,35 @@ def setup_db():
         _apply_row_level_security()
 
 
-def _apply_row_level_security() -> None:
-    """Same policies as the RLS migration, so the suite runs with them on PostgreSQL."""
-    import importlib.util
-    from pathlib import Path
+def tenant_table_names() -> list[str]:
+    """Every table whose model uses the TenantScoped mixin."""
+    from app.models.workspace import TenantScoped
 
-    path = (
-        Path(__file__).resolve().parents[1] / "alembic/versions/c5d6e7f8a9b0_row_level_security.py"
+    return sorted(
+        mapper.class_.__tablename__
+        for mapper in Base.registry.mappers
+        if issubclass(mapper.class_, TenantScoped)
     )
-    spec = importlib.util.spec_from_file_location("rls_migration", path)
-    module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+
+def _apply_row_level_security() -> None:
+    """The same policies the migrations create, so the suite runs with them on PostgreSQL."""
+    bypass = "current_setting('app.bypass_rls', true) = 'on'"
+    own = "workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::integer"
     with engine.begin() as conn:
-        for table in module.TENANT_TABLES:
+        for table in tenant_table_names():
             conn.exec_driver_sql(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
             conn.exec_driver_sql(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY")
             conn.exec_driver_sql(
-                f"CREATE POLICY tenant_isolation ON {table} USING ({module.BYPASS} OR "
-                f"{module.OWN}) WITH CHECK ({module.BYPASS} OR {module.OWN})",
+                f"CREATE POLICY tenant_isolation ON {table} USING ({bypass} OR {own}) "
+                f"WITH CHECK ({bypass} OR {own})",
             )
         conn.exec_driver_sql("ALTER TABLE suppressions ENABLE ROW LEVEL SECURITY")
         conn.exec_driver_sql("ALTER TABLE suppressions FORCE ROW LEVEL SECURITY")
         conn.exec_driver_sql(
             "CREATE POLICY tenant_isolation ON suppressions USING "
-            f"({module.BYPASS} OR workspace_id IS NULL OR {module.OWN}) WITH CHECK "
-            f"({module.BYPASS} OR workspace_id IS NULL OR {module.OWN})",
+            f"({bypass} OR workspace_id IS NULL OR {own}) WITH CHECK "
+            f"({bypass} OR workspace_id IS NULL OR {own})",
         )
 
 
