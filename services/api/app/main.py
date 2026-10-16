@@ -20,6 +20,7 @@ from app.api.routes import (
     developer,
     emails,
     health,
+    inbox,
     leads,
     mailboxes,
     niches,
@@ -124,6 +125,7 @@ app.include_router(roles.router)
 app.include_router(privacy.router)
 app.include_router(notifications.router)
 app.include_router(mailboxes.router)
+app.include_router(inbox.router)
 app.include_router(developer.router)
 app.include_router(public_v1.router)
 app.include_router(workspaces.router)

@@ -38,6 +38,7 @@ from app.services.developer import events as webhook_events
 from app.services.inbound import normalize
 from app.services.inbound.normalize import DeliveryEvent, InboundEmail
 from app.services.inbound.text import is_auto_reply, is_bounce_report, strip_quoted
+from app.services.inbox import service as inbox_service
 from app.services.notifications import events as notify_events
 from app.services.replies.classification import classify_reply
 from app.services.replies.llm_classifier import RULE_CONFIDENCE_THRESHOLD, classify_with_llm
@@ -413,6 +414,7 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
     apply_reply_effects(db, reply, message, lead)
     webhook_events.reply_received(db, reply)
     notify_events.reply_received(db, reply, lead)
+    inbox_service.on_reply(db, reply)
     db.commit()
     metrics.REPLIES_RECEIVED.labels(str(classification)).inc()
     return reply

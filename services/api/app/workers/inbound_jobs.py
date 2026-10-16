@@ -27,6 +27,18 @@ def retry_failed_webhooks() -> int:
         db.close()
 
 
+@celery_app.task(name="inbox.wake_snoozed", ignore_result=True)
+def wake_snoozed_conversations() -> int:
+    from app.services.inbox.service import wake_snoozed
+
+    db = SessionLocal()
+    try:
+        with system_session(db):
+            return wake_snoozed(db)
+    finally:
+        db.close()
+
+
 @celery_app.task(name="inbox.poll")
 def poll_inboxes() -> int:
     total = 0

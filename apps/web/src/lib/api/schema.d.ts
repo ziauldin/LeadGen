@@ -1435,6 +1435,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/inbox/conversations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Conversations */
+        get: operations["list_conversations_inbox_conversations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/inbox/conversations/{conversation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Conversation */
+        get: operations["get_conversation_inbox_conversations__conversation_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Conversation */
+        patch: operations["patch_conversation_inbox_conversations__conversation_id__patch"];
+        trace?: never;
+    };
+    "/inbox/conversations/{conversation_id}/reply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reply */
+        post: operations["reply_inbox_conversations__conversation_id__reply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/inbox/conversations/{conversation_id}/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suggest */
+        post: operations["suggest_inbox_conversations__conversation_id__suggest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/invitations/{token}": {
         parameters: {
             query?: never;
@@ -3774,6 +3843,100 @@ export interface components {
             /** Website */
             website?: string | null;
         };
+        /** ConversationDetail */
+        ConversationDetail: {
+            /** Assignee Id */
+            assignee_id: number | null;
+            /** Assignee Name */
+            assignee_name: string | null;
+            /** Can Reply */
+            can_reply: boolean;
+            /** Company Name */
+            company_name: string | null;
+            /** Contact Email */
+            contact_email: string;
+            /** Id */
+            id: number;
+            /** Labels */
+            labels: string[];
+            /** Last Classification */
+            last_classification: string | null;
+            /** Last Message At */
+            last_message_at: string | null;
+            /** Lead Id */
+            lead_id: number | null;
+            /** Lead Name */
+            lead_name: string | null;
+            /** Messages */
+            messages: components["schemas"]["ThreadItemRead"][];
+            /** Snoozed Until */
+            snoozed_until: string | null;
+            /** Status */
+            status: string;
+            /** Subject */
+            subject: string | null;
+            /** Unread */
+            unread: boolean;
+        };
+        /** ConversationPage */
+        ConversationPage: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Items */
+            items: components["schemas"]["ConversationRow"][];
+            /** Limit */
+            limit: number;
+            /** Skip */
+            skip: number;
+            /** Total */
+            total: number;
+        };
+        /** ConversationRow */
+        ConversationRow: {
+            /** Assignee Id */
+            assignee_id: number | null;
+            /** Assignee Name */
+            assignee_name: string | null;
+            /** Company Name */
+            company_name: string | null;
+            /** Contact Email */
+            contact_email: string;
+            /** Id */
+            id: number;
+            /** Labels */
+            labels: string[];
+            /** Last Classification */
+            last_classification: string | null;
+            /** Last Message At */
+            last_message_at: string | null;
+            /** Lead Id */
+            lead_id: number | null;
+            /** Lead Name */
+            lead_name: string | null;
+            /** Snoozed Until */
+            snoozed_until: string | null;
+            /** Status */
+            status: string;
+            /** Subject */
+            subject: string | null;
+            /** Unread */
+            unread: boolean;
+        };
+        /** ConversationUpdate */
+        ConversationUpdate: {
+            /** Assignee Id */
+            assignee_id?: number | null;
+            /** Labels */
+            labels?: string[] | null;
+            /** Snoozed Until */
+            snoozed_until?: string | null;
+            /** Status */
+            status?: ("open" | "snoozed" | "done") | null;
+            /** Unread */
+            unread?: boolean | null;
+        };
         /** DashboardSummary */
         DashboardSummary: {
             /** Active Campaigns */
@@ -5191,6 +5354,11 @@ export interface components {
             /** Subject */
             subject: string | null;
         };
+        /** ReplyRequest */
+        ReplyRequest: {
+            /** Body */
+            body: string;
+        };
         /** ReplySyncResponse */
         ReplySyncResponse: {
             /** Message */
@@ -5370,6 +5538,11 @@ export interface components {
             /** Subject */
             subject: string;
         };
+        /** SentReply */
+        SentReply: {
+            /** Email Message Id */
+            email_message_id: number;
+        };
         /** SessionRead */
         SessionRead: {
             /** Current */
@@ -5430,6 +5603,11 @@ export interface components {
             plan: string | null;
             /** Status */
             status: string | null;
+        };
+        /** Suggestion */
+        Suggestion: {
+            /** Body */
+            body: string;
         };
         /** SuppressionCreate */
         SuppressionCreate: {
@@ -5529,6 +5707,32 @@ export interface components {
             required: string[];
             /** Variables */
             variables: string[];
+        };
+        /** ThreadItemRead */
+        ThreadItemRead: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Body */
+            body: string;
+            /** Campaign Id */
+            campaign_id: number | null;
+            /** Classification */
+            classification: string | null;
+            /** From Email */
+            from_email: string | null;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string | null;
+            /** Subject */
+            subject: string | null;
+            /** To Email */
+            to_email: string | null;
         };
         /** TokenRequest */
         TokenRequest: {
@@ -8830,6 +9034,185 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthReadyResponse"];
+                };
+            };
+        };
+    };
+    list_conversations_inbox_conversations_get: {
+        parameters: {
+            query?: {
+                status?: "open" | "snoozed" | "done" | "all";
+                assigned?: "me" | "unassigned" | "any";
+                label?: string | null;
+                classification?: string | null;
+                search?: string | null;
+                skip?: number;
+                limit?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_conversation_inbox_conversations__conversation_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                conversation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_conversation_inbox_conversations__conversation_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                conversation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConversationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reply_inbox_conversations__conversation_id__reply_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                conversation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SentReply"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggest_inbox_conversations__conversation_id__suggest_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                conversation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Suggestion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

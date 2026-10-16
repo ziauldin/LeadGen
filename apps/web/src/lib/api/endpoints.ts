@@ -335,6 +335,18 @@ export const mailboxesApi = {
     }),
 };
 
+export const inboxApi = {
+  list: (params: ListParams = {}) =>
+    apiFetch<S["ConversationPage"]>(`/inbox/conversations${queryString(params)}`),
+  get: (id: number) => apiFetch<S["ConversationDetail"]>(`/inbox/conversations/${id}`),
+  update: (id: number, data: S["ConversationUpdate"]) =>
+    apiFetch<S["ConversationDetail"]>(`/inbox/conversations/${id}`, { method: "PATCH", body: json(data) }),
+  reply: (id: number, body: string) =>
+    apiFetch<S["SentReply"]>(`/inbox/conversations/${id}/reply`, { method: "POST", body: json({ body }) }),
+  suggest: (id: number) =>
+    apiFetch<S["Suggestion"]>(`/inbox/conversations/${id}/suggest`, { method: "POST" }),
+};
+
 /** Where the browser goes to start "Continue with Google/Microsoft". */
 export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";

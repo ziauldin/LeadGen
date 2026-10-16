@@ -25,6 +25,7 @@ from app.models.enums import (
     UserRole,
 )
 from app.models.inbound import EmailEvent, InboxCursor, WebhookEvent
+from app.models.inbox import Conversation
 from app.models.lead import Lead
 from app.models.llm_usage import LLMUsage
 from app.models.mailbox import CampaignSender
@@ -58,6 +59,7 @@ __all__ = [
     "CampaignStatus",
     "CampaignStep",
     "Company",
+    "Conversation",
     "DataRequest",
     "EmailActionToken",
     "EmailContact",

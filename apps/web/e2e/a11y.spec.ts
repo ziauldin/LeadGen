@@ -40,6 +40,7 @@ test("main app pages are accessible", async ({ page }) => {
     "/templates",
     "/email-studio",
     "/replies",
+    "/inbox",
     "/settings/workspace",
     "/settings/providers",
     "/settings/security",

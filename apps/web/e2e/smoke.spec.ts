@@ -130,6 +130,20 @@ test("sign up, build a campaign, approve, send, and handle a reply", async ({ pa
   await page.goto("/replies");
   await expect(page.getByRole("link").filter({ hasText: /Re:/ }).first()).toBeVisible();
 
+  // --- Answer it from the unified inbox ------------------------------------------------------
+  await page.goto("/inbox");
+  await page
+    .getByRole("list", { name: "Conversations" })
+    .getByRole("button")
+    .filter({ hasNotText: /unsubscribe/i })
+    .first()
+    .click();
+  await expect(page.getByRole("list", { name: "Messages" }).getByRole("listitem")).toHaveCount(2);
+  await page.getByLabel("Reply", { exact: true }).fill("Thanks for getting back to me. Does Tuesday at 10 work?");
+  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await expect(page.getByText("Reply sent")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Messages" }).getByRole("listitem")).toHaveCount(3);
+
   // --- Unsubscribe link shows a confirmation; nothing happens until it's submitted -----------
   const leads = await (await api.get(`/api/leads?search=Jo Patel`, { headers })).json();
   const draft = await (

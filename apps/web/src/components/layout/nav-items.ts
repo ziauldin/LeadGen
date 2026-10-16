@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Mail,
   Megaphone,
+  MessagesSquare,
   Search,
   Settings,
   Target,
@@ -30,7 +31,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/campaigns", label: "Campaigns", icon: Megaphone },
   { href: "/templates", label: "Templates", icon: FileText },
   { href: "/email-studio", label: "Email Studio", icon: Mail },
-  { href: "/replies", label: "Replies", icon: Inbox },
+  { href: "/inbox", label: "Inbox", icon: Inbox },
+  { href: "/replies", label: "Replies", icon: MessagesSquare },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

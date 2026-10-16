@@ -100,6 +100,10 @@ celery_app.conf.update(
             "task": "billing.daily",
             "schedule": 3600.0,
         },
+        "wake-snoozed-conversations": {
+            "task": "inbox.wake_snoozed",
+            "schedule": 300.0,
+        },
         "notifications-daily": {
             "task": "notifications.daily",
             "schedule": 3600.0,
