@@ -38,6 +38,7 @@ import {
 import { getErrorMessage } from "@/lib/api/client";
 import { companiesApi, leadsApi, nichesApi } from "@/lib/api/endpoints";
 import { VerificationBadge } from "@/components/leads/verification-badge";
+import { LeadCrmPanel } from "@/components/crm/lead-crm-panel";
 import type { Lead, LeadStatus, LeadUpdate } from "@/lib/api/types";
 
 const schema = z.object({
@@ -614,6 +615,8 @@ function LeadDetail({ lead }: { lead: Lead }) {
           </section>
         </aside>
       </div>
+
+      <LeadCrmPanel leadId={lead.id} leadName={lead.full_name} />
 
       <AddToCampaignDialog
         open={campaignOpen}

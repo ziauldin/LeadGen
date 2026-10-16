@@ -16,6 +16,7 @@ from app.api.routes import (
     campaigns,
     companies,
     compliance,
+    crm,
     dashboard,
     developer,
     emails,
@@ -126,6 +127,7 @@ app.include_router(privacy.router)
 app.include_router(notifications.router)
 app.include_router(mailboxes.router)
 app.include_router(inbox.router)
+app.include_router(crm.router)
 app.include_router(developer.router)
 app.include_router(public_v1.router)
 app.include_router(workspaces.router)

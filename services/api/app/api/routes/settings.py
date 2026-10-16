@@ -42,7 +42,7 @@ def update_settings(
 ) -> WorkspaceSettings:
     workspace_settings = get_or_create_settings(db, ctx.workspace_id)
     for field, value in payload.model_dump(exclude_unset=True).items():
-        if field in ("ai_mode", "block_risky_emails") and value is None:
+        if field in ("ai_mode", "block_risky_emails", "auto_create_deals") and value is None:
             continue
         setattr(workspace_settings, field, value)
     db.commit()

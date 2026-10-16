@@ -16,6 +16,7 @@ class PersonalisationContext:
     sender_name: str
     sender_company: str
     unsubscribe_link: str
+    meeting_link: str = ""
 
 
 def derive_first_name(full_name: str) -> str:
@@ -62,6 +63,7 @@ def build_context(
         pain_point=default_pain_point(niche),
         sender_name=sender_name,
         sender_company=sender_company,
+        meeting_link=(settings.meeting_link or "") if settings else "",
         unsubscribe_link=unsubscribe_url(api_base_url, unsubscribe_token or "preview-token"),
     )
 

@@ -20,6 +20,7 @@ FLAGS: dict[str, str] = {
     "sso": "Single sign-on",
     "public_api": "Public API and outbound webhooks",
     "mailbox_oauth": "Connect Gmail and Microsoft 365 mailboxes",
+    "crm": "Deals pipeline, tasks and notes",
 }
 
 

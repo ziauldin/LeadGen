@@ -178,6 +178,10 @@ class WorkspaceSettings(Base):
     require_lia_note: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     # Don't send to addresses verification marks as risky (catch-all, disposable...).
     block_risky_emails: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # CRM: open a deal automatically when someone replies with interest.
+    auto_create_deals: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Booking link for the {{meeting_link}} template variable (Calendly, Cal.com...).
+    meeting_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     retention_uncontacted_lead_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     retention_reply_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Slack incoming webhook (encrypted) and which notification kinds to post there.

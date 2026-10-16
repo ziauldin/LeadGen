@@ -35,6 +35,7 @@ KINDS: dict[str, Kind] = {
     "trial_ending": Kind("The free trial is about to end", True, True, ("owner",)),
     "member_joined": Kind("Someone joins the workspace", True, False, ("owner", "admin")),
     "data_request_done": Kind("A data request is ready", True, False, ("owner", "admin")),
+    "task_due": Kind("A task assigned to me is due", True, True),
     "weekly_digest": Kind("Weekly summary", False, True, ("owner", "admin")),
 }
 SLACK_KINDS = ("positive_reply", "campaign_paused", "payment_failed", "member_joined")

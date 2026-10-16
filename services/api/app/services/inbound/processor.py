@@ -34,6 +34,7 @@ from app.services.compliance.opt_out import (
     process_unsubscribe_for_message,
     suppress_email,
 )
+from app.services.crm import service as crm_service
 from app.services.developer import events as webhook_events
 from app.services.inbound import normalize
 from app.services.inbound.normalize import DeliveryEvent, InboundEmail
@@ -415,6 +416,7 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
     webhook_events.reply_received(db, reply)
     notify_events.reply_received(db, reply, lead)
     inbox_service.on_reply(db, reply)
+    crm_service.maybe_auto_deal(db, reply)
     db.commit()
     metrics.REPLIES_RECEIVED.labels(str(classification)).inc()
     return reply

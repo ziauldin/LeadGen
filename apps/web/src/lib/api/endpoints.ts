@@ -347,6 +347,27 @@ export const inboxApi = {
     apiFetch<S["Suggestion"]>(`/inbox/conversations/${id}/suggest`, { method: "POST" }),
 };
 
+export const crmApi = {
+  flags: () => apiFetch<Record<string, boolean>>("/workspaces/current/flags"),
+  board: () => apiFetch<S["Board"]>("/deals/board"),
+  createDeal: (data: S["DealWrite"]) => apiFetch<S["DealRead"]>("/deals", { method: "POST", body: json(data) }),
+  updateDeal: (id: number, data: S["DealWrite"]) =>
+    apiFetch<S["DealRead"]>(`/deals/${id}`, { method: "PATCH", body: json(data) }),
+  deleteDeal: (id: number) => apiFetch<void>(`/deals/${id}`, { method: "DELETE" }),
+  addStage: (data: S["StageWrite"]) =>
+    apiFetch<S["StageRead"]>("/deals/stages", { method: "POST", body: json(data) }),
+  tasks: (params: ListParams = {}) => apiFetch<S["TaskRead"][]>(`/tasks${queryString(params)}`),
+  createTask: (data: S["TaskWrite"]) => apiFetch<S["TaskRead"]>("/tasks", { method: "POST", body: json(data) }),
+  updateTask: (id: number, data: S["TaskWrite"]) =>
+    apiFetch<S["TaskRead"]>(`/tasks/${id}`, { method: "PATCH", body: json(data) }),
+  deleteTask: (id: number) => apiFetch<void>(`/tasks/${id}`, { method: "DELETE" }),
+  notes: (leadId: number) => apiFetch<S["NoteRead"][]>(`/leads/${leadId}/notes`),
+  addNote: (leadId: number, body: string) =>
+    apiFetch<S["NoteRead"]>(`/leads/${leadId}/notes`, { method: "POST", body: json({ body }) }),
+  deleteNote: (id: number) => apiFetch<void>(`/notes/${id}`, { method: "DELETE" }),
+  timeline: (leadId: number) => apiFetch<S["TimelineItem"][]>(`/leads/${leadId}/timeline`),
+};
+
 /** Where the browser goes to start "Continue with Google/Microsoft". */
 export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";

@@ -3,7 +3,9 @@ import {
   CheckSquare,
   FileText,
   Inbox,
+  KanbanSquare,
   LayoutDashboard,
+  ListTodo,
   Mail,
   Megaphone,
   MessagesSquare,
@@ -19,6 +21,8 @@ export type NavItem = {
   label: string;
   icon: LucideIcon;
   badge?: "approvals";
+  /** Only shown when this feature flag is on for the workspace. */
+  flag?: string;
 };
 
 export const NAV_ITEMS: NavItem[] = [
@@ -32,6 +36,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/templates", label: "Templates", icon: FileText },
   { href: "/email-studio", label: "Email Studio", icon: Mail },
   { href: "/inbox", label: "Inbox", icon: Inbox },
+  { href: "/deals", label: "Deals", icon: KanbanSquare, flag: "crm" },
+  { href: "/tasks", label: "Tasks", icon: ListTodo, flag: "crm" },
   { href: "/replies", label: "Replies", icon: MessagesSquare },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

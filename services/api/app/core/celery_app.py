@@ -22,6 +22,7 @@ celery_app = Celery(
         "app.workers.billing_jobs",
         "app.workers.notification_jobs",
         "app.workers.verification_jobs",
+        "app.workers.crm_jobs",
     ],
 )
 
@@ -99,6 +100,10 @@ celery_app.conf.update(
         "billing-daily": {
             "task": "billing.daily",
             "schedule": 3600.0,
+        },
+        "task-reminders": {
+            "task": "crm.task_reminders",
+            "schedule": 300.0,
         },
         "wake-snoozed-conversations": {
             "task": "inbox.wake_snoozed",

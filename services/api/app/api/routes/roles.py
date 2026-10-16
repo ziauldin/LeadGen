@@ -375,3 +375,11 @@ def export_audit_logs(
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="audit-log.csv"'},
     )
+
+
+@router.get("/workspaces/current/flags", response_model=dict[str, bool])
+def workspace_flags(ctx: WorkspaceContext = Depends(get_current_workspace)) -> dict[str, bool]:
+    """Which optional features are on for this workspace (server defaults plus admin overrides)."""
+    from app.core.flags import FLAGS, feature_enabled
+
+    return {name: feature_enabled(name, ctx.workspace) for name in FLAGS}

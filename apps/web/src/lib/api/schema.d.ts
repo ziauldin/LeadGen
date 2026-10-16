@@ -1217,6 +1217,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/deals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Deal */
+        post: operations["create_deal_deals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deals/board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Deals Board */
+        get: operations["deals_board_deals_board_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deals/stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Stage */
+        post: operations["add_stage_deals_stages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/deals/stages/{stage_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename Stage */
+        patch: operations["rename_stage_deals_stages__stage_id__patch"];
+        trace?: never;
+    };
+    "/deals/{deal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Deal */
+        delete: operations["delete_deal_deals__deal_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Deal */
+        patch: operations["update_deal_deals__deal_id__patch"];
+        trace?: never;
+    };
     "/developer/options": {
         parameters: {
             query?: never;
@@ -1646,6 +1732,24 @@ export interface paths {
         patch: operations["update_lead_leads__lead_id__patch"];
         trace?: never;
     };
+    "/leads/{lead_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notes */
+        get: operations["list_notes_leads__lead_id__notes_get"];
+        put?: never;
+        /** Add Note */
+        post: operations["add_note_leads__lead_id__notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/leads/{lead_id}/outreach-readiness": {
         parameters: {
             query?: never;
@@ -1655,6 +1759,23 @@ export interface paths {
         };
         /** Get Lead Outreach Readiness */
         get: operations["get_lead_outreach_readiness_leads__lead_id__outreach_readiness_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leads/{lead_id}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lead Timeline */
+        get: operations["lead_timeline_leads__lead_id__timeline_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1732,6 +1853,23 @@ export interface paths {
         head?: never;
         /** Update Niche */
         patch: operations["update_niche_niches__niche_id__patch"];
+        trace?: never;
+    };
+    "/notes/{note_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Note */
+        delete: operations["delete_note_notes__note_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/notifications": {
@@ -2395,6 +2533,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Tasks */
+        get: operations["list_tasks_tasks_get"];
+        put?: never;
+        /** Create Task */
+        post: operations["create_task_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Task */
+        delete: operations["delete_task_tasks__task_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Task */
+        patch: operations["update_task_tasks__task_id__patch"];
+        trace?: never;
+    };
     "/templates": {
         parameters: {
             query?: never;
@@ -2895,6 +3069,26 @@ export interface paths {
         patch: operations["update_current_workspaces_current_patch"];
         trace?: never;
     };
+    "/workspaces/current/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workspace Flags
+         * @description Which optional features are on for this workspace (server defaults plus admin overrides).
+         */
+        get: operations["workspace_flags_workspaces_current_flags_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/current/invitations": {
         parameters: {
             query?: never;
@@ -3329,6 +3523,15 @@ export interface components {
             trial_ends_at: string | null;
             /** Usage */
             usage: components["schemas"]["UsageItem"][];
+        };
+        /** Board */
+        Board: {
+            /** Deals */
+            deals: components["schemas"]["DealRead"][];
+            /** Stages */
+            stages: components["schemas"]["StageRead"][];
+            /** Weighted Pipeline Cents */
+            weighted_pipeline_cents: number;
         };
         /** Body_import_csv_leads_import_csv_post */
         Body_import_csv_leads_import_csv_post: {
@@ -4022,6 +4225,66 @@ export interface components {
             summary: {
                 [key: string]: number;
             } | null;
+        };
+        /** DealRead */
+        DealRead: {
+            /** Closed At */
+            closed_at: string | null;
+            /** Company Id */
+            company_id: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Expected Close Date */
+            expected_close_date: string | null;
+            /** Id */
+            id: number;
+            /** Lead Id */
+            lead_id: number | null;
+            /** Lead Name */
+            lead_name: string | null;
+            /** Owner Id */
+            owner_id: number | null;
+            /** Owner Name */
+            owner_name: string | null;
+            /** Source */
+            source: string;
+            /** Stage Id */
+            stage_id: number;
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Value Cents */
+            value_cents: number;
+        };
+        /** DealWrite */
+        DealWrite: {
+            /** Company Id */
+            company_id?: number | null;
+            /** Currency */
+            currency?: string | null;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Lead Id */
+            lead_id?: number | null;
+            /** Owner Id */
+            owner_id?: number | null;
+            /** Position */
+            position?: number | null;
+            /** Stage Id */
+            stage_id?: number | null;
+            /** Title */
+            title?: string | null;
+            /** Value Cents */
+            value_cents?: number | null;
         };
         /** DeleteAccountRequest */
         DeleteAccountRequest: {
@@ -4996,6 +5259,33 @@ export interface components {
             /** Target Roles */
             target_roles?: string[] | null;
         };
+        /** NoteRead */
+        NoteRead: {
+            /** Author Id */
+            author_id: number | null;
+            /** Author Name */
+            author_name: string | null;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deal Id */
+            deal_id: number | null;
+            /** Id */
+            id: number;
+            /** Lead Id */
+            lead_id: number | null;
+        };
+        /** NoteWrite */
+        NoteWrite: {
+            /** Body */
+            body: string;
+            /** Deal Id */
+            deal_id?: number | null;
+        };
         /** NotificationList */
         NotificationList: {
             /** Items */
@@ -5585,6 +5875,39 @@ export interface components {
             /** Webhook Url */
             webhook_url?: string | null;
         };
+        /** StageRead */
+        StageRead: {
+            /**
+             * Count
+             * @default 0
+             */
+            count: number;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /** Probability */
+            probability: number;
+            /**
+             * Value Cents
+             * @default 0
+             */
+            value_cents: number;
+        };
+        /** StageWrite */
+        StageWrite: {
+            /** Name */
+            name: string;
+            /**
+             * Probability
+             * @default 10
+             */
+            probability?: number;
+        };
         /** SubscriptionInfo */
         SubscriptionInfo: {
             /** Cancel At Period End */
@@ -5653,6 +5976,51 @@ export interface components {
         SuspendRequest: {
             /** Reason */
             reason: string;
+        };
+        /** TaskRead */
+        TaskRead: {
+            /** Assignee Id */
+            assignee_id: number | null;
+            /** Assignee Name */
+            assignee_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deal Id */
+            deal_id: number | null;
+            /** Done At */
+            done_at: string | null;
+            /** Due At */
+            due_at: string | null;
+            /** Id */
+            id: number;
+            /** Lead Id */
+            lead_id: number | null;
+            /** Lead Name */
+            lead_name: string | null;
+            /** Notes */
+            notes: string | null;
+            /** Title */
+            title: string;
+        };
+        /** TaskWrite */
+        TaskWrite: {
+            /** Assignee Id */
+            assignee_id?: number | null;
+            /** Deal Id */
+            deal_id?: number | null;
+            /** Done */
+            done?: boolean | null;
+            /** Due At */
+            due_at?: string | null;
+            /** Lead Id */
+            lead_id?: number | null;
+            /** Notes */
+            notes?: string | null;
+            /** Title */
+            title?: string | null;
         };
         /** TemplateCreate */
         TemplateCreate: {
@@ -5733,6 +6101,24 @@ export interface components {
             subject: string | null;
             /** To Email */
             to_email: string | null;
+        };
+        /** TimelineItem */
+        TimelineItem: {
+            /** Actor */
+            actor: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Detail */
+            detail: string | null;
+            /** Kind */
+            kind: string;
+            /** Ref Id */
+            ref_id: number | null;
+            /** Title */
+            title: string;
         };
         /** TokenRequest */
         TokenRequest: {
@@ -5880,12 +6266,19 @@ export interface components {
              */
             ai_mode: string;
             /**
+             * Auto Create Deals
+             * @default true
+             */
+            auto_create_deals: boolean;
+            /**
              * Block Risky Emails
              * @default false
              */
             block_risky_emails: boolean;
             /** Business Address */
             business_address: string | null;
+            /** Meeting Link */
+            meeting_link: string | null;
             /** Product Description */
             product_description: string | null;
             /** Sender Company */
@@ -5899,10 +6292,14 @@ export interface components {
         UserSettingsUpdate: {
             /** Ai Mode */
             ai_mode?: ("off" | "assist") | null;
+            /** Auto Create Deals */
+            auto_create_deals?: boolean | null;
             /** Block Risky Emails */
             block_risky_emails?: boolean | null;
             /** Business Address */
             business_address?: string | null;
+            /** Meeting Link */
+            meeting_link?: string | null;
             /** Product Description */
             product_description?: string | null;
             /** Sender Company */
@@ -8619,6 +9016,212 @@ export interface operations {
             };
         };
     };
+    create_deal_deals_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DealWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DealRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deals_board_deals_board_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Board"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_stage_deals_stages_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StageWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rename_stage_deals_stages__stage_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                stage_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StageWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StageRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_deal_deals__deal_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                deal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_deal_deals__deal_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                deal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DealWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DealRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     developer_options_developer_options_get: {
         parameters: {
             query?: never;
@@ -9592,6 +10195,76 @@ export interface operations {
             };
         };
     };
+    list_notes_leads__lead_id__notes_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                lead_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_note_leads__lead_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                lead_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_lead_outreach_readiness_leads__lead_id__outreach_readiness_get: {
         parameters: {
             query?: never;
@@ -9612,6 +10285,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OutreachReadiness"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lead_timeline_leads__lead_id__timeline_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                lead_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineItem"][];
                 };
             };
             /** @description Validation Error */
@@ -9847,6 +10553,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["NicheRead"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_note_notes__note_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                note_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -11495,6 +12232,146 @@ export interface operations {
             };
         };
     };
+    list_tasks_tasks_get: {
+        parameters: {
+            query?: {
+                scope?: "mine" | "all";
+                state?: "open" | "done" | "all";
+                due?: "overdue" | "today" | "upcoming" | "any";
+                lead_id?: number | null;
+                limit?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_task_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_task_tasks__task_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_task_tasks__task_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_email_templates_templates_get: {
         parameters: {
             query?: {
@@ -12824,6 +13701,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkspaceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    workspace_flags_workspaces_current_flags_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
                 };
             };
             /** @description Validation Error */
