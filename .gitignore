@@ -34,6 +34,8 @@ build/
 # SQLite local database
 services/api/data/*.db
 services/api/data/*.db-journal
+# Local file storage (exports, uploads) when STORAGE_BACKEND=local
+services/api/data/storage/
 
 # End-to-end test output
 services/api/e2e-api.log
