@@ -37,7 +37,13 @@ Railway's shared variables are the easiest way to give api, worker and beat the 
 | `INBOUND_EMAIL_DOMAIN` | optional; see [PROVIDERS.md](PROVIDERS.md#reply-addresses) |
 | `STORAGE_BACKEND=s3`, `S3_BUCKET`, `S3_ENDPOINT_URL`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | file storage for exports (Cloudflare R2 or S3). Local disk is lost on redeploy |
 | `SENTRY_DSN`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `METRICS_TOKEN` | optional observability; see [RUNBOOKS.md](RUNBOOKS.md) |
-| `FEATURE_*`, `PLATFORM_LLM_*` | as needed |
+| `FEATURE_*`, `PLATFORM_LLM_*` | as needed (see the flag table in the README) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICES`, `BILLING_TRIAL_DAYS`, `BILLING_GRACE_DAYS`, `PLAN_DISPLAY_PRICES` | with `FEATURE_BILLING=true`; the Stripe webhook goes to `https://api.example.com/billing/webhooks/stripe` ([BILLING.md](BILLING.md)) |
+| `GOOGLE_OAUTH_*`, `MICROSOFT_OAUTH_*` | social sign-in and mailbox connections ([SSO.md](SSO.md), [PROVIDERS.md](PROVIDERS.md)) |
+| `HUBSPOT_CLIENT_ID`, `HUBSPOT_CLIENT_SECRET` | HubSpot sync ([INTEGRATIONS.md](INTEGRATIONS.md)) |
+| `TURNSTILE_SECRET_KEY` | CAPTCHA on sign-up, password reset and repeated failed logins |
+| `SUPPORT_EMAIL` | where contact-form and feedback messages go |
+| `SUPERUSER_REQUIRE_MFA`, `IMPERSONATION_MAX_MINUTES` | back-office safety; keep the defaults in production ([ADMIN.md](ADMIN.md)) |
 
 The API refuses to start in production when one of these is unsafe:
 - `SECRET_KEY` is weak or still the placeholder
@@ -57,6 +63,12 @@ The error message lists what to fix.
 |---|---|
 | `API_INTERNAL_URL` | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}` |
 | `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | optional browser error reporting and source maps |
+| `NEXT_PUBLIC_SITE_URL` | the public site's canonical URL (sitemap, Open Graph) |
+| `NEXT_PUBLIC_LEGAL_ENTITY`, `NEXT_PUBLIC_LEGAL_ADDRESS`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_PRIVACY_EMAIL`, `NEXT_PUBLIC_STATUS_URL` | shown on the legal, contact and footer pages ([MARKETING.md](MARKETING.md)) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | the CAPTCHA site key, paired with `TURNSTILE_SECRET_KEY` |
+| `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` | optional product analytics, loaded only after cookie consent |
+
+`NEXT_PUBLIC_*` values are compiled into the build, so set them before building the web service.
 
 The browser only talks to the web service. `/api/*` is proxied to the API over Railway's private network, so the refresh-token cookie is first-party and httpOnly.
 

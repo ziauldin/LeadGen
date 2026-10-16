@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { expect, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 
 const API_LOG = resolve(__dirname, "../../../services/api/e2e-api.log");
 
@@ -72,4 +72,15 @@ export function grantSuperuser(email: string) {
     cwd: api,
     env: { ...process.env, DATABASE_URL: `sqlite:///${resolve(api, "data/e2e.db").split("\\").join("/")}` },
   });
+}
+
+/**
+ * Bearer headers for API calls, from a password sign-in on a standalone request context.
+ * (Reusing a page's refresh cookie would race the page's own token refresh.)
+ */
+export async function apiLogin(request: APIRequestContext, email: string, password = "correct-horse-battery") {
+  const response = await request.post("/api/auth/login", { data: { email, password } });
+  expect(response.ok(), await response.text()).toBeTruthy();
+  const { access_token: token } = await response.json();
+  return { Authorization: `Bearer ${token}` };
 }

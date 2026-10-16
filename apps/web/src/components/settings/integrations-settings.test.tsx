@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { IntegrationsSettings } from "@/components/settings/integrations-settings";
 import { renderWithClient } from "@/test/render";
 import { server } from "@/test/server";
+import type { components } from "@/lib/api/schema";
 
 const url = (path: string) => `http://localhost:3000/api${path}`;
 vi.mock("@/hooks/use-workspace", () => ({ useWorkspace: () => ({ can: () => true }) }));
@@ -13,7 +14,7 @@ const PROVIDERS = [
   { key: "hubspot", label: "HubSpot", auth: "oauth", available: true },
   { key: "pipedrive", label: "Pipedrive", auth: "token", available: true },
 ];
-const PIPEDRIVE = {
+const PIPEDRIVE: components["schemas"]["IntegrationConnectionRead"] = {
   id: 4,
   provider: "pipedrive",
   label: "Pipedrive",
@@ -30,7 +31,7 @@ describe("IntegrationsSettings", () => {
     const user = userEvent.setup();
     const assign = vi.fn();
     vi.stubGlobal("location", { ...window.location, assign, search: "" });
-    let connections: unknown[] = [];
+    let connections: (typeof PIPEDRIVE)[] = [];
     let sent: unknown = null;
     server.use(
       http.get(url("/integrations"), () => HttpResponse.json({ enabled: true, in_plan: true, providers: PROVIDERS, connections })),

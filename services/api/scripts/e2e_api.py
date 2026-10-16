@@ -37,6 +37,7 @@ env = {
     "FEATURE_CRM": "true",
     "FEATURE_ANALYTICS_V2": "true",
     "FEATURE_INTEGRATIONS": "true",
+    "FEATURE_PUBLIC_API": "true",
 }
 
 

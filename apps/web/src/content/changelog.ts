@@ -3,6 +3,18 @@ export type ChangelogEntry = { id: string; date: string; title: string; items: s
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: "2026-10-crm",
+    date: "2026-10-23",
+    title: "Inbox, deals, A/B tests and CRM sync",
+    items: [
+      "Connect Gmail and Microsoft 365 mailboxes and rotate sending across them",
+      "Verify email addresses before they are sent to",
+      "Answer every reply from one inbox, and track deals and tasks from interested replies",
+      "A/B test subject lines and emails, with a winner suggested once results are clear",
+      "Sync interested leads and deals with HubSpot or Pipedrive",
+    ],
+  },
+  {
     id: "2026-10-billing",
     date: "2026-10-20",
     title: "Plans, billing and a public site",
