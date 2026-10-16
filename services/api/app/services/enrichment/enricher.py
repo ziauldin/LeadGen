@@ -107,7 +107,7 @@ def _save_contacts(
 
 def _hunter_lookup(db: Session, company: Company) -> tuple[list[Any], str]:
     """Return ``(emails, note)``. Hunter problems never fail the enrichment."""
-    from app.services.enrichment.email_discovery.factory import get_email_discovery_provider
+    from app.services.enrichment.email_discovery.factory import resolve_email_discovery
     from app.services.enrichment.email_discovery.utils import extract_company_domain
 
     domain = extract_company_domain(company.website or company.domain)
@@ -118,14 +118,19 @@ def _hunter_lookup(db: Session, company: Company) -> tuple[list[Any], str]:
     from app.services.billing.usage import record_usage, remaining
 
     try:
-        provider = get_email_discovery_provider(db, company.workspace_id)
+        provider, metered = resolve_email_discovery(db, company.workspace_id)
         if provider is None:
             return [], "Hunter not configured or disabled"
         workspace = db.get(Workspace, company.workspace_id)
-        if workspace is not None and remaining(db, workspace, "daily_hunter_lookups") <= 0:
+        if (
+            metered
+            and workspace is not None
+            and remaining(db, workspace, "daily_hunter_lookups") <= 0
+        ):
             return [], "Hunter daily lookup limit reached"
         results = list(provider.discover_by_domain(domain))
-        record_usage(db, company.workspace_id, "daily_hunter_lookups")
+        if metered:  # a workspace's own Hunter key isn't counted against the plan
+            record_usage(db, company.workspace_id, "daily_hunter_lookups")
         return results, ""
     except Exception as exc:
         logger.warning("Hunter lookup failed for company %s: %s", company.id, exc)

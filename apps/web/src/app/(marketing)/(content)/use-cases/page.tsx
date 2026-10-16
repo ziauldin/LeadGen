@@ -52,7 +52,7 @@ export default function UseCasesPage() {
       <PageIntro eyebrow="Use cases" title="Built for teams who care how their outreach lands" />
       <div className="grid gap-6 md:grid-cols-2">
         {CASES.map((item) => (
-          <section key={item.title} className="rounded-xl border border-[var(--outline-variant)] bg-white p-6">
+          <section key={item.title} className="rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-6">
             <h2 className="text-[19px] font-semibold">{item.title}</h2>
             <p className="mt-2 text-[14px] text-[var(--on-surface-variant)]">{item.who}</p>
             <ul className="mt-4 list-disc space-y-1.5 pl-5 text-[14px]">

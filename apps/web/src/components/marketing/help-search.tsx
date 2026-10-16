@@ -36,7 +36,7 @@ export function HelpSearch({ articles }: { articles: Article[] }) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search, e.g. DKIM, unsubscribe, invoices"
-          className="h-11 bg-white pl-9 text-[15px]"
+          className="h-11 bg-[var(--surface-container-lowest)] pl-9 text-[15px]"
         />
       </div>
       <p className="sr-only" aria-live="polite">
@@ -53,7 +53,7 @@ export function HelpSearch({ articles }: { articles: Article[] }) {
                 <li key={article.slug}>
                   <Link
                     href={`/help/${article.slug}`}
-                    className="block h-full rounded-xl border border-[var(--outline-variant)] bg-white p-5 hover:border-[var(--primary)]"
+                    className="block h-full rounded-xl border border-[var(--outline-variant)] bg-[var(--surface-container-lowest)] p-5 hover:border-[var(--primary)]"
                   >
                     <span className="text-[15px] font-semibold">{article.title}</span>
                     <span className="mt-1 block text-[14px] text-[var(--on-surface-variant)]">{article.summary}</span>

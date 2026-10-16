@@ -81,7 +81,7 @@ Each contact gets a verification status:
 
 - **When contacts are checked:** with a provider connected, new contacts are checked in the background after CSV imports and when leads are added to a campaign. Anyone can also select leads and choose **Verify emails**. Without a provider, **Verify emails** runs a free DNS-only check (syntax, disposable domains, and whether the domain accepts mail at all), which can mark addresses invalid but never valid.
 - **What gets blocked:** the approval checks and the send gate never email `invalid` addresses. Turn on **Settings → Deliverability → Don't send to risky addresses** to block `risky` ones too.
-- **Credits:** each paid check uses one of the plan's `monthly_verifications` credits (Free 100, Starter 2,000, Pro 20,000, Enterprise 100,000). DNS-only checks and provider errors are free. Results older than 90 days are re-checked when verified again.
+- **Who pays:** checks on the workspace's own ZeroBounce or NeverBounce key are paid to that provider and never count against the plan. Without a key, the operator can offer platform verification (`PLATFORM_VERIFICATION_PROVIDER` and `PLATFORM_VERIFICATION_API_KEY`); each of those checks uses one of the plan's `monthly_verifications` (Free 100, Starter 2,000, Pro 20,000, Enterprise 100,000). DNS-only checks and provider errors are always free. Results older than 90 days are re-checked when verified again.
 
 ## Reply inbox (IMAP)
 

@@ -16,15 +16,28 @@ export default function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: 80,
-          background: "linear-gradient(135deg, #0b3b8c 0%, #1d4ed8 100%)",
           color: "white",
+          backgroundColor: "#06071a",
+          backgroundImage:
+            "radial-gradient(circle at 18% 25%, rgba(91,75,255,0.75), transparent 45%), radial-gradient(circle at 85% 15%, rgba(61,220,245,0.4), transparent 40%), radial-gradient(circle at 70% 85%, rgba(244,114,182,0.45), transparent 45%)",
         }}
       >
-        <div style={{ fontSize: 40, fontWeight: 700, opacity: 0.9 }}>{SITE.name}</div>
-        <div style={{ fontSize: 72, fontWeight: 800, marginTop: 24, lineHeight: 1.1 }}>
-          Outbound that respects the people you email
+        <div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 36, fontWeight: 700 }}>
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 14,
+              background: "linear-gradient(135deg, #5b4bff, #b2369f)",
+            }}
+          />
+          {SITE.name}
         </div>
-        <div style={{ fontSize: 30, marginTop: 28, opacity: 0.85 }}>{SITE.tagline}</div>
+        <div style={{ display: "flex", flexDirection: "column", fontSize: 76, fontWeight: 800, marginTop: 36, lineHeight: 1.05 }}>
+          <span>Book more meetings.</span>
+          <span style={{ color: "#cfe9ff" }}>Keep your domain clean.</span>
+        </div>
+        <div style={{ fontSize: 30, marginTop: 32, color: "#c9cdea" }}>{SITE.tagline}</div>
       </div>
     ),
     size,

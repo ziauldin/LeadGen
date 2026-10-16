@@ -119,3 +119,49 @@ def test_unexpected_crawler_failure_never_leaves_company_in_progress():
 
     assert response.json()["status"] == "failed"
     assert "boom" not in response.json()["message"]
+
+
+def _enrich(client, headers, company_id):
+    page = CrawledPage(url="https://acme-foods.co.uk", html="<p>no emails</p>")
+    with (
+        patch(
+            "app.services.enrichment.enricher.fetch_robots_parser",
+            return_value=(AllowAll(), True),
+        ),
+        patch(
+            "app.services.enrichment.enricher.crawl_company_site",
+            return_value=([page], None),
+        ),
+        patch(DISCOVER, return_value=[]) as discover,
+    ):
+        response = client.post(f"/companies/{company_id}/enrich?sync=true", headers=headers)
+        assert response.status_code == 200, response.text
+    return discover
+
+
+def _lookups(client, headers) -> int:
+    usage = {u["metric"]: u for u in client.get("/billing", headers=headers).json()["usage"]}
+    return usage["daily_hunter_lookups"]["used"]
+
+
+def test_own_hunter_key_is_not_counted_against_the_plan():
+    client = get_client()
+    headers = auth_headers(client)
+    company_id = _setup(client, headers)
+    credential = _save_hunter(client, headers).json()
+    client.patch(f"/provider-settings/{credential['id']}/activate", headers=headers)
+    assert _enrich(client, headers, company_id).called
+    assert _lookups(client, headers) == 0
+
+
+def test_platform_hunter_key_is_counted(monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "hunter_enabled", True)
+    monkeypatch.setattr(settings, "email_discovery_provider", "hunter")
+    monkeypatch.setattr(settings, "hunter_api_key", "platform-hunter-key")
+    client = get_client()
+    headers = auth_headers(client)
+    company_id = _setup(client, headers)
+    assert _enrich(client, headers, company_id).called
+    assert _lookups(client, headers) == 1

@@ -210,6 +210,26 @@ export interface paths {
         patch: operations["update_workspace_admin_workspaces__workspace_id__patch"];
         trace?: never;
     };
+    "/admin/workspaces/{workspace_id}/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant Credits
+         * @description Add credits (goodwill, refunds) or remove them (a negative amount). Always audited.
+         */
+        post: operations["grant_credits_admin_workspaces__workspace_id__credits_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/workspaces/{workspace_id}/impersonate": {
         parameters: {
             query?: never;
@@ -889,6 +909,66 @@ export interface paths {
         put?: never;
         /** Create Checkout */
         post: operations["create_checkout_billing_checkout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/billing/credit-packs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Credit Packs
+         * @description Credit packs and what one credit buys, for the pricing page.
+         */
+        get: operations["public_credit_packs_billing_credit_packs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/billing/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Credit History
+         * @description The latest 50 credit purchases, grants and daily usage.
+         */
+        get: operations["credit_history_billing_credits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/billing/credits/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Credit Checkout
+         * @description Buy a credit pack (a one-off payment). Credits are added when Stripe confirms payment.
+         */
+        post: operations["create_credit_checkout_billing_credits_checkout_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3643,6 +3723,7 @@ export interface components {
              * @default false
              */
             billing_enabled: boolean;
+            credits: components["schemas"]["CreditsInfo"] | null;
             /**
              * Features
              * @default {}
@@ -4341,6 +4422,58 @@ export interface components {
             reply_rate: number;
             /** Sent */
             sent: number;
+        };
+        /** CreditCheckoutRequest */
+        CreditCheckoutRequest: {
+            /** Credits */
+            credits: number;
+        };
+        /** CreditGrant */
+        CreditGrant: {
+            /** Amount */
+            amount: number;
+            /** Note */
+            note: string;
+        };
+        /** CreditPackInfo */
+        CreditPackInfo: {
+            /** Amount */
+            amount: number | null;
+            /** Credits */
+            credits: number;
+            /** Purchasable */
+            purchasable: boolean;
+        };
+        /** CreditTransactionRead */
+        CreditTransactionRead: {
+            /** Amount */
+            amount: number;
+            /** Balance After */
+            balance_after: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Metric */
+            metric: string | null;
+            /** Note */
+            note: string | null;
+        };
+        /** CreditsInfo */
+        CreditsInfo: {
+            /** Balance */
+            balance: number;
+            /** Packs */
+            packs: components["schemas"]["CreditPackInfo"][];
+            /** Units */
+            units: {
+                [key: string]: number;
+            };
         };
         /** DashboardSummary */
         DashboardSummary: {
@@ -5799,6 +5932,24 @@ export interface components {
             microsoft: boolean;
             /** Sso */
             sso: boolean;
+        };
+        /** PublicCreditPack */
+        PublicCreditPack: {
+            /** Amount */
+            amount: number | null;
+            /** Credits */
+            credits: number;
+            /** Currency */
+            currency: string;
+        };
+        /** PublicCredits */
+        PublicCredits: {
+            /** Packs */
+            packs: components["schemas"]["PublicCreditPack"][];
+            /** Units */
+            units: {
+                [key: string]: number;
+            };
         };
         /** PublicPlan */
         PublicPlan: {
@@ -7418,6 +7569,43 @@ export interface operations {
             };
         };
     };
+    grant_credits_admin_workspaces__workspace_id__credits_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditGrant"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     impersonate_admin_workspaces__workspace_id__impersonate_post: {
         parameters: {
             query?: never;
@@ -8623,6 +8811,92 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CheckoutRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UrlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_credit_packs_billing_credit_packs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicCredits"];
+                };
+            };
+        };
+    };
+    credit_history_billing_credits_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditTransactionRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_credit_checkout_billing_credits_checkout_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreditCheckoutRequest"];
             };
         };
         responses: {
