@@ -2,9 +2,13 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_workspace, get_verified_admin, get_verified_workspace
+from app.api.deps import (
+    get_current_workspace,
+    require_permission,
+)
 from app.api.paging import PageParams, order_by, page_params
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.rate_limit import enforce
 from app.core.tenancy import WorkspaceContext
 from app.models.campaign import Campaign
@@ -97,6 +101,7 @@ def create_campaign_endpoint(
     payload: CampaignCreate,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> CampaignRead:
     campaign = create_campaign(
         db,
@@ -135,6 +140,7 @@ def update_campaign(
     payload: CampaignUpdate,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> CampaignRead:
     campaign = get_campaign(db, campaign_id, ctx.workspace_id)
     return _serialize_campaign(
@@ -216,6 +222,7 @@ def add_leads(
     payload: AddLeadsRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> AddLeadsResponse:
     result = add_leads_to_campaign(db, ctx, campaign_id, payload.lead_ids)
     return AddLeadsResponse(
@@ -230,8 +237,11 @@ def add_leads(
 @router.post("/{campaign_id}/start", response_model=CampaignActionResponse)
 def start_campaign_endpoint(
     campaign_id: int,
-    ctx: WorkspaceContext = Depends(get_verified_workspace),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.CAMPAIGNS_SEND, verified=True)
+    ),
 ) -> CampaignActionResponse:
     campaign = start_campaign(db, campaign_id, ctx.workspace_id)
     return CampaignActionResponse(
@@ -244,6 +254,7 @@ def pause_campaign_endpoint(
     campaign_id: int,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_SEND)),
 ) -> CampaignActionResponse:
     campaign = pause_campaign(db, campaign_id, ctx.workspace_id)
     return CampaignActionResponse(campaign=_serialize_campaign(campaign), message="Campaign paused")
@@ -252,8 +263,11 @@ def pause_campaign_endpoint(
 @router.post("/{campaign_id}/process-sends", response_model=ProcessSendsResponse)
 def process_campaign_sends_endpoint(
     campaign_id: int,
-    ctx: WorkspaceContext = Depends(get_verified_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.CAMPAIGNS_SEND_NOW, verified=True)
+    ),
 ) -> ProcessSendsResponse:
     """Send this campaign's approved emails now (admin only). Normally the scheduler does this."""
     get_campaign(db, campaign_id, ctx.workspace_id)
@@ -319,6 +333,7 @@ def stop_enrollment_endpoint(
     enrollment_id: int,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> EnrollmentRead:
     enrollment = db.scalar(
         select(CampaignEnrollment).where(

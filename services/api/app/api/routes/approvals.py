@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_workspace, get_verified_workspace
+from app.api.deps import get_current_workspace, require_permission
 from app.api.paging import PageParams, order_by, page_params
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.email_message import EmailMessage
 from app.models.lead import Lead
@@ -115,8 +116,11 @@ def list_approvals(
 @router.post("/bulk-approve", response_model=BulkResult)
 def bulk_approve_endpoint(
     payload: BulkApproveRequest,
-    ctx: WorkspaceContext = Depends(get_verified_workspace),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.APPROVALS_APPROVE, verified=True)
+    ),
 ) -> BulkResult:
     return bulk_approve(db, ctx.workspace_id, payload.message_ids, actor_id=ctx.user_id)
 
@@ -126,6 +130,7 @@ def bulk_reject_endpoint(
     payload: BulkRejectRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.APPROVALS_APPROVE)),
 ) -> BulkResult:
     return bulk_reject(
         db,

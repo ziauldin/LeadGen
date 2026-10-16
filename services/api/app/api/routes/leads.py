@@ -3,10 +3,11 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_workspace, get_owned_lead
+from app.api.deps import get_current_workspace, get_owned_lead, require_permission
 from app.api.paging import PageParams, order_by, page_params
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.company import Company
 from app.models.email_contact import EmailContact
@@ -142,8 +143,13 @@ def bulk_leads(
     payload: LeadBulkRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> BulkResult:
     """Add to a campaign, enrich, change status, rescore or delete up to 500 leads at once."""
+    if payload.action == "delete" and not ctx.can(Permission.LEADS_DELETE):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Your role can't delete leads"
+        )
     return run_bulk_action(db, ctx, payload)
 
 
@@ -152,6 +158,7 @@ def create_lead(
     payload: LeadCreate,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> LeadRead:
     _ensure_niche_in_workspace(db, payload.niche_id, ctx.workspace_id)
     if payload.company_id is not None:
@@ -172,6 +179,7 @@ async def import_csv(
     file: UploadFile = File(...),
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> LeadImportResult:
     raw = await file.read(settings.csv_max_bytes + 1)
     if len(raw) > settings.csv_max_bytes:
@@ -200,6 +208,7 @@ def export_csv(
     niche_id: int | None = None,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.DATA_EXPORT)),
 ) -> PlainTextResponse:
     if niche_id is not None:
         _ensure_niche_in_workspace(db, niche_id, ctx.workspace_id)
@@ -231,6 +240,7 @@ def update_lead(
     lead: Lead = Depends(get_owned_lead),
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> LeadRead:
     updates = payload.model_dump(exclude_unset=True)
     if updates.get("company_id") is not None:
@@ -249,6 +259,7 @@ def update_lead(
 def delete_lead(
     lead: Lead = Depends(get_owned_lead),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_DELETE)),
 ) -> None:
     remove_lead(db, lead)
     db.commit()

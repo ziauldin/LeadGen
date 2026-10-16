@@ -229,6 +229,8 @@ def change_member_role(
         raise ValidationFailedError("A workspace must keep at least one owner")
     old_role = member.role
     member.role = role
+    if role != WorkspaceRole.MEMBER:
+        member.custom_role_id = None
     audit(
         db,
         workspace_id,
@@ -239,6 +241,55 @@ def change_member_role(
         {"from": old_role, "to": role.value},
     )
     db.commit()
+    return member
+
+
+def assign_custom_role(
+    db: Session,
+    *,
+    workspace_id: int,
+    actor_id: int,
+    actor_permissions: frozenset[str],
+    user_id: int,
+    custom_role_id: int | None,
+) -> WorkspaceMember:
+    """Give a member a custom role (or clear it). Custom roles only apply to the member role."""
+    from app.models.workspace import CustomRole
+
+    member = get_membership(db, workspace_id, user_id)
+    if member is None:
+        raise NotFoundError("Member not found")
+    role = None
+    if custom_role_id is not None:
+        role = db.scalar(
+            select(CustomRole).where(
+                CustomRole.id == custom_role_id, CustomRole.workspace_id == workspace_id
+            )
+        )
+        if role is None:
+            raise NotFoundError("Role not found")
+        if member.role != WorkspaceRole.MEMBER:
+            raise ValidationFailedError(
+                "Custom roles can only be given to people with the member role"
+            )
+        missing = set(role.permissions or []) - actor_permissions
+        if missing:
+            raise PermissionDeniedError(
+                "You can't give someone a role with permissions you don't have"
+            )
+    old = member.custom_role_id
+    member.custom_role_id = role.id if role else None
+    audit(
+        db,
+        workspace_id,
+        actor_id,
+        "member_custom_role_changed",
+        "user",
+        user_id,
+        {"from": old, "to": member.custom_role_id, "role": role.name if role else None},
+    )
+    db.commit()
+    db.refresh(member)
     return member
 
 

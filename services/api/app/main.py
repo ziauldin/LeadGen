@@ -22,6 +22,7 @@ from app.api.routes import (
     niches,
     provider_settings,
     replies,
+    roles,
     scoring,
     searches,
     settings,
@@ -110,6 +111,7 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(sso.router)
+app.include_router(roles.router)
 app.include_router(workspaces.router)
 app.include_router(workspaces.invitations_router)
 app.include_router(billing.router)

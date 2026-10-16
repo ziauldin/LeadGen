@@ -58,6 +58,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Audit Logs */
+        get: operations["list_audit_logs_audit_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/audit-logs/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Audit Logs */
+        get: operations["export_audit_logs_audit_logs_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/2fa": {
         parameters: {
             query?: never;
@@ -1350,6 +1384,62 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Roles */
+        get: operations["list_roles_roles_get"];
+        put?: never;
+        /** Create Role */
+        post: operations["create_role_roles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Permissions */
+        get: operations["list_permissions_roles_permissions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/roles/{role_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Role
+         * @description Delete a custom role. Members who had it go back to the built-in member role.
+         */
+        delete: operations["delete_role_roles__role_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Role */
+        patch: operations["update_role_roles__role_id__patch"];
+        trace?: never;
+    };
     "/scoring/recalculate": {
         parameters: {
             query?: never;
@@ -1913,6 +2003,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/current/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Permissions */
+        get: operations["my_permissions_workspaces_current_permissions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspace_id}/switch": {
         parameters: {
             query?: never;
@@ -2020,6 +2127,45 @@ export interface components {
             items: components["schemas"]["ApprovalItem"][];
             /** Limit */
             limit: number;
+            /** Skip */
+            skip: number;
+            /** Total */
+            total: number;
+        };
+        /** AuditEntry */
+        AuditEntry: {
+            /** Action */
+            action: string;
+            /** Actor Email */
+            actor_email: string | null;
+            /** Actor Id */
+            actor_id: number | null;
+            /** Actor Name */
+            actor_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Entity Id */
+            entity_id: number | null;
+            /** Entity Type */
+            entity_type: string;
+            /** Id */
+            id: number;
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** AuditPage */
+        AuditPage: {
+            /** Items */
+            items: components["schemas"]["AuditEntry"][];
+            /** Limit */
+            limit: number;
+            /** Retention Days */
+            retention_days: number;
             /** Skip */
             skip: number;
             /** Total */
@@ -3135,6 +3281,10 @@ export interface components {
         };
         /** MemberRead */
         MemberRead: {
+            /** Custom Role */
+            custom_role: string | null;
+            /** Custom Role Id */
+            custom_role_id: number | null;
             /** Email */
             email: string;
             /**
@@ -3150,7 +3300,9 @@ export interface components {
         };
         /** MemberUpdate */
         MemberUpdate: {
-            role: components["schemas"]["WorkspaceRole"];
+            /** Custom Role Id */
+            custom_role_id?: number | null;
+            role?: components["schemas"]["WorkspaceRole"] | null;
         };
         /** MessageResponse */
         MessageResponse: {
@@ -3163,6 +3315,15 @@ export interface components {
             code: string;
             /** Mfa Token */
             mfa_token: string;
+        };
+        /** MyPermissions */
+        MyPermissions: {
+            /** Custom Role */
+            custom_role: string | null;
+            /** Permissions */
+            permissions: string[];
+            /** Role */
+            role: string;
         };
         /** NicheCreate */
         NicheCreate: {
@@ -3264,6 +3425,13 @@ export interface components {
             issues: string[];
             /** Ready */
             ready: boolean;
+        };
+        /** PermissionInfo */
+        PermissionInfo: {
+            /** Description */
+            description: string;
+            /** Key */
+            key: string;
         };
         /** ProcessSendsResponse */
         ProcessSendsResponse: {
@@ -3541,6 +3709,33 @@ export interface components {
             password: string;
             /** Token */
             token: string;
+        };
+        /** RoleRead */
+        RoleRead: {
+            /** Built In */
+            built_in: boolean;
+            /** Description */
+            description: string | null;
+            /** Id */
+            id: number | null;
+            /**
+             * Member Count
+             * @default 0
+             */
+            member_count: number;
+            /** Name */
+            name: string;
+            /** Permissions */
+            permissions: string[];
+        };
+        /** RoleWrite */
+        RoleWrite: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Permissions */
+            permissions?: string[] | null;
         };
         /** RunSearchRequest */
         RunSearchRequest: {
@@ -4136,6 +4331,83 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BulkResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_audit_logs_audit_logs_get: {
+        parameters: {
+            query?: {
+                actor_id?: number | null;
+                action?: string | null;
+                entity_type?: string | null;
+                since?: string | null;
+                until?: string | null;
+                skip?: number;
+                limit?: number;
+                sort?: string | null;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_audit_logs_audit_logs_export_get: {
+        parameters: {
+            query?: {
+                actor_id?: number | null;
+                action?: string | null;
+                entity_type?: string | null;
+                since?: string | null;
+                until?: string | null;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -6900,6 +7172,171 @@ export interface operations {
             };
         };
     };
+    list_roles_roles_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_role_roles_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_permissions_roles_permissions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_role_roles__role_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_role_roles__role_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                role_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     recalculate_scores_scoring_recalculate_post: {
         parameters: {
             query?: never;
@@ -8350,6 +8787,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OnboardingStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_permissions_workspaces_current_permissions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyPermissions"];
                 };
             };
             /** @description Validation Error */

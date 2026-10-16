@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, ForeignKey, String
+from sqlalchemy import JSON, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 class AuditLog(Base, TimestampMixin):
     __tablename__ = "audit_logs"
+    __table_args__ = (Index("ix_audit_logs_workspace_created", "workspace_id", "created_at"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     workspace_id: Mapped[int | None] = mapped_column(

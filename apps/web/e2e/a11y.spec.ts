@@ -39,6 +39,8 @@ test("main app pages are accessible", async ({ page }) => {
     "/settings/providers",
     "/settings/security",
     "/settings/sso",
+    "/settings/roles",
+    "/settings/audit",
   ]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");

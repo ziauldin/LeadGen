@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_workspace
+from app.api.deps import get_current_workspace, require_permission
 from app.core.database import get_db
 from app.core.errors import ValidationFailedError
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.enums import ProviderName, SearchProvider, SearchStatus
 from app.models.niche import Niche
@@ -74,6 +75,7 @@ def generate_queries(
     payload: GenerateQueriesRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> GenerateQueriesResponse:
     niche = _get_niche(db, payload.niche_id, ctx)
     return GenerateQueriesResponse(niche_id=niche.id, queries=generate_search_queries(niche))
@@ -84,6 +86,7 @@ def run_search(
     payload: RunSearchRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> SearchQueryRead:
     niche = _get_niche(db, payload.niche_id, ctx)
 
@@ -132,6 +135,7 @@ def save_results(
     payload: SaveSearchResultsRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> SaveSearchResultsResponse:
     search = _get_search(db, search_id, ctx)
     niche = _get_niche(db, search.niche_id, ctx)

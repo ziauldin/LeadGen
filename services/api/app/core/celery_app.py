@@ -78,6 +78,10 @@ celery_app.conf.update(
             "task": "ops.heartbeat",
             "schedule": 60.0,
         },
+        "purge-audit-logs": {
+            "task": "ops.purge_audit_logs",
+            "schedule": 86400.0,
+        },
     },
 )
 

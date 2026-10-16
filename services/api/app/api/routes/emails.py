@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_current_workspace, get_verified_workspace
+from app.api.deps import (
+    get_current_user,
+    get_current_workspace,
+    require_permission,
+)
 from app.api.routes.approvals import approval_item
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.rate_limit import enforce
 from app.core.tenancy import WorkspaceContext
 from app.models.user import User
@@ -64,6 +69,7 @@ def preview_email(
     ctx: WorkspaceContext = Depends(get_current_workspace),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> EmailPreviewResponse:
     _limit_ai(ctx, payload.mode)
     try:
@@ -103,6 +109,7 @@ def generate_email(
     ctx: WorkspaceContext = Depends(get_current_workspace),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> EmailGenerateResponse:
     _limit_ai(ctx, payload.mode)
     try:
@@ -133,6 +140,7 @@ def regenerate_email(
     ctx: WorkspaceContext = Depends(get_current_workspace),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> EmailMessageRead:
     _limit_ai(ctx, payload.mode)
     try:
@@ -154,8 +162,11 @@ def regenerate_email(
 @router.post("/approve", response_model=EmailApproveResponse)
 def approve_email(
     payload: EmailApproveRequest,
-    ctx: WorkspaceContext = Depends(get_verified_workspace),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.APPROVALS_APPROVE, verified=True)
+    ),
 ) -> EmailApproveResponse:
     message = approve_email_message(
         db,
@@ -187,6 +198,7 @@ def edit_email(
     payload: EmailEditRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> ApprovalItem:
     edit_message(
         db,
@@ -202,8 +214,11 @@ def edit_email(
 @router.post("/{message_id}/approve", response_model=ApprovalItem)
 def approve_email_by_id(
     message_id: int,
-    ctx: WorkspaceContext = Depends(get_verified_workspace),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.APPROVALS_APPROVE, verified=True)
+    ),
 ) -> ApprovalItem:
     approve_email_message(db, message_id, ctx.workspace_id, actor_id=ctx.user_id)
     return _review_item(db, ctx.workspace_id, message_id)
@@ -215,6 +230,7 @@ def reject_email_by_id(
     payload: EmailRejectRequest,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.APPROVALS_APPROVE)),
 ) -> ApprovalItem:
     reject_message(db, ctx.workspace_id, message_id, reason=payload.reason, actor_id=ctx.user_id)
     return _review_item(db, ctx.workspace_id, message_id)

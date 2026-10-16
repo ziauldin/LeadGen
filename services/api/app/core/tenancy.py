@@ -38,9 +38,13 @@ class WorkspaceContext:
     user_id: int
     role: WorkspaceRole
     workspace: Workspace
+    permissions: frozenset[str] = frozenset()
 
     def has_role(self, minimum: WorkspaceRole) -> bool:
         return ROLE_RANK[self.role] >= ROLE_RANK[minimum]
+
+    def can(self, permission: str) -> bool:
+        return permission in self.permissions
 
 
 def _rls_settings(session: Session) -> tuple[str, str]:

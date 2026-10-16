@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.config import settings as app_settings
 from app.core.database import get_db
 from app.core.errors import PermissionDeniedError
+from app.core.permissions import DESCRIPTIONS, Permission, permissions_for
 from app.core.rate_limit import enforce
 from app.core.request_context import user_id_var, workspace_id_var
 from app.core.security import read_access_token
@@ -66,11 +67,13 @@ def get_current_workspace(
             "under Security, to continue.",
             extra={"code": "mfa_required"},
         )
+    custom = membership.custom_role.permissions if membership.custom_role else None
     ctx = WorkspaceContext(
         workspace_id=membership.workspace_id,
         user_id=current_user.id,
         role=WorkspaceRole(membership.role),
         workspace=membership.workspace,
+        permissions=permissions_for(membership.role, custom),
     )
     enforce(app_settings.rate_limit_default, "workspace", str(ctx.workspace_id))
     bind_session(db, ctx.workspace_id)
@@ -92,6 +95,40 @@ def require_role(minimum: WorkspaceRole) -> Callable[..., WorkspaceContext]:
 
 
 require_admin = require_role(WorkspaceRole.ADMIN)
+
+
+def require_permission(
+    permission: Permission, *, verified: bool = False
+) -> Callable[..., WorkspaceContext]:
+    """Allow the request only if the member's role grants ``permission``.
+
+    With ``verified=True`` the user must also have confirmed their email address (for actions
+    that send email, invite people or add credentials).
+    """
+
+    def dependency(
+        current_user: User = Depends(get_current_user),
+        ctx: WorkspaceContext = Depends(get_current_workspace),
+    ) -> WorkspaceContext:
+        if not ctx.can(permission):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Your role doesn't allow this ({DESCRIPTIONS.get(permission, permission)}).",
+            )
+        if (
+            verified
+            and settings.require_email_verification
+            and current_user.email_verified_at is None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Please confirm your email address before doing this.",
+            )
+        return ctx
+
+    return dependency
+
+
 require_owner = require_role(WorkspaceRole.OWNER)
 
 

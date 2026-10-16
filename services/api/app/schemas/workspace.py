@@ -60,10 +60,14 @@ class MemberRead(BaseModel):
     email: str
     role: WorkspaceRole
     joined_at: datetime
+    custom_role_id: int | None = None
+    custom_role: str | None = None
 
 
 class MemberUpdate(BaseModel):
-    role: WorkspaceRole
+    role: WorkspaceRole | None = None
+    # Send null to clear. Leave it out to keep the current custom role.
+    custom_role_id: int | None = None
 
 
 class InvitationCreate(BaseModel):

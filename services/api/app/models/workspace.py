@@ -84,9 +84,34 @@ class WorkspaceMember(Base, TimestampMixin):
     )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     role: Mapped[str] = mapped_column(String(20), default=WorkspaceRole.MEMBER, nullable=False)
+    # Members can be given a custom role (Enterprise) instead of the built-in member set.
+    custom_role_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "workspace_roles.id", ondelete="SET NULL", name="fk_workspace_members_custom_role_id"
+        ),
+        index=True,
+        nullable=True,
+    )
 
     workspace: Mapped[Workspace] = relationship(back_populates="members")
     user: Mapped[User] = relationship()
+    custom_role: Mapped[CustomRole | None] = relationship()
+
+
+class CustomRole(Base, TimestampMixin):
+    """A named set of permissions an Enterprise workspace defines for its members."""
+
+    __tablename__ = "workspace_roles"
+    __table_args__ = (UniqueConstraint("workspace_id", "name", name="uq_workspace_roles_name"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workspace_id: Mapped[int] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    permissions: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
 
 
 class WorkspaceInvitation(Base, TimestampMixin):

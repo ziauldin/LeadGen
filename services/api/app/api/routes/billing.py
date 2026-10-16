@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_workspace, require_owner
+from app.api.deps import get_current_workspace, require_permission
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.services.billing.plans import METRIC_PERIOD, features_for, limits_for
 from app.services.billing.provider import get_billing_provider
@@ -55,7 +56,8 @@ def get_billing(
 @router.post("/checkout")
 def create_checkout(
     payload: CheckoutRequest,
-    ctx: WorkspaceContext = Depends(require_owner),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.BILLING_MANAGE)),
 ) -> dict[str, str]:
     url = get_billing_provider().create_checkout(ctx.workspace, payload.plan)
     return {"url": url}

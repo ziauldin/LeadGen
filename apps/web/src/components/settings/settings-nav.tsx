@@ -9,7 +9,9 @@ import {
   Gauge,
   KeyRound,
   MailCheck,
+  ScrollText,
   ShieldCheck,
+  UserCog,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -18,7 +20,9 @@ import { cn } from "@/lib/utils";
 export const SETTINGS_SECTIONS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/settings/workspace", label: "Workspace", icon: Building2 },
   { href: "/settings/members", label: "Members", icon: Users },
+  { href: "/settings/roles", label: "Roles", icon: UserCog },
   { href: "/settings/security", label: "Security", icon: ShieldCheck },
+  { href: "/settings/audit", label: "Audit log", icon: ScrollText },
   { href: "/settings/sso", label: "Single sign-on", icon: Fingerprint },
   { href: "/settings/providers", label: "Providers", icon: KeyRound },
   { href: "/settings/suppressions", label: "Suppressions", icon: Ban },

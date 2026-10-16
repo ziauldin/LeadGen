@@ -12,11 +12,12 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_current_workspace, require_admin
+from app.api.deps import get_current_user, get_current_workspace, require_permission
 from app.api.routes.auth import _set_refresh_cookie
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.errors import NotFoundError, ValidationFailedError
+from app.core.permissions import Permission
 from app.core.rate_limit import client_ip, enforce, limiter
 from app.core.tenancy import WorkspaceContext
 from app.models.audit_log import AuditLog
@@ -536,15 +537,19 @@ def list_domains(
 @router.post("/sso/domains", response_model=DomainRead, status_code=status.HTTP_201_CREATED)
 def add_domain(
     payload: DomainCreate,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SSO_MANAGE)),
 ) -> DomainRead:
     return _domain_read(sso.add_domain(db, ctx.workspace_id, payload.domain))
 
 
 @router.post("/sso/domains/{domain_id}/verify", response_model=DomainRead)
 def verify_domain(
-    domain_id: int, ctx: WorkspaceContext = Depends(require_admin), db: Session = Depends(get_db)
+    domain_id: int,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SSO_MANAGE)),
 ) -> DomainRead:
     enforce("10/minute", "verify-domain", str(ctx.workspace_id))
     return _domain_read(sso.verify_domain(db, ctx.workspace_id, domain_id))
@@ -552,7 +557,10 @@ def verify_domain(
 
 @router.delete("/sso/domains/{domain_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_domain(
-    domain_id: int, ctx: WorkspaceContext = Depends(require_admin), db: Session = Depends(get_db)
+    domain_id: int,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SSO_MANAGE)),
 ) -> None:
     row = db.scalar(
         select(VerifiedDomain).where(
@@ -580,8 +588,9 @@ def list_connections(
 @router.post("/sso/connections", response_model=ConnectionRead, status_code=status.HTTP_201_CREATED)
 def create_connection(
     payload: ConnectionWrite,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SSO_MANAGE)),
 ) -> ConnectionRead:
     if not payload.protocol or not payload.display_name:
         raise ValidationFailedError("Choose a protocol and give the connection a name")
@@ -594,8 +603,9 @@ def create_connection(
 def update_connection(
     connection_id: int,
     payload: ConnectionWrite,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SSO_MANAGE)),
 ) -> ConnectionRead:
     row = db.scalar(
         select(SsoConnection).where(
@@ -612,8 +622,9 @@ def update_connection(
 @router.delete("/sso/connections/{connection_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_connection(
     connection_id: int,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.SSO_MANAGE)),
 ) -> None:
     row = db.scalar(
         select(SsoConnection).where(

@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_workspace, get_verified_admin, require_admin
+from app.api.deps import (
+    get_current_workspace,
+    require_permission,
+)
 from app.core.database import get_db
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.schemas.provider_settings import (
     ProviderCredentialListResponse,
@@ -53,8 +57,11 @@ def get_provider_settings(
 @router.post("", response_model=ProviderCredentialRead, status_code=status.HTTP_200_OK)
 def upsert_provider_settings(
     payload: ProviderCredentialUpsertRequest,
-    ctx: WorkspaceContext = Depends(get_verified_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.PROVIDERS_MANAGE, verified=True)
+    ),
 ) -> ProviderCredentialRead:
     try:
         credential = upsert_credential(
@@ -73,8 +80,11 @@ def upsert_provider_settings(
 @router.patch("/{credential_id}/activate", response_model=ProviderCredentialRead)
 def activate_provider_settings(
     credential_id: int,
-    ctx: WorkspaceContext = Depends(get_verified_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(
+        require_permission(Permission.PROVIDERS_MANAGE, verified=True)
+    ),
 ) -> ProviderCredentialRead:
     try:
         credential = activate_credential(db, ctx.workspace_id, ctx.user_id, credential_id)
@@ -86,8 +96,9 @@ def activate_provider_settings(
 @router.post("/{credential_id}/test", response_model=ProviderTestResponse)
 def test_provider_settings(
     credential_id: int,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.PROVIDERS_MANAGE)),
 ) -> ProviderTestResponse:
     credential = get_credential(db, ctx.workspace_id, credential_id)
     if credential is None:
@@ -101,8 +112,9 @@ def test_provider_settings(
 @router.delete("/{credential_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_provider_settings(
     credential_id: int,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.PROVIDERS_MANAGE)),
 ) -> None:
     try:
         delete_credential(db, ctx.workspace_id, ctx.user_id, credential_id)
@@ -114,8 +126,9 @@ def delete_provider_settings(
 def update_warmup(
     credential_id: int,
     payload: WarmupRequest,
-    ctx: WorkspaceContext = Depends(require_admin),
+    ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.PROVIDERS_MANAGE)),
 ) -> ProviderCredentialRead:
     credential = configure_warmup(
         db,

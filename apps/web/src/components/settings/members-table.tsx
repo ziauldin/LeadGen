@@ -18,7 +18,7 @@ import {
 import { SettingsCard, formatDate } from "@/components/settings/settings-card";
 import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { workspacesApi } from "@/lib/api/endpoints";
+import { rolesApi, workspacesApi } from "@/lib/api/endpoints";
 import type { Member, WorkspaceRole } from "@/lib/api/types";
 
 const ROLE_RANK: Record<WorkspaceRole, number> = { member: 0, admin: 1, owner: 2 };
@@ -63,12 +63,29 @@ export function MembersTable() {
     [members.data],
   );
 
+  const roles = useQuery({ queryKey: ["roles"], queryFn: rolesApi.list });
+  const customRoles = useMemo(() => (roles.data ?? []).filter((role) => !role.built_in), [roles.data]);
+
   const changeRole = useMutation({
     mutationFn: ({ userId, role }: { userId: number; role: WorkspaceRole }) =>
-      workspacesApi.updateMember(userId, role),
+      workspacesApi.updateMember(userId, { role }),
     onSuccess: (member) => {
       void queryClient.invalidateQueries({ queryKey: ["members"] });
       toast.success(`${member.name} is now ${ROLE_LABELS[member.role].toLowerCase()}`);
+    },
+  });
+
+  const changeCustomRole = useMutation({
+    mutationFn: ({ userId, roleId }: { userId: number; roleId: number | null }) =>
+      workspacesApi.updateMember(userId, { custom_role_id: roleId }),
+    onSuccess: (member) => {
+      void queryClient.invalidateQueries({ queryKey: ["members"] });
+      void queryClient.invalidateQueries({ queryKey: ["roles"] });
+      toast.success(
+        member.custom_role
+          ? `${member.name} now has the ${member.custom_role} role`
+          : `${member.name} is back on the standard member permissions`,
+      );
     },
   });
 
@@ -156,6 +173,58 @@ export function MembersTable() {
           );
         },
       },
+      ...(customRoles.length
+        ? [
+            {
+              id: "custom_role",
+              header: "Custom role",
+              className: "hidden md:table-cell",
+              cell: ({ row }: { row: { original: Row } }) => {
+                const member = row.original;
+                if (member.role !== "member") {
+                  return <span className="text-[var(--on-surface-variant)]">—</span>;
+                }
+                if (!canManage(member)) {
+                  return (
+                    <span className="text-[var(--on-surface-variant)]">{member.custom_role ?? "Standard"}</span>
+                  );
+                }
+                const items: Record<string, string> = {
+                  none: "Standard",
+                  ...Object.fromEntries(customRoles.map((role) => [String(role.id), role.name])),
+                };
+                return (
+                  <Select
+                    value={member.custom_role_id ? String(member.custom_role_id) : "none"}
+                    items={items}
+                    onValueChange={(value) => {
+                      const roleId = !value || value === "none" ? null : Number(value);
+                      if (roleId !== (member.custom_role_id ?? null)) {
+                        changeCustomRole.mutate({ userId: member.user_id, roleId });
+                      }
+                    }}
+                    disabled={changeCustomRole.isPending}
+                  >
+                    <SelectTrigger
+                      size="sm"
+                      className="w-[150px] bg-white"
+                      aria-label={`Custom role for ${member.name}`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false}>
+                      {Object.entries(items).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              },
+            } satisfies DataTableColumn<Row>,
+          ]
+        : []),
       {
         id: "joined",
         header: "Joined",
@@ -186,7 +255,7 @@ export function MembersTable() {
     ],
     // canManage/roleOptions only depend on these values.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user?.id, myRole, isAdmin, changeRole.isPending],
+    [user?.id, myRole, isAdmin, changeRole.isPending, changeCustomRole.isPending, customRoles],
   );
 
   const count = rows?.length ?? 0;

@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_workspace
+from app.api.deps import get_current_workspace, require_permission
 from app.core.database import get_db
 from app.core.errors import NotFoundError
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.email_template import EmailTemplateRecord
 from app.schemas.template import TemplateCreate, TemplateRead, TemplateUpdate, TemplateVariables
@@ -85,6 +86,7 @@ def create_email_template(
     payload: TemplateCreate,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> TemplateRead:
     record = create_template(
         db,
@@ -113,6 +115,7 @@ def update_email_template(
     payload: TemplateUpdate,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> TemplateRead:
     record = update_template(
         db,
@@ -131,6 +134,7 @@ def delete_email_template(
     template_id: str,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.CAMPAIGNS_MANAGE)),
 ) -> None:
     """Archive the template. Campaign steps keep their own copy of its text."""
     record = archive_template(db, ctx.workspace_id, _record_id(template_id))

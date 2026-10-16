@@ -134,10 +134,11 @@ export const workspacesApi = {
   switch: (id: number) =>
     apiFetch<WorkspaceDetail>(`/workspaces/${id}/switch`, { method: "POST" }),
   members: () => apiFetch<Member[]>("/workspaces/current/members"),
-  updateMember: (userId: number, role: WorkspaceRole) =>
+  /** Change the built-in role and/or the custom role (null clears it). */
+  updateMember: (userId: number, data: { role?: WorkspaceRole; custom_role_id?: number | null }) =>
     apiFetch<Member>(`/workspaces/current/members/${userId}`, {
       method: "PATCH",
-      body: json({ role }),
+      body: json(data),
     }),
   removeMember: (userId: number) =>
     apiFetch<void>(`/workspaces/current/members/${userId}`, { method: "DELETE" }),
@@ -181,6 +182,23 @@ export const ssoApi = {
     apiFetch<S["ConnectionRead"]>(`/sso/connections/${id}`, { method: "PATCH", body: json(data) }),
   deleteConnection: (id: number) =>
     apiFetch<void>(`/sso/connections/${id}`, { method: "DELETE" }),
+};
+
+export const rolesApi = {
+  mine: () => apiFetch<S["MyPermissions"]>("/workspaces/current/permissions"),
+  permissions: () => apiFetch<S["PermissionInfo"][]>("/roles/permissions"),
+  list: () => apiFetch<S["RoleRead"][]>("/roles"),
+  create: (data: S["RoleWrite"]) =>
+    apiFetch<S["RoleRead"]>("/roles", { method: "POST", body: json(data) }),
+  update: (id: number, data: S["RoleWrite"]) =>
+    apiFetch<S["RoleRead"]>(`/roles/${id}`, { method: "PATCH", body: json(data) }),
+  remove: (id: number) => apiFetch<void>(`/roles/${id}`, { method: "DELETE" }),
+};
+
+export const auditApi = {
+  list: (params: ListParams = {}) => apiFetch<S["AuditPage"]>(`/audit-logs${queryString(params)}`),
+  exportCsv: (params: ListParams = {}) =>
+    downloadAuthenticatedFile(`/audit-logs/export${queryString(params)}`, "audit-log.csv"),
 };
 
 /** Where the browser goes to start "Continue with Google/Microsoft". */

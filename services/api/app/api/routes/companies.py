@@ -5,10 +5,11 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import get_current_workspace
+from app.api.deps import get_current_workspace, require_permission
 from app.api.paging import PageParams, order_by, page_params
 from app.core.database import get_db
 from app.core.errors import AppError
+from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.company import Company
 from app.models.enums import EnrichmentStatus
@@ -98,6 +99,7 @@ def update_company(
     company_id: int,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> Company:
     company = _get_company(db, company_id, ctx)
 
@@ -129,6 +131,7 @@ def enrich_company_endpoint(
     sync: bool = Query(default=False, description="Run inline instead of on a worker"),
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> EnrichCompanyResponse:
     company = _get_company(db, company_id, ctx)
 
@@ -161,6 +164,7 @@ def bulk_enrich_companies(
     payload: BulkIds,
     ctx: WorkspaceContext = Depends(get_current_workspace),
     db: Session = Depends(get_db),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.LEADS_WRITE)),
 ) -> BulkResult:
     """Queue enrichment for many companies. Stops charging once the daily quota is used up."""
     result = BulkResult()
