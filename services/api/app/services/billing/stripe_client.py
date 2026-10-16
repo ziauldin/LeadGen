@@ -89,6 +89,9 @@ class StripeClient:
             "POST", "billing_portal/sessions", {"customer": customer, "return_url": return_url}
         )
 
+    def retrieve_checkout_session(self, session_id: str) -> dict[str, Any]:
+        return self.request("GET", f"checkout/sessions/{session_id}")
+
     def retrieve_subscription(self, subscription_id: str) -> dict[str, Any]:
         return self.request("GET", f"subscriptions/{subscription_id}")
 

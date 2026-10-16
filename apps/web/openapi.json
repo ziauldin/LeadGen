@@ -765,6 +765,16 @@
             "title": "Billing Enabled",
             "type": "boolean"
           },
+          "credits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreditsInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "features": {
             "additionalProperties": {
               "anyOf": [
@@ -847,6 +857,7 @@
         },
         "required": [
           "billing_enabled",
+          "credits",
           "features",
           "limits",
           "plan",
@@ -3232,6 +3243,160 @@
           "sent"
         ],
         "title": "Counts",
+        "type": "object"
+      },
+      "CreditCheckoutRequest": {
+        "properties": {
+          "credits": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 10000000.0,
+            "title": "Credits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "credits"
+        ],
+        "title": "CreditCheckoutRequest",
+        "type": "object"
+      },
+      "CreditGrant": {
+        "properties": {
+          "amount": {
+            "maximum": 10000000.0,
+            "minimum": -10000000.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "note": {
+            "maxLength": 255,
+            "minLength": 3,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "note"
+        ],
+        "title": "CreditGrant",
+        "type": "object"
+      },
+      "CreditPackInfo": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "purchasable": {
+            "title": "Purchasable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "amount",
+          "credits",
+          "purchasable"
+        ],
+        "title": "CreditPackInfo",
+        "type": "object"
+      },
+      "CreditTransactionRead": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "integer"
+          },
+          "balance_after": {
+            "title": "Balance After",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "metric": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "amount",
+          "balance_after",
+          "created_at",
+          "id",
+          "kind",
+          "metric",
+          "note"
+        ],
+        "title": "CreditTransactionRead",
+        "type": "object"
+      },
+      "CreditsInfo": {
+        "properties": {
+          "balance": {
+            "title": "Balance",
+            "type": "integer"
+          },
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/CreditPackInfo"
+            },
+            "title": "Packs",
+            "type": "array"
+          },
+          "units": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Units",
+            "type": "object"
+          }
+        },
+        "required": [
+          "balance",
+          "packs",
+          "units"
+        ],
+        "title": "CreditsInfo",
         "type": "object"
       },
       "DashboardSummary": {
@@ -7873,6 +8038,60 @@
         "title": "ProvidersRead",
         "type": "object"
       },
+      "PublicCreditPack": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "credits",
+          "currency"
+        ],
+        "title": "PublicCreditPack",
+        "type": "object"
+      },
+      "PublicCredits": {
+        "properties": {
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/PublicCreditPack"
+            },
+            "title": "Packs",
+            "type": "array"
+          },
+          "units": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Units",
+            "type": "object"
+          }
+        },
+        "required": [
+          "packs",
+          "units"
+        ],
+        "title": "PublicCredits",
+        "type": "object"
+      },
       "PublicPlan": {
         "properties": {
           "currency": {
@@ -12403,6 +12622,68 @@
         ]
       }
     },
+    "/admin/workspaces/{workspace_id}/credits": {
+      "post": {
+        "description": "Add credits (goodwill, refunds) or remove them (a negative amount). Always audited.",
+        "operationId": "grant_credits_admin_workspaces__workspace_id__credits_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditGrant"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Grant Credits Admin Workspaces  Workspace Id  Credits Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Grant Credits",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/admin/workspaces/{workspace_id}/impersonate": {
       "post": {
         "description": "A short-lived token to view the app as a member. Read-only unless ``write`` is set.",
@@ -14553,6 +14834,152 @@
           }
         ],
         "summary": "Create Checkout",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/billing/credit-packs": {
+      "get": {
+        "description": "Credit packs and what one credit buys, for the pricing page.",
+        "operationId": "public_credit_packs_billing_credit_packs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicCredits"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Public Credit Packs",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/billing/credits": {
+      "get": {
+        "description": "The latest 50 credit purchases, grants and daily usage.",
+        "operationId": "credit_history_billing_credits_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CreditTransactionRead"
+                  },
+                  "title": "Response Credit History Billing Credits Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Credit History",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/billing/credits/checkout": {
+      "post": {
+        "description": "Buy a credit pack (a one-off payment). Credits are added when Stripe confirms payment.",
+        "operationId": "create_credit_checkout_billing_credits_checkout_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditCheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UrlResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Credit Checkout",
         "tags": [
           "billing"
         ]

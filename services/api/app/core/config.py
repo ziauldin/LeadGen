@@ -147,6 +147,13 @@ class Settings(BaseSettings):
     stripe_api_base: str = "https://api.stripe.com/v1"
     billing_trial_days: int = 14
     billing_grace_days: int = 7
+    # Credit packs shown on the pricing page and in billing settings (display prices), and
+    # the Stripe one-off price for each pack, e.g. {"1000": "price_..."}.
+    credit_packs: str = (
+        '[{"credits": 1000, "amount": 10}, {"credits": 5000, "amount": 40}, '
+        '{"credits": 20000, "amount": 120}]'
+    )
+    stripe_credit_prices: str = "{}"
 
     # Marketing site: prices shown on /pricing (Stripe stays the source of truth for charges)
     # and where contact-form messages go.

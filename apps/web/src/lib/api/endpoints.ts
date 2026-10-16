@@ -400,6 +400,9 @@ export const billingApi = {
     apiFetch<{ url: string }>("/billing/checkout", { method: "POST", body: json({ plan, interval }) }),
   portal: () => apiFetch<{ url: string }>("/billing/portal", { method: "POST" }),
   invoices: () => apiFetch<S["Invoice"][]>("/billing/invoices"),
+  buyCredits: (credits: number) =>
+    apiFetch<{ url: string }>("/billing/credits/checkout", { method: "POST", body: json({ credits }) }),
+  creditHistory: () => apiFetch<S["CreditTransactionRead"][]>("/billing/credits"),
 };
 
 export const dashboardApi = {

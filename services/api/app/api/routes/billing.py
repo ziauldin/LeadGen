@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from app.core.permissions import Permission
 from app.core.tenancy import WorkspaceContext
 from app.models.billing import Subscription
 from app.models.user import User
+from app.services.billing import credits as credit_service
 from app.services.billing import stripe_billing
 from app.services.billing.plans import METRIC_PERIOD, PLANS, features_for, limits_for
 from app.services.billing.provider import BillingNotConfiguredError
@@ -39,6 +40,33 @@ class SubscriptionInfo(BaseModel):
     has_billing_account: bool
 
 
+class CreditPackInfo(BaseModel):
+    credits: int
+    amount: float | None
+    purchasable: bool
+
+
+class CreditsInfo(BaseModel):
+    balance: int
+    packs: list[CreditPackInfo]
+    # How many units of each metric one credit buys, e.g. {"monthly_llm_tokens": 1000}.
+    units: dict[str, int]
+
+
+class CreditTransactionRead(BaseModel):
+    id: int
+    amount: int
+    kind: str
+    metric: str | None
+    note: str | None
+    balance_after: int
+    created_at: datetime
+
+
+class CreditCheckoutRequest(BaseModel):
+    credits: int = Field(gt=0, le=10_000_000)
+
+
 class BillingSummary(BaseModel):
     plan: str
     limits: dict[str, int]
@@ -51,6 +79,19 @@ class BillingSummary(BaseModel):
     trial_ends_at: datetime | None = None
     subscription: SubscriptionInfo | None = None
     sending_paused_for_payment: bool = False
+    credits: CreditsInfo | None = None
+
+
+def credits_info(db: Session, workspace_id: int) -> CreditsInfo:
+    online = stripe_billing.billing_enabled()
+    return CreditsInfo(
+        balance=credit_service.balance(db, workspace_id),
+        packs=[
+            CreditPackInfo(**credit_service.pack_payload(pack, online))
+            for pack in credit_service.credit_packs()
+        ],
+        units=dict(credit_service.CREDIT_UNITS),
+    )
 
 
 class CheckoutRequest(BaseModel):
@@ -122,6 +163,7 @@ def get_billing(
             workspace.sending_suspended_at
             and (workspace.sending_suspended_reason or "").startswith(stripe_billing.DUNNING_REASON)
         ),
+        credits=credits_info(db, ctx.workspace_id),
     )
 
 
@@ -142,6 +184,33 @@ def create_checkout(
         )
     except StripeError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@router.post("/credits/checkout", response_model=UrlResponse)
+def create_credit_checkout(
+    payload: CreditCheckoutRequest,
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    _allowed: WorkspaceContext = Depends(require_permission(Permission.BILLING_MANAGE)),
+) -> UrlResponse:
+    """Buy a credit pack (a one-off payment). Credits are added when Stripe confirms payment."""
+    _require_billing()
+    try:
+        return UrlResponse(
+            url=stripe_billing.create_credit_checkout(db, ctx.workspace, user, payload.credits)
+        )
+    except StripeError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@router.get("/credits", response_model=list[CreditTransactionRead])
+def credit_history(
+    ctx: WorkspaceContext = Depends(get_current_workspace),
+    db: Session = Depends(get_db),
+) -> list[Any]:
+    """The latest 50 credit purchases, grants and daily usage."""
+    return credit_service.history(db, ctx.workspace_id)
 
 
 @router.post("/portal", response_model=UrlResponse)
