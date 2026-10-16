@@ -26,16 +26,24 @@ class TransactionalMailer(Protocol):
     def send(self, email: TransactionalEmail) -> None: ...
 
 
-# Last emails sent by the console mailer. Used by tests and the e2e test-mail endpoint.
+# Last emails sent by the console mailer. Used by tests.
 OUTBOX: deque[TransactionalEmail] = deque(maxlen=200)
 
 
 class ConsoleMailer:
-    """Development/test mailer: logs the email and keeps it in memory."""
+    """Development/test mailer: logs the whole email (links included) and keeps it in memory.
+
+    Never used in production (the config check refuses it), so logging the body is safe.
+    """
 
     def send(self, email: TransactionalEmail) -> None:
         OUTBOX.append(email)
-        logger.info("Platform email (console) to=%s subject=%s", email.to, email.subject)
+        logger.info(
+            "Platform email (console) to=%s subject=%s\n%s",
+            email.to,
+            email.subject,
+            email.text,
+        )
 
 
 class ResendMailer:

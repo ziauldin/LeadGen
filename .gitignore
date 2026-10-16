@@ -34,3 +34,9 @@ build/
 # SQLite local database
 services/api/data/*.db
 services/api/data/*.db-journal
+
+# End-to-end test output
+services/api/e2e-api.log
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/blob-report/
