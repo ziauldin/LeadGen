@@ -11,6 +11,7 @@ os.environ.setdefault("FEATURE_INBOUND_WEBHOOKS", "true")
 os.environ.setdefault("FEATURE_IMAP", "true")
 os.environ.setdefault("FEATURE_AI_EMAILS", "true")
 os.environ.setdefault("PLATFORM_LLM_PROVIDER", "mock")
+os.environ.setdefault("PASSWORD_BREACH_CHECK", "false")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-for-hs256-signing")
 
 from fastapi.testclient import TestClient

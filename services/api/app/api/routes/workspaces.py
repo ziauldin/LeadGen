@@ -10,6 +10,7 @@ from app.api.deps import (
     require_verified_user,
 )
 from app.core.database import get_db
+from app.core.errors import PermissionDeniedError, ValidationFailedError
 from app.core.rate_limit import enforce
 from app.core.tenancy import WorkspaceContext
 from app.models.campaign import Campaign
@@ -93,8 +94,18 @@ def update_current(
 ) -> Workspace:
     workspace = db.get(Workspace, ctx.workspace_id)
     assert workspace is not None  # noqa: S101 - resolved by the dependency
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(workspace, field, value)
+    updates = payload.model_dump(exclude_unset=True)
+    if updates.get("require_2fa") is not None:
+        if ctx.role != WorkspaceRole.OWNER:
+            raise PermissionDeniedError("Only owners can change the two-factor policy")
+        actor = db.get(User, ctx.user_id)
+        if updates["require_2fa"] and not (actor and actor.mfa_enabled):
+            raise ValidationFailedError(
+                "Turn on two-factor authentication for your own account first"
+            )
+    for field, value in updates.items():
+        if value is not None:
+            setattr(workspace, field, value)
     workspaces.audit(
         db, ctx.workspace_id, ctx.user_id, "workspace_updated", "workspace", workspace.id
     )

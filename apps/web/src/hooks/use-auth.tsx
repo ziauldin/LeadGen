@@ -26,12 +26,20 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   isVerified: boolean;
-  login: (email: string, password: string, next?: string | null) => Promise<void>;
+  /** Resolves to an MFA token when a two-factor code is still needed. */
+  login: (
+    email: string,
+    password: string,
+    next?: string | null,
+    captchaToken?: string | null,
+  ) => Promise<{ mfaToken: string } | void>;
+  completeTwoFactor: (mfaToken: string, code: string, next?: string | null) => Promise<void>;
   register: (
     name: string,
     email: string,
     password: string,
     next?: string | null,
+    captchaToken?: string | null,
   ) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -86,10 +94,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setSessionExpiredHandler(null);
   }, [queryClient, router]);
 
-  const login = useCallback(
-    async (email: string, password: string, next?: string | null) => {
-      const token = await authApi.login({ email, password });
-      setAccessToken(token.access_token);
+  const finishSignIn = useCallback(
+    async (accessToken: string | null | undefined, next?: string | null) => {
+      setAccessToken(accessToken ?? null);
       queryClient.clear();
       await refreshUser();
       router.push(safeNext(next));
@@ -97,9 +104,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [queryClient, refreshUser, router],
   );
 
+  const login = useCallback(
+    async (email: string, password: string, next?: string | null, captchaToken?: string | null) => {
+      const result = await authApi.login({ email, password, captcha_token: captchaToken });
+      if (result.mfa_required && result.mfa_token) return { mfaToken: result.mfa_token };
+      await finishSignIn(result.access_token, next);
+    },
+    [finishSignIn],
+  );
+
+  const completeTwoFactor = useCallback(
+    async (mfaToken: string, code: string, next?: string | null) => {
+      const result = await authApi.loginTwoFactor(mfaToken, code);
+      await finishSignIn(result.access_token, next);
+    },
+    [finishSignIn],
+  );
+
   const register = useCallback(
-    async (name: string, email: string, password: string, next?: string | null) => {
-      await authApi.register({ name, email, password });
+    async (
+      name: string,
+      email: string,
+      password: string,
+      next?: string | null,
+      captchaToken?: string | null,
+    ) => {
+      await authApi.register({ name, email, password, captcha_token: captchaToken });
       await login(email, password, next);
     },
     [login],
@@ -113,10 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setAccessToken(null);
     setWorkspaceId(null);
-    setUser(null);
     queryClient.clear();
-    router.push("/login");
-  }, [queryClient, router]);
+    // A full navigation drops all in-memory state and avoids the auth guard adding ?next=.
+    window.location.assign("/login");
+  }, [queryClient]);
 
   const value = useMemo(
     () => ({
@@ -124,11 +154,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       isVerified: Boolean(user?.email_verified_at),
       login,
+      completeTwoFactor,
       register,
       logout,
       refreshUser,
     }),
-    [user, loading, login, register, logout, refreshUser],
+    [user, loading, login, completeTwoFactor, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

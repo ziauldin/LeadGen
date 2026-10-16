@@ -85,6 +85,10 @@ class Settings(BaseSettings):
     refresh_cookie_samesite: str = "lax"  # use "none" only for a cross-site API without proxy
     refresh_cookie_domain: str | None = None
     require_email_verification: bool = True
+    # Reject passwords found in known breaches (Have I Been Pwned range API, k-anonymity).
+    password_breach_check: bool = True
+    # Cloudflare Turnstile CAPTCHA on sign-up, password reset and repeated failed logins.
+    turnstile_secret_key: str = ""
 
     # Rate limiting (slowapi). Use Redis in production so limits hold across instances.
     rate_limit_enabled: bool = True

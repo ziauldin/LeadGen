@@ -5,6 +5,8 @@ import {
   queryString,
 } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
+
+type S = components["schemas"];
 import type {
   AddLeadsResult,
   ApprovalItem,
@@ -59,13 +61,46 @@ import type {
 const json = (data: unknown) => JSON.stringify(data);
 
 export const authApi = {
-  register: (data: { name: string; email: string; password: string }) =>
+  register: (data: { name: string; email: string; password: string; captcha_token?: string | null }) =>
     apiFetch<User>("/auth/register", { method: "POST", body: json(data), skipAuthRetry: true }),
-  login: (data: { email: string; password: string }) =>
+  login: (data: { email: string; password: string; captcha_token?: string | null }) =>
     apiFetch<LoginResponse>("/auth/login", {
       method: "POST",
       body: json(data),
       skipAuthRetry: true,
+    }),
+  loginTwoFactor: (mfaToken: string, code: string) =>
+    apiFetch<LoginResponse>("/auth/login/2fa", {
+      method: "POST",
+      body: json({ mfa_token: mfaToken, code }),
+      skipAuthRetry: true,
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    apiFetch<LoginResponse>("/auth/change-password", {
+      method: "POST",
+      body: json({ current_password: currentPassword, new_password: newPassword }),
+    }),
+  twoFactorStatus: () => apiFetch<S["TwoFactorStatus"]>("/auth/2fa"),
+  twoFactorSetup: () => apiFetch<S["TwoFactorSetup"]>("/auth/2fa/setup", { method: "POST" }),
+  twoFactorEnable: (code: string) =>
+    apiFetch<S["RecoveryCodes"]>("/auth/2fa/enable", { method: "POST", body: json({ code }) }),
+  twoFactorDisable: (password: string, code: string) =>
+    apiFetch<{ message: string }>("/auth/2fa/disable", {
+      method: "POST",
+      body: json({ password, code }),
+    }),
+  regenerateRecoveryCodes: (code: string) =>
+    apiFetch<S["RecoveryCodes"]>("/auth/2fa/recovery-codes", {
+      method: "POST",
+      body: json({ code }),
+    }),
+  sessions: () => apiFetch<S["SessionRead"][]>("/auth/sessions"),
+  revokeSession: (id: string) =>
+    apiFetch<void>(`/auth/sessions/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  deleteAccount: (password: string, code?: string) =>
+    apiFetch<void>("/auth/account", {
+      method: "DELETE",
+      body: json({ password, code: code || null }),
     }),
   logout: () => apiFetch<{ message: string }>("/auth/logout", { method: "POST", skipAuthRetry: true }),
   logoutAll: () => apiFetch<{ message: string }>("/auth/logout-all", { method: "POST" }),
@@ -74,10 +109,10 @@ export const authApi = {
     apiFetch<User>("/auth/verify-email", { method: "POST", body: json({ token }), skipAuthRetry: true }),
   resendVerification: () =>
     apiFetch<{ message: string }>("/auth/resend-verification", { method: "POST" }),
-  forgotPassword: (email: string) =>
+  forgotPassword: (email: string, captchaToken?: string | null) =>
     apiFetch<{ message: string }>("/auth/forgot-password", {
       method: "POST",
-      body: json({ email }),
+      body: json({ email, captcha_token: captchaToken ?? null }),
       skipAuthRetry: true,
     }),
   resetPassword: (token: string, password: string) =>
@@ -94,7 +129,7 @@ export const workspacesApi = {
   create: (data: { name: string; timezone?: string }) =>
     apiFetch<WorkspaceDetail>("/workspaces", { method: "POST", body: json(data) }),
   current: () => apiFetch<WorkspaceDetail>("/workspaces/current"),
-  update: (data: { name?: string; timezone?: string }) =>
+  update: (data: { name?: string; timezone?: string; require_2fa?: boolean }) =>
     apiFetch<WorkspaceDetail>("/workspaces/current", { method: "PATCH", body: json(data) }),
   switch: (id: number) =>
     apiFetch<WorkspaceDetail>(`/workspaces/${id}/switch`, { method: "POST" }),

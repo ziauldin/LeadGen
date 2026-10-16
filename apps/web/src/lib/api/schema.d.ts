@@ -58,6 +58,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/2fa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Two Factor Status */
+        get: operations["two_factor_status_auth_2fa_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Two Factor Disable */
+        post: operations["two_factor_disable_auth_2fa_disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Two Factor Enable */
+        post: operations["two_factor_enable_auth_2fa_enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/recovery-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Two Factor Recovery Codes */
+        post: operations["two_factor_recovery_codes_auth_2fa_recovery_codes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/2fa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Two Factor Setup */
+        post: operations["two_factor_setup_auth_2fa_setup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete My Account
+         * @description Permanently delete the signed-in account (and workspaces only they belong to).
+         */
+        delete: operations["delete_my_account_auth_account_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description Change the password and sign out every other device. This device stays signed in.
+         */
+        post: operations["change_password_auth_change_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/forgot-password": {
         parameters: {
             query?: never;
@@ -86,6 +211,26 @@ export interface paths {
         put?: never;
         /** Login */
         post: operations["login_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login/2fa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login Two Factor
+         * @description Second sign-in step: a code from the authenticator app, or a recovery code.
+         */
+        post: operations["login_two_factor_auth_login_2fa_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -206,6 +351,40 @@ export interface paths {
         /** Reset Password */
         post: operations["reset_password_auth_reset_password_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sessions */
+        get: operations["list_sessions_auth_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke Session */
+        delete: operations["revoke_session_auth_sessions__session_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1996,10 +2175,22 @@ export interface components {
             /** Timezone */
             timezone?: string | null;
         };
+        /** ChangePasswordRequest */
+        ChangePasswordRequest: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
         /** CheckoutRequest */
         CheckoutRequest: {
             /** Plan */
             plan: string;
+        };
+        /** CodeRequest */
+        CodeRequest: {
+            /** Code */
+            code: string;
         };
         /** CompanyListResponse */
         CompanyListResponse: {
@@ -2116,6 +2307,13 @@ export interface components {
             /** Total Leads */
             total_leads: number;
         };
+        /** DeleteAccountRequest */
+        DeleteAccountRequest: {
+            /** Code */
+            code?: string | null;
+            /** Password */
+            password: string;
+        };
         /** DeliverabilityCheck */
         DeliverabilityCheck: {
             /** Detail */
@@ -2155,6 +2353,13 @@ export interface components {
             name: string;
             /** Status */
             status: string;
+        };
+        /** DisableTwoFactorRequest */
+        DisableTwoFactorRequest: {
+            /** Code */
+            code: string;
+            /** Password */
+            password: string;
         };
         /** EmailApproveRequest */
         EmailApproveRequest: {
@@ -2304,6 +2509,8 @@ export interface components {
         };
         /** EmailRequest */
         EmailRequest: {
+            /** Captcha Token */
+            captcha_token?: string | null;
             /**
              * Email
              * Format: email
@@ -2611,12 +2818,23 @@ export interface components {
             source_url?: string | null;
             status?: components["schemas"]["LeadStatus"] | null;
         };
-        /** LoginResponse */
+        /**
+         * LoginResponse
+         * @description Tokens after sign-in, or ``mfa_required`` with a short-lived ``mfa_token`` when the
+         *     account has two-factor authentication and a code is still needed.
+         */
         LoginResponse: {
             /** Access Token */
-            access_token: string;
+            access_token: string | null;
             /** Expires In */
-            expires_in: number;
+            expires_in: number | null;
+            /**
+             * Mfa Required
+             * @default false
+             */
+            mfa_required: boolean;
+            /** Mfa Token */
+            mfa_token: string | null;
             /** Refresh Token */
             refresh_token: string | null;
             /**
@@ -2648,6 +2866,13 @@ export interface components {
         MessageResponse: {
             /** Message */
             message: string;
+        };
+        /** MfaLoginRequest */
+        MfaLoginRequest: {
+            /** Code */
+            code: string;
+            /** Mfa Token */
+            mfa_token: string;
         };
         /** NicheCreate */
         NicheCreate: {
@@ -2866,6 +3091,11 @@ export interface components {
             results: components["schemas"]["LeadScoreRead"][];
             /** Updated */
             updated: number;
+        };
+        /** RecoveryCodes */
+        RecoveryCodes: {
+            /** Recovery Codes */
+            recovery_codes: string[];
         };
         /**
          * RefreshRequest
@@ -3109,6 +3339,27 @@ export interface components {
             /** Subject */
             subject: string;
         };
+        /** SessionRead */
+        SessionRead: {
+            /** Current */
+            current: boolean;
+            /** Id */
+            id: string;
+            /** Ip */
+            ip: string | null;
+            /**
+             * Last Active At
+             * Format: date-time
+             */
+            last_active_at: string;
+            /**
+             * Signed In At
+             * Format: date-time
+             */
+            signed_in_at: string;
+            /** User Agent */
+            user_agent: string | null;
+        };
         /** SuppressionCreate */
         SuppressionCreate: {
             /** Domain */
@@ -3208,6 +3459,22 @@ export interface components {
             /** Token */
             token: string;
         };
+        /** TwoFactorSetup */
+        TwoFactorSetup: {
+            /** Otpauth Uri */
+            otpauth_uri: string;
+            /** Qr Code */
+            qr_code: string;
+            /** Secret */
+            secret: string;
+        };
+        /** TwoFactorStatus */
+        TwoFactorStatus: {
+            /** Enabled */
+            enabled: boolean;
+            /** Recovery Codes Left */
+            recovery_codes_left: number;
+        };
         /** UsageItem */
         UsageItem: {
             /** Limit */
@@ -3221,6 +3488,8 @@ export interface components {
         };
         /** UserLogin */
         UserLogin: {
+            /** Captcha Token */
+            captcha_token?: string | null;
             /**
              * Email
              * Format: email
@@ -3245,12 +3514,19 @@ export interface components {
             email_verified_at: string | null;
             /** Id */
             id: number;
+            /**
+             * Mfa Enabled
+             * @default false
+             */
+            mfa_enabled: boolean;
             /** Name */
             name: string;
             role: components["schemas"]["UserRole"];
         };
         /** UserRegister */
         UserRegister: {
+            /** Captcha Token */
+            captcha_token?: string | null;
             /**
              * Email
              * Format: email
@@ -3359,6 +3635,11 @@ export interface components {
             name: string;
             /** Plan */
             plan: string;
+            /**
+             * Require 2Fa
+             * @default false
+             */
+            require_2fa: boolean;
             /** Slug */
             slug: string;
             /** Timezone */
@@ -3373,6 +3654,8 @@ export interface components {
         WorkspaceUpdate: {
             /** Name */
             name?: string | null;
+            /** Require 2Fa */
+            require_2fa?: boolean | null;
             /** Timezone */
             timezone?: string | null;
         };
@@ -3389,6 +3672,11 @@ export interface components {
             name: string;
             /** Plan */
             plan: string;
+            /**
+             * Require 2Fa
+             * @default false
+             */
+            require_2fa: boolean;
             role: components["schemas"]["WorkspaceRole"];
             /** Slug */
             slug: string;
@@ -3557,6 +3845,209 @@ export interface operations {
             };
         };
     };
+    two_factor_status_auth_2fa_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorStatus"];
+                };
+            };
+        };
+    };
+    two_factor_disable_auth_2fa_disable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DisableTwoFactorRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    two_factor_enable_auth_2fa_enable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodes"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    two_factor_recovery_codes_auth_2fa_recovery_codes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodes"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    two_factor_setup_auth_2fa_setup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorSetup"];
+                };
+            };
+        };
+    };
+    delete_my_account_auth_account_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_password_auth_change_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     forgot_password_auth_forgot_password_post: {
         parameters: {
             query?: never;
@@ -3602,6 +4093,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UserLogin"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_two_factor_auth_login_2fa_post: {
+        parameters: {
+            query?: {
+                delivery?: "cookie" | "body";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaLoginRequest"];
             };
         };
         responses: {
@@ -3805,6 +4331,55 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MessageResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sessions_auth_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionRead"][];
+                };
+            };
+        };
+    };
+    revoke_session_auth_sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import settings
 from app.core.config import settings as app_settings
 from app.core.database import get_db
+from app.core.errors import PermissionDeniedError
 from app.core.rate_limit import enforce
 from app.core.request_context import user_id_var, workspace_id_var
 from app.core.security import read_access_token
@@ -59,6 +60,12 @@ def get_current_workspace(
 ) -> WorkspaceContext:
     """Resolve and authorise the workspace for this request, and scope the DB session to it."""
     membership = resolve_membership(db, current_user, x_workspace_id)
+    if membership.workspace.require_2fa and not current_user.mfa_enabled:
+        raise PermissionDeniedError(
+            "This workspace requires two-factor authentication. Turn it on in Settings, "
+            "under Security, to continue.",
+            extra={"code": "mfa_required"},
+        )
     ctx = WorkspaceContext(
         workspace_id=membership.workspace_id,
         user_id=current_user.id,

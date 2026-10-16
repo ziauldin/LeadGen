@@ -8,22 +8,31 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.errors import AuthenticationError, PermissionDeniedError
 from app.core.rate_limit import client_ip, enforce, limiter
-from app.core.security import create_access_token
+from app.core.security import create_access_token, verify_password
 from app.models.user import User
 from app.schemas.auth import (
+    ChangePasswordRequest,
+    CodeRequest,
+    DeleteAccountRequest,
+    DisableTwoFactorRequest,
     EmailRequest,
     LoginResponse,
     MessageResponse,
+    MfaLoginRequest,
+    RecoveryCodes,
     RefreshRequest,
     ResetPasswordRequest,
+    SessionRead,
     Token,
     TokenRequest,
+    TwoFactorSetup,
+    TwoFactorStatus,
     UserLogin,
     UserRead,
     UserRegister,
 )
+from app.services.auth import account, mfa, protection, sessions, tokens
 from app.services.auth import service as auth_service
-from app.services.auth import tokens
 from app.services.workspaces.service import create_personal_workspace
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -97,6 +106,8 @@ def _refresh_token_from(request: Request, payload: RefreshRequest | None) -> str
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/hour")
 def register(request: Request, payload: UserRegister, db: Session = Depends(get_db)) -> User:
+    protection.verify_captcha(payload.captcha_token, remote_ip=client_ip(request))
+    protection.ensure_password_not_breached(payload.password)
     user = auth_service.register_user(
         db,
         name=payload.name,
@@ -117,7 +128,21 @@ def login(
     db: Session = Depends(get_db),
 ) -> LoginResponse:
     enforce("30/hour", "login-email", str(payload.email).lower())
+    if auth_service.needs_captcha(db, str(payload.email)):
+        protection.verify_captcha(payload.captcha_token, remote_ip=client_ip(request))
     user = auth_service.authenticate(db, email=str(payload.email), password=payload.password)
+    if mfa.is_enabled(user):
+        return LoginResponse(mfa_required=True, mfa_token=mfa.issue_mfa_token(user))
+    return _complete_login(request, response, db, user, delivery)
+
+
+def _complete_login(
+    request: Request,
+    response: Response,
+    db: Session,
+    user: User,
+    delivery: str,
+) -> LoginResponse:
     raw, _ = tokens.issue_refresh_token(
         db,
         user,
@@ -131,6 +156,23 @@ def login(
         return LoginResponse(**access.model_dump(), refresh_token=raw)
     _set_refresh_cookie(response, raw)
     return LoginResponse(**access.model_dump())
+
+
+@router.post("/login/2fa", response_model=LoginResponse)
+@limiter.limit("10/minute")
+def login_two_factor(
+    request: Request,
+    response: Response,
+    payload: MfaLoginRequest,
+    delivery: Literal["cookie", "body"] = "cookie",
+    db: Session = Depends(get_db),
+) -> LoginResponse:
+    """Second sign-in step: a code from the authenticator app, or a recovery code."""
+    user = mfa.read_mfa_token(db, payload.mfa_token)
+    enforce("10/15minutes", "mfa-login", str(user.id))
+    if not mfa.verify_code(db, user, payload.code):
+        raise AuthenticationError("That code isn't right. Try the latest code from your app.")
+    return _complete_login(request, response, db, user, delivery)
 
 
 @router.post("/refresh", response_model=LoginResponse)
@@ -218,6 +260,7 @@ def forgot_password(
     payload: EmailRequest,
     db: Session = Depends(get_db),
 ) -> MessageResponse:
+    protection.verify_captcha(payload.captcha_token, remote_ip=client_ip(request))
     enforce("3/hour", "forgot-password", str(payload.email).lower())
     auth_service.request_password_reset(db, str(payload.email))
     return MessageResponse(
@@ -233,6 +276,124 @@ def reset_password(
     payload: ResetPasswordRequest,
     db: Session = Depends(get_db),
 ) -> MessageResponse:
+    protection.ensure_password_not_breached(payload.password)
     auth_service.reset_password(db, payload.token, payload.password)
     _clear_refresh_cookie(response)
     return MessageResponse(message="Password updated. Please sign in with your new password.")
+
+
+@router.post("/change-password", response_model=LoginResponse)
+@limiter.limit("10/hour")
+def change_password(
+    request: Request,
+    response: Response,
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> LoginResponse:
+    """Change the password and sign out every other device. This device stays signed in."""
+    protection.ensure_password_not_breached(payload.new_password)
+    auth_service.change_password(
+        db, current_user, current=payload.current_password, new=payload.new_password
+    )
+    return _complete_login(request, response, db, current_user, "cookie")
+
+
+# --- Two-factor authentication -----------------------------------------------------------------
+
+
+@router.get("/2fa", response_model=TwoFactorStatus)
+def two_factor_status(current_user: User = Depends(get_current_user)) -> TwoFactorStatus:
+    return TwoFactorStatus(
+        enabled=mfa.is_enabled(current_user),
+        recovery_codes_left=mfa.recovery_codes_left(current_user),
+    )
+
+
+@router.post("/2fa/setup", response_model=TwoFactorSetup)
+def two_factor_setup(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> TwoFactorSetup:
+    return TwoFactorSetup(**mfa.begin_setup(db, current_user))
+
+
+@router.post("/2fa/enable", response_model=RecoveryCodes)
+@limiter.limit("10/minute")
+def two_factor_enable(
+    request: Request,
+    payload: CodeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RecoveryCodes:
+    return RecoveryCodes(recovery_codes=mfa.enable(db, current_user, payload.code))
+
+
+@router.post("/2fa/disable", response_model=MessageResponse)
+@limiter.limit("10/minute")
+def two_factor_disable(
+    request: Request,
+    payload: DisableTwoFactorRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    mfa.disable(db, current_user, password=payload.password, code=payload.code)
+    return MessageResponse(message="Two-factor authentication is off")
+
+
+@router.post("/2fa/recovery-codes", response_model=RecoveryCodes)
+@limiter.limit("5/hour")
+def two_factor_recovery_codes(
+    request: Request,
+    payload: CodeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RecoveryCodes:
+    return RecoveryCodes(
+        recovery_codes=mfa.regenerate_recovery_codes(db, current_user, payload.code)
+    )
+
+
+# --- Sessions and account ----------------------------------------------------------------------
+
+
+@router.get("/sessions", response_model=list[SessionRead])
+def list_sessions(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[SessionRead]:
+    current = sessions.family_of(db, request.cookies.get(settings.refresh_cookie_name))
+    return [
+        SessionRead(**vars(item))
+        for item in sessions.list_sessions(db, current_user.id, current_family=current)
+    ]
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    sessions.revoke_session(db, current_user.id, session_id)
+
+
+@router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/hour")
+def delete_my_account(
+    request: Request,
+    response: Response,
+    payload: DeleteAccountRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    """Permanently delete the signed-in account (and workspaces only they belong to)."""
+    if not verify_password(payload.password, current_user.hashed_password):
+        raise AuthenticationError("Password is incorrect")
+    if mfa.is_enabled(current_user) and not (
+        payload.code and mfa.verify_code(db, current_user, payload.code)
+    ):
+        raise AuthenticationError("Enter a current two-factor code")
+    account.delete_account(db, current_user)
+    _clear_refresh_cookie(response)

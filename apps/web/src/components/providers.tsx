@@ -1,6 +1,6 @@
 "use client";
 
-import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,6 +34,20 @@ export function makeQueryClient() {
           failureCount < 2,
       },
     },
+    // A workspace that requires two-factor sends members without it to set it up.
+    queryCache: new QueryCache({
+      onError: (error) => {
+        if (
+          error instanceof ApiError &&
+          error.status === 403 &&
+          (error.detail as { code?: string } | undefined)?.code === "mfa_required" &&
+          typeof window !== "undefined" &&
+          !window.location.pathname.startsWith("/settings/security")
+        ) {
+          window.location.assign("/settings/security?required=1");
+        }
+      },
+    }),
     // Every failed mutation tells the user why, unless the caller handles it itself.
     mutationCache: new MutationCache({
       onError: (error, _variables, _context, mutation) => {

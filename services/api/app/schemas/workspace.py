@@ -16,6 +16,7 @@ class WorkspaceRead(BaseModel):
     slug: str
     plan: str
     timezone: str
+    require_2fa: bool = False
     created_at: datetime
 
 
@@ -43,6 +44,7 @@ class WorkspaceCreate(BaseModel):
 class WorkspaceUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=255)
     timezone: str | None = Field(default=None, max_length=64)
+    require_2fa: bool | None = None
 
     @field_validator("timezone")
     @classmethod
