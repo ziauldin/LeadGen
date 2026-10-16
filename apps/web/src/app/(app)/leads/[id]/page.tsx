@@ -50,10 +50,17 @@ const schema = z.object({
   status: z.string(),
   qualification_notes: z.string().max(5000),
   compliance_source_note: z.string().max(2000),
+  lawful_basis: z.enum(["legitimate_interest", "consent", "contract"]),
+  lawful_basis_note: z.string().max(2000),
 });
 type FormValues = z.infer<typeof schema>;
 
 const NO_COMPANY = "none";
+const LAWFUL_BASIS_OPTIONS = [
+  { value: "legitimate_interest", label: "Legitimate interest" },
+  { value: "consent", label: "Consent" },
+  { value: "contract", label: "Contract" },
+];
 const STATUS_OPTIONS = SETTABLE_LEAD_STATUSES.map((status) => ({
   value: status,
   label: leadStatusLabel(status),
@@ -68,6 +75,8 @@ function toForm(lead: Lead): FormValues {
     status: lead.status,
     qualification_notes: lead.qualification_notes ?? "",
     compliance_source_note: lead.compliance_source_note ?? "",
+    lawful_basis: (lead.lawful_basis ?? "legitimate_interest") as FormValues["lawful_basis"],
+    lawful_basis_note: lead.lawful_basis_note ?? "",
   };
 }
 
@@ -205,6 +214,8 @@ function LeadDetail({ lead }: { lead: Lead }) {
       payload.qualification_notes = blank(values.qualification_notes);
     if (dirtyFields.compliance_source_note)
       payload.compliance_source_note = blank(values.compliance_source_note);
+    if (dirtyFields.lawful_basis) payload.lawful_basis = values.lawful_basis;
+    if (dirtyFields.lawful_basis_note) payload.lawful_basis_note = blank(values.lawful_basis_note);
     if (dirtyFields.company_id)
       payload.company_id = values.company_id === NO_COMPANY ? null : Number(values.company_id);
     if (dirtyFields.status && !optedOut) payload.status = values.status as LeadStatus;
@@ -362,6 +373,34 @@ function LeadDetail({ lead }: { lead: Lead }) {
                     rows={3}
                     className="text-[13px]"
                     {...form.register("compliance_source_note")}
+                  />
+                </Field>
+              </div>
+              <Controller
+                control={form.control}
+                name="lawful_basis"
+                render={({ field }) => (
+                  <SelectField
+                    id="lawful_basis"
+                    label="Lawful basis"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={LAWFUL_BASIS_OPTIONS}
+                  />
+                )}
+              />
+              <div className="sm:col-span-2">
+                <Field
+                  id="lawful_basis_note"
+                  label="Legitimate-interest note"
+                  hint="Why contacting this person is reasonable and expected. Your workspace may require it before outreach."
+                  error={errors.lawful_basis_note?.message}
+                >
+                  <Textarea
+                    id="lawful_basis_note"
+                    rows={2}
+                    className="text-[13px]"
+                    {...form.register("lawful_basis_note")}
                   />
                 </Field>
               </div>

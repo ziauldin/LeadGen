@@ -20,6 +20,7 @@ from app.api.routes import (
     health,
     leads,
     niches,
+    privacy,
     provider_settings,
     replies,
     roles,
@@ -112,6 +113,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(sso.router)
 app.include_router(roles.router)
+app.include_router(privacy.router)
 app.include_router(workspaces.router)
 app.include_router(workspaces.invitations_router)
 app.include_router(billing.router)

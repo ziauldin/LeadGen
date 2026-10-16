@@ -26,6 +26,7 @@ from app.models.inbound import EmailEvent, InboxCursor, WebhookEvent
 from app.models.lead import Lead
 from app.models.llm_usage import LLMUsage
 from app.models.niche import Niche
+from app.models.privacy import DataRequest
 from app.models.provider_credential import ProviderCredential
 from app.models.reply import Reply
 from app.models.search_query import SearchQuery
@@ -50,6 +51,7 @@ __all__ = [
     "CampaignStatus",
     "CampaignStep",
     "Company",
+    "DataRequest",
     "EmailActionToken",
     "EmailContact",
     "EmailEvent",

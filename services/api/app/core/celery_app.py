@@ -16,6 +16,7 @@ celery_app = Celery(
         "app.workers.platform_email_jobs",
         "app.workers.inbound_jobs",
         "app.workers.ops_jobs",
+        "app.workers.privacy_jobs",
     ],
 )
 
@@ -80,6 +81,10 @@ celery_app.conf.update(
         },
         "purge-audit-logs": {
             "task": "ops.purge_audit_logs",
+            "schedule": 86400.0,
+        },
+        "apply-retention": {
+            "task": "privacy.apply_retention",
             "schedule": 86400.0,
         },
     },

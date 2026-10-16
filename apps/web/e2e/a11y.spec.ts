@@ -17,7 +17,7 @@ async function expectAccessible(page: Page, name: string) {
 }
 
 test("public pages are accessible", async ({ page }) => {
-  for (const path of ["/login", "/login/sso", "/register", "/forgot-password"]) {
+  for (const path of ["/login", "/login/sso", "/register", "/forgot-password", "/subprocessors"]) {
     await page.goto(path);
     await expectAccessible(page, path);
   }
@@ -41,6 +41,7 @@ test("main app pages are accessible", async ({ page }) => {
     "/settings/sso",
     "/settings/roles",
     "/settings/audit",
+    "/settings/privacy",
   ]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");

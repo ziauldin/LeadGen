@@ -49,6 +49,15 @@ class Lead(Base, TenantScoped, TimestampUpdatedMixin):
     score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     qualification_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     compliance_source_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # GDPR Art. 6 basis for processing: legitimate_interest | consent | contract.
+    lawful_basis: Mapped[str] = mapped_column(
+        String(30),
+        default="legitimate_interest",
+        server_default="legitimate_interest",
+        nullable=False,
+    )
+    # The legitimate-interest assessment (why contacting this person is reasonable).
+    lawful_basis_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     niche: Mapped[Niche] = relationship(back_populates="leads")
     company: Mapped[Company | None] = relationship(back_populates="leads")

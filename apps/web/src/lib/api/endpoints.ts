@@ -201,6 +201,20 @@ export const auditApi = {
     downloadAuthenticatedFile(`/audit-logs/export${queryString(params)}`, "audit-log.csv"),
 };
 
+export const privacyApi = {
+  requests: (params: ListParams = {}) =>
+    apiFetch<S["DataRequestPage"]>(`/privacy/requests${queryString(params)}`),
+  createRequest: (data: S["DataRequestCreate"]) =>
+    apiFetch<S["DataRequestRead"]>("/privacy/requests", { method: "POST", body: json(data) }),
+  downloadLink: (id: number) =>
+    apiFetch<S["DownloadRead"]>(`/privacy/requests/${id}/download`, { method: "POST" }),
+  retry: (id: number) =>
+    apiFetch<S["DataRequestRead"]>(`/privacy/requests/${id}/retry`, { method: "POST" }),
+  settings: () => apiFetch<S["GovernanceSettings"]>("/privacy/settings"),
+  updateSettings: (data: S["GovernanceSettings"]) =>
+    apiFetch<S["GovernanceSettings"]>("/privacy/settings", { method: "PUT", body: json(data) }),
+};
+
 /** Where the browser goes to start "Continue with Google/Microsoft". */
 export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";

@@ -13,7 +13,8 @@ Every workspace action is checked against a **permission**, not a role name. Eac
 | `campaigns.send_now` | Push due emails out immediately |
 | `approvals.approve` | Approve or reject emails |
 | `replies.manage` | Label replies, add notes, link replies |
-| `data.export` | CSV exports and data requests |
+| `data.export` | CSV exports and whole-workspace exports |
+| `privacy.manage` | Data subject requests (export or erase a person), retention and lawful-basis policy |
 | `providers.manage` | Connect sending, inbox, search and AI providers |
 | `settings.manage` | Workspace profile, AI settings, suppressions, policies |
 | `members.manage` | Invite people, change roles, remove members |

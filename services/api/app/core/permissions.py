@@ -18,6 +18,7 @@ class Permission(StrEnum):
     APPROVALS_APPROVE = "approvals.approve"  # approve or reject emails
     REPLIES_MANAGE = "replies.manage"
     DATA_EXPORT = "data.export"
+    PRIVACY_MANAGE = "privacy.manage"  # data subject requests, retention, lawful-basis policy
     PROVIDERS_MANAGE = "providers.manage"
     SETTINGS_MANAGE = "settings.manage"  # workspace profile, AI, suppressions, policies
     MEMBERS_MANAGE = "members.manage"
@@ -37,7 +38,8 @@ DESCRIPTIONS: dict[str, str] = {
     Permission.CAMPAIGNS_SEND_NOW: "Send due emails immediately",
     Permission.APPROVALS_APPROVE: "Approve and reject emails",
     Permission.REPLIES_MANAGE: "Label replies and add notes",
-    Permission.DATA_EXPORT: "Export data (CSV and data requests)",
+    Permission.DATA_EXPORT: "Export data (CSV and workspace exports)",
+    Permission.PRIVACY_MANAGE: "Handle data requests (export or erase a person) and retention",
     Permission.PROVIDERS_MANAGE: "Connect sending, inbox, search and AI providers",
     Permission.SETTINGS_MANAGE: "Change workspace settings and suppressions",
     Permission.MEMBERS_MANAGE: "Invite people and change roles",

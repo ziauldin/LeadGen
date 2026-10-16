@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/health",
   "/healthz",
   "/auth/complete",
+  "/subprocessors",
 ];
 
 const SESSION_HINT = "lg_session";

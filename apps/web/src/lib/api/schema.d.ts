@@ -1207,6 +1207,82 @@ export interface paths {
         patch: operations["update_niche_niches__niche_id__patch"];
         trace?: never;
     };
+    "/privacy/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Requests
+         * @description Requests this member may see: all of them with privacy.manage, else their own exports.
+         */
+        get: operations["list_requests_privacy_requests_get"];
+        put?: never;
+        /** Create Data Request */
+        post: operations["create_data_request_privacy_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/privacy/requests/{request_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Download Request
+         * @description A short-lived signed link to the export file.
+         */
+        post: operations["download_request_privacy_requests__request_id__download_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/privacy/requests/{request_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Request */
+        post: operations["retry_request_privacy_requests__request_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/privacy/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Governance */
+        get: operations["get_governance_privacy_settings_get"];
+        /** Update Governance */
+        put: operations["update_governance_privacy_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/provider-settings": {
         parameters: {
             query?: never;
@@ -2699,6 +2775,61 @@ export interface components {
             /** Total Leads */
             total_leads: number;
         };
+        /** DataRequestCreate */
+        DataRequestCreate: {
+            /** Email */
+            email?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "export" | "erase" | "workspace_export";
+            /** Note */
+            note?: string | null;
+        };
+        /** DataRequestPage */
+        DataRequestPage: {
+            /** Items */
+            items: components["schemas"]["DataRequestRead"][];
+            /** Limit */
+            limit: number;
+            /** Skip */
+            skip: number;
+            /** Total */
+            total: number;
+        };
+        /** DataRequestRead */
+        DataRequestRead: {
+            /** Completed At */
+            completed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Downloadable */
+            downloadable: boolean;
+            /** Error */
+            error: string | null;
+            /** Expires At */
+            expires_at: string | null;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Note */
+            note: string | null;
+            /** Requested By */
+            requested_by: string | null;
+            /** Status */
+            status: string;
+            /** Subject Email */
+            subject_email: string | null;
+            /** Summary */
+            summary: {
+                [key: string]: number;
+            } | null;
+        };
         /** DeleteAccountRequest */
         DeleteAccountRequest: {
             /** Code */
@@ -2783,6 +2914,11 @@ export interface components {
             txt_record: string;
             /** Verified */
             verified: boolean;
+        };
+        /** DownloadRead */
+        DownloadRead: {
+            /** Url */
+            url: string;
         };
         /** EmailApproveRequest */
         EmailApproveRequest: {
@@ -3026,6 +3162,18 @@ export interface components {
             /** Queries */
             queries: string[];
         };
+        /** GovernanceSettings */
+        GovernanceSettings: {
+            /**
+             * Require Lia Note
+             * @default false
+             */
+            require_lia_note?: boolean;
+            /** Retention Reply Days */
+            retention_reply_days?: number | null;
+            /** Retention Uncontacted Lead Days */
+            retention_uncontacted_lead_days?: number | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -3117,6 +3265,14 @@ export interface components {
             full_name: string;
             /** Job Title */
             job_title?: string | null;
+            /**
+             * Lawful Basis
+             * @default legitimate_interest
+             * @enum {string}
+             */
+            lawful_basis?: "legitimate_interest" | "consent" | "contract";
+            /** Lawful Basis Note */
+            lawful_basis_note?: string | null;
             /** Linkedin Url */
             linkedin_url?: string | null;
             /** Niche Id */
@@ -3175,6 +3331,14 @@ export interface components {
             id: number;
             /** Job Title */
             job_title: string | null;
+            /**
+             * Lawful Basis
+             * @default legitimate_interest
+             * @enum {string}
+             */
+            lawful_basis: "legitimate_interest" | "consent" | "contract";
+            /** Lawful Basis Note */
+            lawful_basis_note: string | null;
             /** Linkedin Url */
             linkedin_url: string | null;
             /** Niche Id */
@@ -3244,6 +3408,10 @@ export interface components {
             full_name?: string | null;
             /** Job Title */
             job_title?: string | null;
+            /** Lawful Basis */
+            lawful_basis?: ("legitimate_interest" | "consent" | "contract") | null;
+            /** Lawful Basis Note */
+            lawful_basis_note?: string | null;
             /** Linkedin Url */
             linkedin_url?: string | null;
             /** Qualification Notes */
@@ -6752,6 +6920,208 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NicheRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requests_privacy_requests_get: {
+        parameters: {
+            query?: {
+                skip?: number;
+                limit?: number;
+                sort?: string | null;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataRequestPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_data_request_privacy_requests_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DataRequestCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataRequestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_request_privacy_requests__request_id__download_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_request_privacy_requests__request_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                request_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataRequestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_governance_privacy_settings_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_governance_privacy_settings_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GovernanceSettings"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceSettings"];
                 };
             };
             /** @description Validation Error */

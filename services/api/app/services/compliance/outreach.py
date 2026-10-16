@@ -1,8 +1,13 @@
+import hashlib
+
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.lead import Lead
 from app.models.suppression import Suppression
+from app.models.workspace import WorkspaceSettings
+
+LAWFUL_BASES = ("legitimate_interest", "consent", "contract")
 
 
 def _domain_of(email: str) -> str | None:
@@ -17,7 +22,8 @@ def is_email_suppressed(db: Session, workspace_id: int, email: str) -> bool:
     """
     normalized = email.strip().lower()
     domain = _domain_of(normalized)
-    match = [Suppression.email == normalized]
+    hashed = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+    match = [Suppression.email == normalized, Suppression.email_hash == hashed]
     if domain:
         match.append(and_(Suppression.email.is_(None), Suppression.domain == domain))
     return (
@@ -40,6 +46,16 @@ def validate_lead_for_outreach(lead: Lead, db: Session) -> list[str]:
         errors.append("Lead is missing a source URL")
     if not lead.compliance_source_note:
         errors.append("Lead is missing a compliance/source note")
+    if lead.lawful_basis not in LAWFUL_BASES:
+        errors.append("Lead has no lawful basis for contact")
+    elif lead.lawful_basis == "legitimate_interest" and not lead.lawful_basis_note:
+        require_note = db.scalar(
+            select(WorkspaceSettings.require_lia_note).where(
+                WorkspaceSettings.workspace_id == lead.workspace_id
+            )
+        )
+        if require_note:
+            errors.append("Lead needs a legitimate-interest note before outreach")
 
     active_contacts = [contact for contact in (lead.email_contacts or []) if not contact.opted_out]
     if not active_contacts:

@@ -247,6 +247,8 @@ def update_lead(
         _ensure_company_in_workspace(db, updates["company_id"], ctx.workspace_id)
     if updates.get("status") is not None:
         updates["status"] = validate_user_status_change(lead.status, updates["status"])
+    if "lawful_basis" in updates and updates["lawful_basis"] is None:
+        del updates["lawful_basis"]  # a lead always keeps a basis
 
     for field, value in updates.items():
         setattr(lead, field, value)

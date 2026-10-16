@@ -16,6 +16,9 @@ class Suppression(Base, TimestampMixin):
         nullable=True,
     )
     email: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    # SHA-256 of the normalised address. Erased people are kept only as a hash, so they are
+    # never contacted again without the workspace still holding their email address.
+    email_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     domain: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source: Mapped[str | None] = mapped_column(String(255), nullable=True)
