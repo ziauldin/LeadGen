@@ -178,6 +178,9 @@ class WorkspaceSettings(Base):
     require_lia_note: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     retention_uncontacted_lead_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     retention_reply_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Slack incoming webhook (encrypted) and which notification kinds to post there.
+    slack_webhook_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    slack_events: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     workspace: Mapped[Workspace] = relationship(back_populates="settings")
 

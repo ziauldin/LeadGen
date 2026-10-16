@@ -132,10 +132,15 @@ def send_verification(db: Session, user: User) -> None:
 
 def verify_email(db: Session, raw_token: str) -> User:
     user = tokens.consume_email_action_token(db, raw_token, tokens.PURPOSE_VERIFY)
-    if user.email_verified_at is None:
+    first_time = user.email_verified_at is None
+    if first_time:
         user.email_verified_at = _now()
         _audit(db, user.id, "email_verified")
     db.commit()
+    if first_time:
+        from app.services.notifications.lifecycle import send_welcome
+
+        send_welcome(db, user)
     return user
 
 

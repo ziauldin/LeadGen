@@ -32,6 +32,7 @@ from app.models.reply import Reply
 from app.models.suppression import Suppression
 from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.common.csv_safety import safe_cell
+from app.services.notifications import events as notify_events
 from app.services.workspaces.service import audit
 
 EXPORT_TTL = timedelta(days=7)
@@ -359,6 +360,7 @@ def process_request(db: Session, request_id: int) -> DataRequest | None:
         request.id,
         {"subject_hash": request.subject_hash, **(request.summary or {})},
     )
+    notify_events.data_request_done(db, request)
     db.commit()
     return request
 

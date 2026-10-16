@@ -878,6 +878,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/billing/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Plans
+         * @description Plans, limits and the prices shown on the pricing page (no sign-in needed).
+         */
+        get: operations["public_plans_billing_plans_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/billing/portal": {
         parameters: {
             query?: never;
@@ -1145,6 +1165,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Contact */
+        post: operations["contact_contact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboard/summary": {
         parameters: {
             query?: never;
@@ -1310,6 +1347,26 @@ export interface paths {
         put?: never;
         /** Reject Email By Id */
         post: operations["reject_email_by_id_emails__message_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Feedback
+         * @description In-app feedback: emailed to the support inbox with enough context to follow up.
+         */
+        post: operations["feedback_feedback_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1554,6 +1611,58 @@ export interface paths {
         head?: never;
         /** Update Niche */
         patch: operations["update_niche_niches__niche_id__patch"];
+        trace?: never;
+    };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notifications */
+        get: operations["list_notifications_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preferences */
+        get: operations["get_preferences_notifications_preferences_get"];
+        /** Update Preferences */
+        put: operations["update_preferences_notifications_preferences_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Read */
+        post: operations["mark_read_notifications_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/privacy/requests": {
@@ -2749,6 +2858,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces/current/slack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Slack */
+        get: operations["get_slack_workspaces_current_slack_get"];
+        /** Update Slack */
+        put: operations["update_slack_workspaces_current_slack_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/current/slack/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test Slack */
+        post: operations["test_slack_workspaces_current_slack_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspaces/{workspace_id}/switch": {
         parameters: {
             query?: never;
@@ -3513,6 +3657,29 @@ export interface components {
             /** Saml Idp Sso Url */
             saml_idp_sso_url?: string | null;
         };
+        /** ContactRequest */
+        ContactRequest: {
+            /** Captcha Token */
+            captcha_token?: string | null;
+            /** Company */
+            company?: string | null;
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Message */
+            message: string;
+            /** Name */
+            name: string;
+            /**
+             * Topic
+             * @default sales
+             */
+            topic?: string;
+            /** Website */
+            website?: string | null;
+        };
         /** DashboardSummary */
         DashboardSummary: {
             /** Active Campaigns */
@@ -4018,6 +4185,18 @@ export interface components {
             /** Stopped Reason */
             stopped_reason: string | null;
         };
+        /** FeedbackRequest */
+        FeedbackRequest: {
+            /**
+             * Kind
+             * @default idea
+             */
+            kind?: string;
+            /** Message */
+            message: string;
+            /** Page */
+            page?: string | null;
+        };
         /** GenerateQueriesRequest */
         GenerateQueriesRequest: {
             /** Niche Id */
@@ -4382,6 +4561,16 @@ export interface components {
              */
             token_type: string;
         };
+        /** MarkRead */
+        MarkRead: {
+            /**
+             * All
+             * @default false
+             */
+            all?: boolean;
+            /** Ids */
+            ids?: number[];
+        };
         /** Me */
         Me: {
             /** Key Name */
@@ -4531,6 +4720,33 @@ export interface components {
             /** Target Roles */
             target_roles?: string[] | null;
         };
+        /** NotificationList */
+        NotificationList: {
+            /** Items */
+            items: components["schemas"]["NotificationRead"][];
+            /** Unread */
+            unread: number;
+        };
+        /** NotificationRead */
+        NotificationRead: {
+            /** Body */
+            body: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Link */
+            link: string | null;
+            /** Read */
+            read: boolean;
+            /** Title */
+            title: string;
+        };
         /** OnboardingStatus */
         OnboardingStatus: {
             /** Campaign Created */
@@ -4568,6 +4784,26 @@ export interface components {
             description: string;
             /** Key */
             key: string;
+        };
+        /** PreferenceKind */
+        PreferenceKind: {
+            /** Email */
+            email: boolean;
+            /** In App */
+            in_app: boolean;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+        };
+        /** PreferencesUpdate */
+        PreferencesUpdate: {
+            /** Settings */
+            settings: {
+                [key: string]: {
+                    [key: string]: boolean;
+                };
+            };
         };
         /** ProcessSendsResponse */
         ProcessSendsResponse: {
@@ -4680,6 +4916,27 @@ export interface components {
             microsoft: boolean;
             /** Sso */
             sso: boolean;
+        };
+        /** PublicPlan */
+        PublicPlan: {
+            /** Currency */
+            currency: string;
+            /** Features */
+            features: {
+                [key: string]: boolean | number;
+            };
+            /** Limits */
+            limits: {
+                [key: string]: number;
+            };
+            /** Name */
+            name: string;
+            /** Prices */
+            prices: {
+                [key: string]: number | null;
+            } | null;
+            /** Purchasable */
+            purchasable: string[];
         };
         /** RecalculateRequest */
         RecalculateRequest: {
@@ -4994,6 +5251,27 @@ export interface components {
             signed_in_at: string;
             /** User Agent */
             user_agent: string | null;
+        };
+        /** SlackSettings */
+        SlackSettings: {
+            /** Available Events */
+            available_events: components["schemas"]["PreferenceKind"][];
+            /** Connected */
+            connected: boolean;
+            /** Events */
+            events: string[];
+        };
+        /** SlackUpdate */
+        SlackUpdate: {
+            /**
+             * Disconnect
+             * @default false
+             */
+            disconnect?: boolean;
+            /** Events */
+            events?: string[] | null;
+            /** Webhook Url */
+            webhook_url?: string | null;
         };
         /** SubscriptionInfo */
         SubscriptionInfo: {
@@ -7201,6 +7479,26 @@ export interface operations {
             };
         };
     };
+    public_plans_billing_plans_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicPlan"][];
+                };
+            };
+        };
+    };
     create_portal_billing_portal_post: {
         parameters: {
             query?: never;
@@ -7831,6 +8129,39 @@ export interface operations {
             };
         };
     };
+    contact_contact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_dashboard_summary_dashboard_summary_get: {
         parameters: {
             query?: never;
@@ -8193,6 +8524,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApprovalItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    feedback_feedback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
                 };
             };
             /** @description Validation Error */
@@ -8813,6 +9177,141 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NicheRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notifications_notifications_get: {
+        parameters: {
+            query?: {
+                unread_only?: boolean;
+                limit?: number;
+            };
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_preferences_notifications_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferenceKind"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_preferences_notifications_preferences_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferenceKind"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_read_notifications_read_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkRead"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
                 };
             };
             /** @description Validation Error */
@@ -11877,6 +12376,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyPermissions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_slack_workspaces_current_slack_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlackSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_slack_workspaces_current_slack_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SlackUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlackSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_slack_workspaces_current_slack_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
                 };
             };
             /** @description Validation Error */

@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 from celery.signals import beat_init, worker_process_init
 from kombu import Queue
 
@@ -19,6 +20,7 @@ celery_app = Celery(
         "app.workers.privacy_jobs",
         "app.workers.outbound_webhook_jobs",
         "app.workers.billing_jobs",
+        "app.workers.notification_jobs",
     ],
 )
 
@@ -96,6 +98,14 @@ celery_app.conf.update(
         "billing-daily": {
             "task": "billing.daily",
             "schedule": 3600.0,
+        },
+        "notifications-daily": {
+            "task": "notifications.daily",
+            "schedule": 3600.0,
+        },
+        "weekly-digest": {
+            "task": "notifications.weekly_digest",
+            "schedule": crontab(hour=8, minute=0, day_of_week="mon"),
         },
     },
 )

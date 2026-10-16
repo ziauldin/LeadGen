@@ -127,6 +127,9 @@ export function OnboardingChecklist() {
             />
           </div>
         </div>
+        <ButtonLink href="/onboarding" size="sm" className="self-start sm:self-center">
+          Open setup guide
+        </ButtonLink>
         <Button
           variant="ghost"
           size="sm"

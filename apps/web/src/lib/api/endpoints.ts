@@ -302,6 +302,23 @@ export const adminApi = {
   auditLogs: () => apiFetch<S["AdminAuditRow"][]>("/admin/audit-logs"),
 };
 
+export const notificationsApi = {
+  list: (unreadOnly = false) =>
+    apiFetch<S["NotificationList"]>(`/notifications${queryString({ unread_only: unreadOnly || undefined })}`),
+  markRead: (payload: { ids?: number[]; all?: boolean }) =>
+    apiFetch<{ message: string }>("/notifications/read", { method: "POST", body: json(payload) }),
+  preferences: () => apiFetch<S["PreferenceKind"][]>("/notifications/preferences"),
+  savePreferences: (settings: Record<string, Record<string, boolean>>) =>
+    apiFetch<S["PreferenceKind"][]>("/notifications/preferences", {
+      method: "PUT",
+      body: json({ settings }),
+    }),
+  slack: () => apiFetch<S["SlackSettings"]>("/workspaces/current/slack"),
+  updateSlack: (data: S["SlackUpdate"]) =>
+    apiFetch<S["SlackSettings"]>("/workspaces/current/slack", { method: "PUT", body: json(data) }),
+  testSlack: () => apiFetch<{ message: string }>("/workspaces/current/slack/test", { method: "POST" }),
+};
+
 /** Where the browser goes to start "Continue with Google/Microsoft". */
 export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";

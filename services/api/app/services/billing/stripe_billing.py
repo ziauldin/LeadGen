@@ -24,6 +24,7 @@ from app.models.user import User
 from app.models.workspace import Workspace
 from app.services.billing.plans import PLANS
 from app.services.billing.stripe_client import StripeClient, verify_signature
+from app.services.notifications import events as notify_events
 from app.services.workspaces.service import audit
 
 logger = logging.getLogger(__name__)
@@ -242,6 +243,8 @@ def reconcile(db: Session, workspace: Workspace, sub: dict[str, Any]) -> Subscri
         row.past_due_since = None
         _lift_dunning(workspace)
     elif status == "past_due":
+        if row.past_due_since is None:
+            notify_events.payment_failed(db, workspace)
         row.past_due_since = row.past_due_since or _now()
     elif status in ENDED_STATUSES:
         workspace.plan = "free"

@@ -38,6 +38,7 @@ from app.services.developer import events as webhook_events
 from app.services.inbound import normalize
 from app.services.inbound.normalize import DeliveryEvent, InboundEmail
 from app.services.inbound.text import is_auto_reply, is_bounce_report, strip_quoted
+from app.services.notifications import events as notify_events
 from app.services.replies.classification import classify_reply
 from app.services.replies.llm_classifier import RULE_CONFIDENCE_THRESHOLD, classify_with_llm
 from app.services.sending.state import InvalidTransitionError, transition
@@ -210,6 +211,7 @@ def _safety_check(db: Session, campaign_id: int | None) -> None:
             f"complaint rate {complaint_rate:.2%} over {total} sends"
         )
         logger.warning("Campaign %s auto-paused: %s", campaign_id, campaign.auto_paused_reason)
+        notify_events.campaign_paused(db, campaign)
 
 
 def _record_event(
@@ -410,6 +412,7 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
     db.flush()
     apply_reply_effects(db, reply, message, lead)
     webhook_events.reply_received(db, reply)
+    notify_events.reply_received(db, reply, lead)
     db.commit()
     metrics.REPLIES_RECEIVED.labels(str(classification)).inc()
     return reply

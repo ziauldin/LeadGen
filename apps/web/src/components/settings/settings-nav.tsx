@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Ban,
+  Bell,
   Building2,
   Code2,
   Fingerprint,
@@ -24,6 +25,7 @@ export const SETTINGS_SECTIONS: { href: string; label: string; icon: LucideIcon 
   { href: "/settings/members", label: "Members", icon: Users },
   { href: "/settings/roles", label: "Roles", icon: UserCog },
   { href: "/settings/security", label: "Security", icon: ShieldCheck },
+  { href: "/settings/notifications", label: "Notifications", icon: Bell },
   { href: "/settings/audit", label: "Audit log", icon: ScrollText },
   { href: "/settings/privacy", label: "Privacy", icon: Scale },
   { href: "/settings/sso", label: "Single sign-on", icon: Fingerprint },

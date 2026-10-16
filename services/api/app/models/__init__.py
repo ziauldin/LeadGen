@@ -28,6 +28,7 @@ from app.models.inbound import EmailEvent, InboxCursor, WebhookEvent
 from app.models.lead import Lead
 from app.models.llm_usage import LLMUsage
 from app.models.niche import Niche
+from app.models.notification import LifecycleEmail, Notification, NotificationPreference
 from app.models.privacy import DataRequest
 from app.models.provider_credential import ProviderCredential
 from app.models.reply import Reply
@@ -71,7 +72,10 @@ __all__ = [
     "LLMUsage",
     "Lead",
     "LeadStatus",
+    "LifecycleEmail",
     "Niche",
+    "Notification",
+    "NotificationPreference",
     "ProviderCredential",
     "ProviderCredentialStatus",
     "ProviderName",

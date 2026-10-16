@@ -444,5 +444,8 @@ def accept_invitation(db: Session, raw_token: str, user: User) -> Workspace:
         "workspace_invitation",
         invitation.id,
     )
+    from app.services.notifications import events as notify_events
+
+    notify_events.member_joined(db, invitation.workspace_id, user)
     db.commit()
     return invitation.workspace
