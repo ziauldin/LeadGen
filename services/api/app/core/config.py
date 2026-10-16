@@ -131,6 +131,11 @@ class Settings(BaseSettings):
     feature_imap: bool = False
     feature_inbound_webhooks: bool = False
     feature_sso: bool = False
+    feature_public_api: bool = False
+
+    # Public API (/v1) and outbound webhooks
+    rate_limit_api: str = "120/minute"  # per API key
+    outbound_webhook_timeout_seconds: float = 10.0
 
     # "Continue with Google / Microsoft" (OIDC apps you register with each provider).
     google_oauth_client_id: str = ""

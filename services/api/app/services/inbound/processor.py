@@ -34,6 +34,7 @@ from app.services.compliance.opt_out import (
     process_unsubscribe_for_message,
     suppress_email,
 )
+from app.services.developer import events as webhook_events
 from app.services.inbound import normalize
 from app.services.inbound.normalize import DeliveryEvent, InboundEmail
 from app.services.inbound.text import is_auto_reply, is_bounce_report, strip_quoted
@@ -243,6 +244,7 @@ def process_delivery_event(db: Session, workspace_id: int, event: DeliveryEvent)
             with contextlib.suppress(InvalidTransitionError):
                 transition(db, message, EmailMessageStatus.BOUNCED, reason=event.reason)
             message.bounce_status = BounceStatus.HARD
+            webhook_events.email_bounced(db, message, "hard_bounce")
         for contact in db.scalars(
             select(EmailContact).where(
                 EmailContact.workspace_id == workspace_id,
@@ -297,6 +299,7 @@ def process_delivery_event(db: Session, workspace_id: int, event: DeliveryEvent)
         if message is not None:
             with contextlib.suppress(InvalidTransitionError):
                 transition(db, message, EmailMessageStatus.COMPLAINED, reason="spam complaint")
+            webhook_events.email_bounced(db, message, "complaint")
         suppress_email(
             db,
             workspace_id=workspace_id,
@@ -406,6 +409,7 @@ def process_inbound_email(db: Session, workspace_id: int, email: InboundEmail) -
     db.add(reply)
     db.flush()
     apply_reply_effects(db, reply, message, lead)
+    webhook_events.reply_received(db, reply)
     db.commit()
     metrics.REPLIES_RECEIVED.labels(str(classification)).inc()
     return reply

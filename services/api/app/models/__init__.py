@@ -2,6 +2,7 @@ from app.models.audit_log import AuditLog
 from app.models.auth_tokens import EmailActionToken, RefreshToken
 from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
+from app.models.developer import ApiKey, IdempotencyRecord, WebhookDelivery, WebhookEndpoint
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
 from app.models.email_template import EmailTemplateRecord
@@ -44,6 +45,7 @@ from app.models.workspace import (
 )
 
 __all__ = [
+    "ApiKey",
     "AuditLog",
     "BounceStatus",
     "Campaign",
@@ -62,6 +64,7 @@ __all__ = [
     "EnrichmentStatus",
     "EnrollmentStatus",
     "ExternalIdentity",
+    "IdempotencyRecord",
     "InboxCursor",
     "LLMUsage",
     "Lead",
@@ -86,6 +89,8 @@ __all__ = [
     "UserRole",
     "UserSettings",
     "VerifiedDomain",
+    "WebhookDelivery",
+    "WebhookEndpoint",
     "WebhookEvent",
     "Workspace",
     "WorkspaceInvitation",

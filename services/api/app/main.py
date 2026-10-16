@@ -16,6 +16,7 @@ from app.api.routes import (
     companies,
     compliance,
     dashboard,
+    developer,
     emails,
     health,
     leads,
@@ -33,6 +34,7 @@ from app.api.routes import (
     workspaces,
 )
 from app.api.routes.settings import suppressions_router
+from app.api.v1 import routes as public_v1
 from app.core.config import production_config_errors
 from app.core.config import settings as app_settings
 from app.core.errors import AppError
@@ -114,6 +116,8 @@ app.include_router(auth.router)
 app.include_router(sso.router)
 app.include_router(roles.router)
 app.include_router(privacy.router)
+app.include_router(developer.router)
+app.include_router(public_v1.router)
 app.include_router(workspaces.router)
 app.include_router(workspaces.invitations_router)
 app.include_router(billing.router)

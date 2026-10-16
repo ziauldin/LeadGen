@@ -23,6 +23,7 @@ from app.models.lead import Lead
 from app.models.niche import Niche
 from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.compliance.outreach import primary_recipient_email, validate_lead_for_outreach
+from app.services.developer import events as webhook_events
 from app.services.email_generation.generator import (
     apply_content,
     build_content,
@@ -368,6 +369,7 @@ def complete_finished(db: Session, *, now: datetime | None = None) -> dict[str, 
     ).all()
     for enrollment in enrollments:
         enrollment.status = EnrollmentStatus.COMPLETED
+        webhook_events.enrollment_completed(db, enrollment)
     db.flush()  # sessions don't autoflush; the counts below must see these changes
 
     campaigns_done = 0

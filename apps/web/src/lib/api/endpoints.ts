@@ -215,6 +215,28 @@ export const privacyApi = {
     apiFetch<S["GovernanceSettings"]>("/privacy/settings", { method: "PUT", body: json(data) }),
 };
 
+export const developerApi = {
+  options: () => apiFetch<S["DeveloperOptions"]>("/developer/options"),
+  keys: () => apiFetch<S["ApiKeyRead"][]>("/api-keys"),
+  createKey: (data: S["ApiKeyCreate"]) =>
+    apiFetch<S["ApiKeyCreated"]>("/api-keys", { method: "POST", body: json(data) }),
+  revokeKey: (id: number) => apiFetch<void>(`/api-keys/${id}`, { method: "DELETE" }),
+  endpoints: () => apiFetch<S["EndpointRead"][]>("/webhook-endpoints"),
+  createEndpoint: (data: S["EndpointWrite"]) =>
+    apiFetch<S["EndpointCreated"]>("/webhook-endpoints", { method: "POST", body: json(data) }),
+  updateEndpoint: (id: number, data: S["EndpointWrite"]) =>
+    apiFetch<S["EndpointRead"]>(`/webhook-endpoints/${id}`, { method: "PATCH", body: json(data) }),
+  deleteEndpoint: (id: number) => apiFetch<void>(`/webhook-endpoints/${id}`, { method: "DELETE" }),
+  rotateSecret: (id: number) =>
+    apiFetch<S["SecretRead"]>(`/webhook-endpoints/${id}/rotate-secret`, { method: "POST" }),
+  testEndpoint: (id: number) =>
+    apiFetch<S["DeliveryRead"]>(`/webhook-endpoints/${id}/test`, { method: "POST" }),
+  deliveries: (id: number) =>
+    apiFetch<S["DeliveryPage"]>(`/webhook-endpoints/${id}/deliveries`),
+  replay: (deliveryId: number) =>
+    apiFetch<S["DeliveryRead"]>(`/webhook-deliveries/${deliveryId}/replay`, { method: "POST" }),
+};
+
 /** Where the browser goes to start "Continue with Google/Microsoft". */
 export function socialSignInUrl(provider: "google" | "microsoft", next?: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";

@@ -27,6 +27,7 @@ from app.schemas.lead import (
 from app.schemas.outreach import OutreachReadiness
 from app.services.billing.usage import check_quota, record_usage
 from app.services.compliance.outreach import validate_lead_for_outreach
+from app.services.developer import events as webhook_events
 from app.services.leads.bulk import delete_lead as remove_lead
 from app.services.leads.bulk import lead_stats, run_bulk_action
 from app.services.leads.csv_import import export_leads_to_csv, import_leads_from_csv
@@ -169,6 +170,8 @@ def create_lead(
     check_quota(db, ctx.workspace, "monthly_leads")
     lead = Lead(workspace_id=ctx.workspace_id, **data)
     db.add(lead)
+    db.flush()
+    webhook_events.lead_created(db, lead)
     record_usage(db, ctx.workspace_id, "monthly_leads")
     db.commit()
     return serialize_lead(_load_lead(db, lead.id, ctx.workspace_id))

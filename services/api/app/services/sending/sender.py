@@ -30,6 +30,7 @@ from app.models.lead import Lead
 from app.models.workspace import Workspace, WorkspaceSettings
 from app.services.billing.usage import record_usage
 from app.services.campaigns.sequences import on_message_sent
+from app.services.developer import events as webhook_events
 from app.services.sending.base import SendKind
 from app.services.sending.gate import GateKind, campaign_sent_today, evaluate_send_gate
 from app.services.sending.mime import build_outbound, make_message_id
@@ -175,6 +176,7 @@ def deliver_message(db: Session, message_id: int, *, now: datetime | None = None
         message.next_attempt_at = None
         record_usage(db, message.workspace_id, "monthly_sends")
         on_message_sent(db, message, message.sent_at)
+        webhook_events.email_sent(db, message)
         if lead.status not in {LeadStatus.REPLIED, LeadStatus.MEETING_BOOKED, LeadStatus.CLIENT}:
             lead.status = LeadStatus.CONTACTED
         db.add(

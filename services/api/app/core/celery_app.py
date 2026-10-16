@@ -17,6 +17,7 @@ celery_app = Celery(
         "app.workers.inbound_jobs",
         "app.workers.ops_jobs",
         "app.workers.privacy_jobs",
+        "app.workers.outbound_webhook_jobs",
     ],
 )
 
@@ -86,6 +87,10 @@ celery_app.conf.update(
         "apply-retention": {
             "task": "privacy.apply_retention",
             "schedule": 86400.0,
+        },
+        "retry-outbound-webhooks": {
+            "task": "outbound_webhooks.retry_due",
+            "schedule": 60.0,
         },
     },
 )

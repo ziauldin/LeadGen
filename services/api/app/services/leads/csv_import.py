@@ -15,6 +15,7 @@ from app.models.workspace import Workspace
 from app.services.billing.usage import record_usage, remaining
 from app.services.common.csv_safety import safe_row
 from app.services.companies.helpers import extract_domain, normalize_website
+from app.services.developer import events as webhook_events
 
 CSV_IMPORT_COLUMNS = [
     "full_name",
@@ -230,6 +231,7 @@ def import_leads_from_csv(
             db.add(lead)
             db.flush()
             result.created += 1
+            webhook_events.lead_created(db, lead, [email] if email else [])
 
         if email:
             contact = db.scalar(

@@ -140,20 +140,26 @@ def safe_get(
     raise FetchError("Too many redirects")
 
 
-def safe_post_form(
+def _safe_post(
     client: httpx.Client,
     url: str,
-    data: dict[str, str],
     *,
     timeout: float,
     max_bytes: int,
-    headers: dict[str, str] | None = None,
+    headers: dict[str, str] | None,
+    data: dict[str, str] | None = None,
+    content: bytes | None = None,
 ) -> FetchResult:
-    """POST a form to a validated public URL. Redirects are not followed."""
     validate_url(url)
     try:
         with client.stream(
-            "POST", url, data=data, headers=headers, timeout=timeout, follow_redirects=False
+            "POST",
+            url,
+            data=data,
+            content=content,
+            headers=headers,
+            timeout=timeout,
+            follow_redirects=False,
         ) as response:
             if not _peer_is_public(response):
                 raise UnsafeURLError("Connected address is not publicly routable")
@@ -173,3 +179,31 @@ def safe_post_form(
             )
     except httpx.HTTPError as exc:
         raise FetchError(f"Request failed: {exc.__class__.__name__}") from exc
+
+
+def safe_post_form(
+    client: httpx.Client,
+    url: str,
+    data: dict[str, str],
+    *,
+    timeout: float,
+    max_bytes: int,
+    headers: dict[str, str] | None = None,
+) -> FetchResult:
+    """POST a form to a validated public URL. Redirects are not followed."""
+    return _safe_post(client, url, timeout=timeout, max_bytes=max_bytes, headers=headers, data=data)
+
+
+def safe_post_bytes(
+    client: httpx.Client,
+    url: str,
+    content: bytes,
+    *,
+    timeout: float,
+    max_bytes: int,
+    headers: dict[str, str] | None = None,
+) -> FetchResult:
+    """POST a raw body (e.g. signed JSON) to a validated public URL. Redirects are not followed."""
+    return _safe_post(
+        client, url, timeout=timeout, max_bytes=max_bytes, headers=headers, content=content
+    )
