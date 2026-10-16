@@ -2,6 +2,7 @@ import httpx
 import pytest
 from sqlalchemy import select
 
+from app.core.config import settings
 from app.models.email_contact import EmailContact
 from app.models.email_message import EmailMessage
 from app.models.enums import EmailMessageStatus
@@ -141,10 +142,29 @@ def test_bulk_verify_and_gate(monkeypatch):
     assert any("risky" in issue.lower() for issue in readiness["issues"])
 
 
-def test_verification_uses_plan_credits():
+def test_own_verification_key_is_not_counted():
     client = get_client()
     headers, _campaign, _ids = approved_message(client, emails=LEADS)
     _connect_mock_verifier(client, headers)
+    db = TestingSessionLocal()
+    try:
+        workspace = db.scalar(select(Workspace))
+        workspace.plan_overrides = {"monthly_verifications": 2}
+        db.commit()
+    finally:
+        db.close()
+    lead_ids = [lead["id"] for lead in client.get("/leads", headers=headers).json()["items"]]
+    client.post("/leads/bulk", headers=headers, json={"action": "verify", "lead_ids": lead_ids})
+    checked = [c for c in _contacts().values() if c.verification_status is not None]
+    assert len(checked) == len(LEADS)  # the workspace pays its provider directly
+    usage = {u["metric"]: u for u in client.get("/billing", headers=headers).json()["usage"]}
+    assert usage["monthly_verifications"]["used"] == 0
+
+
+def test_platform_verification_uses_plan_credits(monkeypatch):
+    monkeypatch.setattr(settings, "platform_verification_provider", "mock")
+    client = get_client()
+    headers, _campaign, _ids = approved_message(client, emails=LEADS)
     db = TestingSessionLocal()
     try:
         workspace = db.scalar(select(Workspace))

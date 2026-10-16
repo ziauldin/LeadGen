@@ -122,3 +122,30 @@ def check_campaign_limit(db: Session, workspace: Workspace) -> None:
     limit = limits_for(workspace).max_campaigns
     if count >= limit:
         raise QuotaExceededError("max_campaigns", limit, count)
+
+
+MAILBOX_PROVIDER_NAMES = ("gmail", "outlook")
+
+
+def connected_mailboxes(db: Session, workspace_id: int) -> int:
+    from app.models.enums import ProviderType
+    from app.models.provider_credential import ProviderCredential
+
+    return (
+        db.scalar(
+            select(func.count(ProviderCredential.id)).where(
+                ProviderCredential.workspace_id == workspace_id,
+                ProviderCredential.provider_type == ProviderType.EMAIL,
+                ProviderCredential.provider_name.in_(MAILBOX_PROVIDER_NAMES),
+            )
+        )
+        or 0
+    )
+
+
+def check_mailbox_limit(db: Session, workspace: Workspace) -> None:
+    """Raise when connecting one more mailbox would go over the plan."""
+    used = connected_mailboxes(db, workspace.id)
+    limit = limits_for(workspace).max_mailboxes
+    if used >= limit:
+        raise QuotaExceededError("max_mailboxes", limit, used)

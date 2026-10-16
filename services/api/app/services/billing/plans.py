@@ -18,6 +18,7 @@ class PlanLimits:
     daily_hunter_lookups: int
     max_campaigns: int
     monthly_verifications: int = 0
+    max_mailboxes: int = 1  # connected Gmail / Microsoft 365 mailboxes
 
     def as_dict(self) -> dict[str, int]:
         return asdict(self)
@@ -33,6 +34,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_hunter_lookups=25,
         max_campaigns=3,
         monthly_verifications=100,
+        max_mailboxes=1,
     ),
     "starter": PlanLimits(
         monthly_sends=5_000,
@@ -43,6 +45,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_hunter_lookups=200,
         max_campaigns=20,
         monthly_verifications=2_000,
+        max_mailboxes=5,
     ),
     "pro": PlanLimits(
         monthly_sends=50_000,
@@ -53,6 +56,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_hunter_lookups=1_000,
         max_campaigns=100,
         monthly_verifications=20_000,
+        max_mailboxes=25,
     ),
     "enterprise": PlanLimits(
         monthly_sends=250_000,
@@ -63,6 +67,7 @@ PLANS: dict[str, PlanLimits] = {
         daily_hunter_lookups=5_000,
         max_campaigns=1_000,
         monthly_verifications=100_000,
+        max_mailboxes=200,
     ),
 }
 

@@ -182,6 +182,10 @@ class Settings(BaseSettings):
     hunter_api_key: str = ""
     hunter_daily_limit: int = 25
     hunter_enabled: bool = False
+    # Platform-paid email verification, used when a workspace hasn't connected its own key.
+    # zerobounce | neverbounce | mock | "" (off: DNS-only checks). Counted against the plan.
+    platform_verification_provider: str = ""
+    platform_verification_api_key: str = ""
 
     default_daily_send_limit: int = 20
     default_per_domain_limit: int = 3
