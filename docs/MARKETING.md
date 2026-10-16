@@ -19,7 +19,8 @@ The public site lives in the same Next.js app, under `src/app/(marketing)`:
 | Web | `NEXT_PUBLIC_LEGAL_ENTITY`, `NEXT_PUBLIC_LEGAL_ADDRESS` | The company named in legal pages and the footer |
 | Web | `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_PRIVACY_EMAIL` | Contact addresses shown on legal and contact pages |
 | Web | `NEXT_PUBLIC_STATUS_URL` | Optional status page link in the footer |
-| API | `PLAN_DISPLAY_PRICES` | Prices shown on `/pricing`, e.g. `{"currency":"USD","free":{"month":0},"starter":{"month":49,"year":490},"pro":{"month":149,"year":1490}}`. Stripe still decides what's actually charged. |
+| API | `PLAN_DISPLAY_PRICES` | Prices shown on `/pricing` ("year" is the yearly total). Default: Starter $39/month or $390/year, Pro $99/month or $990/year, Enterprise "Custom". Stripe still decides what's actually charged, so keep the two in step. |
+| API | `CREDIT_PACKS` | Credit packs shown on `/pricing` and in billing settings ([BILLING.md](BILLING.md#credits)). |
 | API | `SUPPORT_EMAIL` | Where contact-form messages are sent |
 
 ## Legal text

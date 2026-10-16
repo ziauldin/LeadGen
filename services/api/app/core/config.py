@@ -157,7 +157,12 @@ class Settings(BaseSettings):
 
     # Marketing site: prices shown on /pricing (Stripe stays the source of truth for charges)
     # and where contact-form messages go.
-    plan_display_prices: str = '{"currency": "USD", "free": {"month": 0, "year": 0}}'
+    # Prices shown on the pricing page (whole currency units; "year" is the yearly total).
+    # Plans left out (Enterprise by default) show "Custom". Stripe holds the real prices.
+    plan_display_prices: str = (
+        '{"currency": "USD", "free": {"month": 0, "year": 0}, '
+        '"starter": {"month": 39, "year": 390}, "pro": {"month": 99, "year": 990}}'
+    )
     support_email: str = "support@localhost"
 
     # Platform admins must use two-factor authentication to open the back office.
