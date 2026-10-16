@@ -1,7 +1,7 @@
 # API image, also used for the Celery worker and beat (override the command).
 # Build:  docker build -t leadsgen-api services/api
 
-FROM python:3.12-slim AS build
+FROM python:3.14-slim AS build
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential \
@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 COPY pyproject.toml requirements.txt ./
 RUN pip wheel --wheel-dir /wheels -r requirements.txt
 
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 PORT=8000
 WORKDIR /app
