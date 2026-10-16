@@ -18,6 +18,7 @@ from app.models.lead import Lead
 from app.models.reply import Reply
 from app.models.user import User
 from app.models.workspace import WorkspaceSettings
+from app.services.integrations import service as integrations
 from app.services.workspaces.service import audit
 
 DEFAULT_STAGES: list[tuple[str, str, int]] = [
@@ -125,6 +126,7 @@ def create_deal(
         deal.id,
         {"stage": target.name, "lead_id": deal.lead_id, "source": source},
     )
+    integrations.queue(db, workspace_id, "deal", deal.id)
     return deal
 
 
@@ -163,6 +165,7 @@ def update_deal(db: Session, deal: Deal, actor_id: int, changes: dict[str, Any])
         )
         meta.update({"from_stage": names.get(previous_stage), "to_stage": names.get(deal.stage_id)})
     audit(db, deal.workspace_id, actor_id, "deal_updated", "deal", deal.id, meta)
+    integrations.queue(db, deal.workspace_id, "deal", deal.id)
     db.commit()
     return deal
 

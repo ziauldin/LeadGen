@@ -27,6 +27,11 @@ from app.models.enums import (
 )
 from app.models.inbound import EmailEvent, InboxCursor, WebhookEvent
 from app.models.inbox import Conversation
+from app.models.integration import (
+    IntegrationConnection,
+    IntegrationLink,
+    IntegrationSyncLog,
+)
 from app.models.lead import Lead
 from app.models.llm_usage import LLMUsage
 from app.models.mailbox import CampaignSender
@@ -76,6 +81,9 @@ __all__ = [
     "ExternalIdentity",
     "IdempotencyRecord",
     "InboxCursor",
+    "IntegrationConnection",
+    "IntegrationLink",
+    "IntegrationSyncLog",
     "LLMUsage",
     "Lead",
     "LeadStatus",

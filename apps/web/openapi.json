@@ -5345,6 +5345,288 @@
         "title": "ImpersonationToken",
         "type": "object"
       },
+      "IntegrationConnectResponse": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "IntegrationConnectResponse",
+        "type": "object"
+      },
+      "IntegrationConnectionRead": {
+        "properties": {
+          "account_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Label"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/IntegrationSettings"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_label",
+          "created_at",
+          "id",
+          "label",
+          "last_error",
+          "last_synced_at",
+          "provider",
+          "settings",
+          "status"
+        ],
+        "title": "IntegrationConnectionRead",
+        "type": "object"
+      },
+      "IntegrationProvider": {
+        "properties": {
+          "auth": {
+            "title": "Auth",
+            "type": "string"
+          },
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "auth",
+          "available",
+          "key",
+          "label"
+        ],
+        "title": "IntegrationProvider",
+        "type": "object"
+      },
+      "IntegrationSettings": {
+        "properties": {
+          "pull_status": {
+            "title": "Pull Status",
+            "type": "boolean"
+          },
+          "push_contacts": {
+            "title": "Push Contacts",
+            "type": "boolean"
+          },
+          "push_deals": {
+            "title": "Push Deals",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "pull_status",
+          "push_contacts",
+          "push_deals"
+        ],
+        "title": "IntegrationSettings",
+        "type": "object"
+      },
+      "IntegrationSettingsUpdate": {
+        "properties": {
+          "pull_status": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pull Status"
+          },
+          "push_contacts": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push Contacts"
+          },
+          "push_deals": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Push Deals"
+          }
+        },
+        "title": "IntegrationSettingsUpdate",
+        "type": "object"
+      },
+      "IntegrationSyncLogRead": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "direction": {
+            "title": "Direction",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "local_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Local Id"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "object_type": {
+            "title": "Object Type",
+            "type": "string"
+          },
+          "remote_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "direction",
+          "id",
+          "local_id",
+          "message",
+          "object_type",
+          "remote_id",
+          "status"
+        ],
+        "title": "IntegrationSyncLogRead",
+        "type": "object"
+      },
+      "IntegrationsOverview": {
+        "properties": {
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/IntegrationConnectionRead"
+            },
+            "title": "Connections",
+            "type": "array"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "in_plan": {
+            "title": "In Plan",
+            "type": "boolean"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/IntegrationProvider"
+            },
+            "title": "Providers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "connections",
+          "enabled",
+          "in_plan",
+          "providers"
+        ],
+        "title": "IntegrationsOverview",
+        "type": "object"
+      },
       "InvitationCreate": {
         "properties": {
           "email": {
@@ -7207,6 +7489,28 @@
           "key"
         ],
         "title": "PermissionInfo",
+        "type": "object"
+      },
+      "PipedriveConnectRequest": {
+        "properties": {
+          "api_token": {
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Api Token",
+            "type": "string"
+          },
+          "company_domain": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Company Domain",
+            "type": "string"
+          }
+        },
+        "required": [
+          "api_token",
+          "company_domain"
+        ],
+        "title": "PipedriveConnectRequest",
         "type": "object"
       },
       "PreferenceKind": {
@@ -17610,6 +17914,440 @@
         "summary": "Suggest",
         "tags": [
           "inbox"
+        ]
+      }
+    },
+    "/integrations": {
+      "get": {
+        "operationId": "overview_integrations_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationsOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Overview",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/hubspot/connect": {
+      "post": {
+        "operationId": "connect_hubspot_integrations_hubspot_connect_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationConnectResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Connect Hubspot",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/pipedrive": {
+      "post": {
+        "operationId": "connect_pipedrive_integrations_pipedrive_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PipedriveConnectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Connect Pipedrive",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{connection_id}": {
+      "delete": {
+        "operationId": "delete_integration_integrations__connection_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "title": "Connection Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Integration",
+        "tags": [
+          "integrations"
+        ]
+      },
+      "patch": {
+        "operationId": "update_integration_integrations__connection_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "title": "Connection Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Integration",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{connection_id}/logs": {
+      "get": {
+        "operationId": "sync_logs_integrations__connection_id__logs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "title": "Connection Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IntegrationSyncLogRead"
+                  },
+                  "title": "Response Sync Logs Integrations  Connection Id  Logs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sync Logs",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
+    "/integrations/{connection_id}/sync": {
+      "post": {
+        "description": "Push interested leads and all deals, then pull deal status, in the background.",
+        "operationId": "sync_now_integrations__connection_id__sync_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "schema": {
+              "title": "Connection Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Sync Now Integrations  Connection Id  Sync Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sync Now",
+        "tags": [
+          "integrations"
         ]
       }
     },

@@ -22,6 +22,7 @@ FLAGS: dict[str, str] = {
     "mailbox_oauth": "Connect Gmail and Microsoft 365 mailboxes",
     "crm": "Deals pipeline, tasks and notes",
     "analytics_v2": "Analytics page with A/B breakdowns",
+    "integrations": "HubSpot and Pipedrive sync",
 }
 
 

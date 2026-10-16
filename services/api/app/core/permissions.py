@@ -40,7 +40,7 @@ DESCRIPTIONS: dict[str, str] = {
     Permission.REPLIES_MANAGE: "Label replies and add notes",
     Permission.DATA_EXPORT: "Export data (CSV and workspace exports)",
     Permission.PRIVACY_MANAGE: "Handle data requests (export or erase a person) and retention",
-    Permission.PROVIDERS_MANAGE: "Connect sending, inbox, search and AI providers",
+    Permission.PROVIDERS_MANAGE: "Connect sending, inbox, search and AI providers, and CRMs",
     Permission.SETTINGS_MANAGE: "Change workspace settings and suppressions",
     Permission.MEMBERS_MANAGE: "Invite people and change roles",
     Permission.SSO_MANAGE: "Set up single sign-on",

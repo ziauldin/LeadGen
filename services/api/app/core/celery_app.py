@@ -23,6 +23,7 @@ celery_app = Celery(
         "app.workers.notification_jobs",
         "app.workers.verification_jobs",
         "app.workers.crm_jobs",
+        "app.workers.integration_jobs",
     ],
 )
 
@@ -104,6 +105,10 @@ celery_app.conf.update(
         "task-reminders": {
             "task": "crm.task_reminders",
             "schedule": 300.0,
+        },
+        "integration-deal-status": {
+            "task": "integrations.pull_statuses",
+            "schedule": 900.0,
         },
         "wake-snoozed-conversations": {
             "task": "inbox.wake_snoozed",

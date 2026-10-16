@@ -75,6 +75,7 @@ class PlanFeatures:
     saml: bool = False  # SAML 2.0 identity providers
     custom_roles: bool = False
     api_access: bool = False
+    integrations: bool = False  # HubSpot and Pipedrive sync
     audit_log_retention_days: int = 30
 
     def as_dict(self) -> dict[str, bool | int]:
@@ -84,9 +85,14 @@ class PlanFeatures:
 PLAN_FEATURES: dict[str, PlanFeatures] = {
     "free": PlanFeatures(),
     "starter": PlanFeatures(api_access=True, audit_log_retention_days=90),
-    "pro": PlanFeatures(sso=True, api_access=True, audit_log_retention_days=365),
+    "pro": PlanFeatures(sso=True, api_access=True, integrations=True, audit_log_retention_days=365),
     "enterprise": PlanFeatures(
-        sso=True, saml=True, custom_roles=True, api_access=True, audit_log_retention_days=730
+        sso=True,
+        saml=True,
+        custom_roles=True,
+        api_access=True,
+        integrations=True,
+        audit_log_retention_days=730,
     ),
 }
 

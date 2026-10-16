@@ -136,6 +136,7 @@ class Settings(BaseSettings):
     feature_mailbox_oauth: bool = False
     feature_crm: bool = False
     feature_analytics_v2: bool = False
+    feature_integrations: bool = False
 
     # Stripe billing (FEATURE_BILLING). STRIPE_PRICES maps "plan:interval" to a Stripe price id,
     # e.g. {"starter:month": "price_123", "starter:year": "price_456", "pro:month": "price_789"}.
@@ -165,6 +166,10 @@ class Settings(BaseSettings):
     google_oauth_client_secret: str = ""
     microsoft_oauth_client_id: str = ""
     microsoft_oauth_client_secret: str = ""
+
+    # CRM integrations. HubSpot needs a public app (OAuth); Pipedrive uses each workspace's API token.
+    hubspot_client_id: str = ""
+    hubspot_client_secret: str = ""
 
     # Platform-paid LLM, used when a workspace has no key of its own: groq | openai | gemini |
     # mock | "" (off). Workspace keys are stored encrypted as "llm" provider credentials.

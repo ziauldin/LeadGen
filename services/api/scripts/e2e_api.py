@@ -36,6 +36,7 @@ env = {
     "SUPERUSER_REQUIRE_MFA": "false",
     "FEATURE_CRM": "true",
     "FEATURE_ANALYTICS_V2": "true",
+    "FEATURE_INTEGRATIONS": "true",
 }
 
 

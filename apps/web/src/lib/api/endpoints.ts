@@ -382,6 +382,18 @@ export const analyticsApi = {
   variants: (campaignId: number) => apiFetch<S["StepVariants"][]>(`/campaigns/${campaignId}/variants`),
 };
 
+export const integrationsApi = {
+  overview: () => apiFetch<S["IntegrationsOverview"]>("/integrations"),
+  connectHubspot: () => apiFetch<{ url: string }>("/integrations/hubspot/connect", { method: "POST" }),
+  connectPipedrive: (data: S["PipedriveConnectRequest"]) =>
+    apiFetch<S["IntegrationConnectionRead"]>("/integrations/pipedrive", { method: "POST", body: json(data) }),
+  update: (id: number, data: S["IntegrationSettingsUpdate"]) =>
+    apiFetch<S["IntegrationConnectionRead"]>(`/integrations/${id}`, { method: "PATCH", body: json(data) }),
+  remove: (id: number) => apiFetch<void>(`/integrations/${id}`, { method: "DELETE" }),
+  sync: (id: number) => apiFetch<{ queued: boolean }>(`/integrations/${id}/sync`, { method: "POST" }),
+  logs: (id: number) => apiFetch<S["IntegrationSyncLogRead"][]>(`/integrations/${id}/logs`),
+};
+
 export const billingApi = {
   summary: () => apiFetch<BillingSummary>("/billing"),
   checkout: (plan: string, interval: "month" | "year") =>

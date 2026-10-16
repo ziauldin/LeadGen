@@ -1641,6 +1641,112 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Overview */
+        get: operations["overview_integrations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/hubspot/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Hubspot */
+        post: operations["connect_hubspot_integrations_hubspot_connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/pipedrive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connect Pipedrive */
+        post: operations["connect_pipedrive_integrations_pipedrive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/{connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Integration */
+        delete: operations["delete_integration_integrations__connection_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Integration */
+        patch: operations["update_integration_integrations__connection_id__patch"];
+        trace?: never;
+    };
+    "/integrations/{connection_id}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sync Logs */
+        get: operations["sync_logs_integrations__connection_id__logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/integrations/{connection_id}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync Now
+         * @description Push interested leads and all deals, then pull deal status, in the background.
+         */
+        post: operations["sync_now_integrations__connection_id__sync_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/invitations/{token}": {
         parameters: {
             query?: never;
@@ -4910,6 +5016,96 @@ export interface components {
             /** Workspace Name */
             workspace_name: string;
         };
+        /** IntegrationConnectResponse */
+        IntegrationConnectResponse: {
+            /** Url */
+            url: string;
+        };
+        /** IntegrationConnectionRead */
+        IntegrationConnectionRead: {
+            /** Account Label */
+            account_label: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Last Error */
+            last_error: string | null;
+            /** Last Synced At */
+            last_synced_at: string | null;
+            /** Provider */
+            provider: string;
+            settings: components["schemas"]["IntegrationSettings"];
+            /** Status */
+            status: string;
+        };
+        /** IntegrationProvider */
+        IntegrationProvider: {
+            /** Auth */
+            auth: string;
+            /** Available */
+            available: boolean;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+        };
+        /** IntegrationSettings */
+        IntegrationSettings: {
+            /** Pull Status */
+            pull_status: boolean;
+            /** Push Contacts */
+            push_contacts: boolean;
+            /** Push Deals */
+            push_deals: boolean;
+        };
+        /** IntegrationSettingsUpdate */
+        IntegrationSettingsUpdate: {
+            /** Pull Status */
+            pull_status?: boolean | null;
+            /** Push Contacts */
+            push_contacts?: boolean | null;
+            /** Push Deals */
+            push_deals?: boolean | null;
+        };
+        /** IntegrationSyncLogRead */
+        IntegrationSyncLogRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Direction */
+            direction: string;
+            /** Id */
+            id: number;
+            /** Local Id */
+            local_id: number | null;
+            /** Message */
+            message: string | null;
+            /** Object Type */
+            object_type: string;
+            /** Remote Id */
+            remote_id: string | null;
+            /** Status */
+            status: string;
+        };
+        /** IntegrationsOverview */
+        IntegrationsOverview: {
+            /** Connections */
+            connections: components["schemas"]["IntegrationConnectionRead"][];
+            /** Enabled */
+            enabled: boolean;
+            /** In Plan */
+            in_plan: boolean;
+            /** Providers */
+            providers: components["schemas"]["IntegrationProvider"][];
+        };
         /** InvitationCreate */
         InvitationCreate: {
             /**
@@ -5464,6 +5660,13 @@ export interface components {
             description: string;
             /** Key */
             key: string;
+        };
+        /** PipedriveConnectRequest */
+        PipedriveConnectRequest: {
+            /** Api Token */
+            api_token: string;
+            /** Company Domain */
+            company_domain: string;
         };
         /** PreferenceKind */
         PreferenceKind: {
@@ -10082,6 +10285,239 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Suggestion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_integrations_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationsOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_hubspot_integrations_hubspot_connect_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationConnectResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connect_pipedrive_integrations_pipedrive_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PipedriveConnectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_integration_integrations__connection_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_integration_integrations__connection_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntegrationSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_logs_integrations__connection_id__logs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationSyncLogRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sync_now_integrations__connection_id__sync_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path: {
+                connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
                 };
             };
             /** @description Validation Error */
