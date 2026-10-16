@@ -132,6 +132,17 @@ class Settings(BaseSettings):
     feature_inbound_webhooks: bool = False
     feature_sso: bool = False
     feature_public_api: bool = False
+    feature_billing: bool = False
+
+    # Stripe billing (FEATURE_BILLING). STRIPE_PRICES maps "plan:interval" to a Stripe price id,
+    # e.g. {"starter:month": "price_123", "starter:year": "price_456", "pro:month": "price_789"}.
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_prices: str = "{}"
+    stripe_automatic_tax: bool = False
+    stripe_api_base: str = "https://api.stripe.com/v1"
+    billing_trial_days: int = 14
+    billing_grace_days: int = 7
 
     # Platform admins must use two-factor authentication to open the back office.
     superuser_require_mfa: bool = True
@@ -259,6 +270,10 @@ def production_config_errors(config: Settings) -> list[str]:
         host in config.cors_origin_regex.lower() for host in ("railway", "vercel")
     ):
         errors.append("CORS_ORIGIN_REGEX must not allow every Railway/Vercel subdomain")
+    if config.feature_billing and not (config.stripe_secret_key and config.stripe_webhook_secret):
+        errors.append("FEATURE_BILLING needs STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET")
+    if config.stripe_secret_key.startswith("sk_test_"):
+        errors.append("STRIPE_SECRET_KEY is a test key; use a live key in production")
     return errors
 
 

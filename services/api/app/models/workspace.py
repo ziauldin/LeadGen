@@ -55,6 +55,8 @@ class Workspace(Base, TimestampMixin):
         nullable=True,
     )
     sending_suspended_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Set while the workspace is on a free trial of a paid plan (FEATURE_BILLING).
+    trial_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # Per-workspace overrides of FEATURE_* flags, e.g. {"public_api": true} (see core/flags.py).
     feature_flags: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

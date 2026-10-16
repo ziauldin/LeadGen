@@ -18,6 +18,7 @@ celery_app = Celery(
         "app.workers.ops_jobs",
         "app.workers.privacy_jobs",
         "app.workers.outbound_webhook_jobs",
+        "app.workers.billing_jobs",
     ],
 )
 
@@ -91,6 +92,10 @@ celery_app.conf.update(
         "retry-outbound-webhooks": {
             "task": "outbound_webhooks.retry_due",
             "schedule": 60.0,
+        },
+        "billing-daily": {
+            "task": "billing.daily",
+            "schedule": 3600.0,
         },
     },
 )

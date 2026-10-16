@@ -760,6 +760,11 @@
       },
       "BillingSummary": {
         "properties": {
+          "billing_enabled": {
+            "default": false,
+            "title": "Billing Enabled",
+            "type": "boolean"
+          },
           "features": {
             "additionalProperties": {
               "anyOf": [
@@ -786,6 +791,52 @@
             "title": "Plan",
             "type": "string"
           },
+          "plan_limits": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            "default": {},
+            "title": "Plan Limits",
+            "type": "object"
+          },
+          "purchasable": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Purchasable",
+            "type": "array"
+          },
+          "sending_paused_for_payment": {
+            "default": false,
+            "title": "Sending Paused For Payment",
+            "type": "boolean"
+          },
+          "subscription": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubscriptionInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trial_ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trial Ends At"
+          },
           "usage": {
             "items": {
               "$ref": "#/components/schemas/UsageItem"
@@ -795,9 +846,15 @@
           }
         },
         "required": [
+          "billing_enabled",
           "features",
           "limits",
           "plan",
+          "plan_limits",
+          "purchasable",
+          "sending_paused_for_payment",
+          "subscription",
+          "trial_ends_at",
           "usage"
         ],
         "title": "BillingSummary",
@@ -1903,6 +1960,15 @@
       },
       "CheckoutRequest": {
         "properties": {
+          "interval": {
+            "default": "month",
+            "enum": [
+              "month",
+              "year"
+            ],
+            "title": "Interval",
+            "type": "string"
+          },
           "plan": {
             "title": "Plan",
             "type": "string"
@@ -4440,6 +4506,102 @@
           "role"
         ],
         "title": "InvitationRead",
+        "type": "object"
+      },
+      "Invoice": {
+        "properties": {
+          "amount_due": {
+            "title": "Amount Due",
+            "type": "integer"
+          },
+          "amount_paid": {
+            "title": "Amount Paid",
+            "type": "integer"
+          },
+          "created": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "hosted_invoice_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hosted Invoice Url"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "invoice_pdf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invoice Pdf"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "amount_due",
+          "amount_paid",
+          "created",
+          "currency",
+          "hosted_invoice_url",
+          "id",
+          "invoice_pdf",
+          "number",
+          "status"
+        ],
+        "title": "Invoice",
         "type": "object"
       },
       "LeadBulkRequest": {
@@ -7114,6 +7276,99 @@
         "title": "SessionRead",
         "type": "object"
       },
+      "SubscriptionInfo": {
+        "properties": {
+          "cancel_at_period_end": {
+            "title": "Cancel At Period End",
+            "type": "boolean"
+          },
+          "current_period_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Period End"
+          },
+          "grace_ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grace Ends At"
+          },
+          "has_billing_account": {
+            "title": "Has Billing Account",
+            "type": "boolean"
+          },
+          "interval": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interval"
+          },
+          "past_due_since": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Past Due Since"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "cancel_at_period_end",
+          "current_period_end",
+          "grace_ends_at",
+          "has_billing_account",
+          "interval",
+          "past_due_since",
+          "plan",
+          "status"
+        ],
+        "title": "SubscriptionInfo",
+        "type": "object"
+      },
       "SuppressionCreate": {
         "properties": {
           "domain": {
@@ -7526,6 +7781,19 @@
           "url"
         ],
         "title": "UrlRead",
+        "type": "object"
+      },
+      "UrlResponse": {
+        "properties": {
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "UrlResponse",
         "type": "object"
       },
       "UsageItem": {
@@ -11560,11 +11828,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Create Checkout Billing Checkout Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/UrlResponse"
                 }
               }
             },
@@ -11587,6 +11851,119 @@
           }
         ],
         "summary": "Create Checkout",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/billing/invoices": {
+      "get": {
+        "operationId": "list_invoices_billing_invoices_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Invoice"
+                  },
+                  "title": "Response List Invoices Billing Invoices Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Invoices",
+        "tags": [
+          "billing"
+        ]
+      }
+    },
+    "/billing/portal": {
+      "post": {
+        "description": "Stripe's customer portal: card details, invoices, plan changes and cancellation.",
+        "operationId": "create_portal_billing_portal_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Workspace-Id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UrlResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Portal",
         "tags": [
           "billing"
         ]

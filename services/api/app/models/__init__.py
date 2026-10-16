@@ -1,5 +1,6 @@
 from app.models.audit_log import AuditLog
 from app.models.auth_tokens import EmailActionToken, RefreshToken
+from app.models.billing import BillingEvent, Subscription
 from app.models.campaign import Campaign, CampaignStep
 from app.models.company import Company
 from app.models.developer import ApiKey, IdempotencyRecord, WebhookDelivery, WebhookEndpoint
@@ -47,6 +48,7 @@ from app.models.workspace import (
 __all__ = [
     "ApiKey",
     "AuditLog",
+    "BillingEvent",
     "BounceStatus",
     "Campaign",
     "CampaignEnrollment",
@@ -83,6 +85,7 @@ __all__ = [
     "SearchStatus",
     "SsoConnection",
     "SsoLoginState",
+    "Subscription",
     "Suppression",
     "UsageCounter",
     "User",

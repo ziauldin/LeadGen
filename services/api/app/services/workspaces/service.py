@@ -104,6 +104,9 @@ def create_workspace(
 def create_personal_workspace(db: Session, user: User) -> Workspace:
     first = user.name.split()[0] if user.name.strip() else "My"
     workspace = create_workspace(db, user, f"{first}'s workspace")
+    from app.services.billing.stripe_billing import start_trial
+
+    start_trial(workspace)
     db.commit()
     return workspace
 

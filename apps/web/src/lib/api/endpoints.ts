@@ -310,6 +310,10 @@ export function socialSignInUrl(provider: "google" | "microsoft", next?: string 
 
 export const billingApi = {
   summary: () => apiFetch<BillingSummary>("/billing"),
+  checkout: (plan: string, interval: "month" | "year") =>
+    apiFetch<{ url: string }>("/billing/checkout", { method: "POST", body: json({ plan, interval }) }),
+  portal: () => apiFetch<{ url: string }>("/billing/portal", { method: "POST" }),
+  invoices: () => apiFetch<S["Invoice"][]>("/billing/invoices"),
 };
 
 export const dashboardApi = {

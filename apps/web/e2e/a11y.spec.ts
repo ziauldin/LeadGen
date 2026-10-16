@@ -28,6 +28,7 @@ test("main app pages are accessible", async ({ page }) => {
     "/settings/audit",
     "/settings/privacy",
     "/settings/api",
+    "/settings/usage",
   ]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");

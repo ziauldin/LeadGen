@@ -861,6 +861,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/billing/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Invoices */
+        get: operations["list_invoices_billing_invoices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/billing/portal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Portal
+         * @description Stripe's customer portal: card details, invoices, plan changes and cancellation.
+         */
+        post: operations["create_portal_billing_portal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/campaigns": {
         parameters: {
             query?: never;
@@ -2949,6 +2986,11 @@ export interface components {
         /** BillingSummary */
         BillingSummary: {
             /**
+             * Billing Enabled
+             * @default false
+             */
+            billing_enabled: boolean;
+            /**
              * Features
              * @default {}
              */
@@ -2961,6 +3003,28 @@ export interface components {
             };
             /** Plan */
             plan: string;
+            /**
+             * Plan Limits
+             * @default {}
+             */
+            plan_limits: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+            /**
+             * Purchasable
+             * @default []
+             */
+            purchasable: string[];
+            /**
+             * Sending Paused For Payment
+             * @default false
+             */
+            sending_paused_for_payment: boolean;
+            subscription: components["schemas"]["SubscriptionInfo"] | null;
+            /** Trial Ends At */
+            trial_ends_at: string | null;
             /** Usage */
             usage: components["schemas"]["UsageItem"][];
         };
@@ -3291,6 +3355,12 @@ export interface components {
         };
         /** CheckoutRequest */
         CheckoutRequest: {
+            /**
+             * Interval
+             * @default month
+             * @enum {string}
+             */
+            interval?: "month" | "year";
             /** Plan */
             plan: string;
         };
@@ -4085,6 +4155,27 @@ export interface components {
             /** Id */
             id: number;
             role: components["schemas"]["WorkspaceRole"];
+        };
+        /** Invoice */
+        Invoice: {
+            /** Amount Due */
+            amount_due: number;
+            /** Amount Paid */
+            amount_paid: number;
+            /** Created */
+            created: string | null;
+            /** Currency */
+            currency: string;
+            /** Hosted Invoice Url */
+            hosted_invoice_url: string | null;
+            /** Id */
+            id: string | null;
+            /** Invoice Pdf */
+            invoice_pdf: string | null;
+            /** Number */
+            number: string | null;
+            /** Status */
+            status: string | null;
         };
         /** LeadBulkRequest */
         LeadBulkRequest: {
@@ -4904,6 +4995,25 @@ export interface components {
             /** User Agent */
             user_agent: string | null;
         };
+        /** SubscriptionInfo */
+        SubscriptionInfo: {
+            /** Cancel At Period End */
+            cancel_at_period_end: boolean;
+            /** Current Period End */
+            current_period_end: string | null;
+            /** Grace Ends At */
+            grace_ends_at: string | null;
+            /** Has Billing Account */
+            has_billing_account: boolean;
+            /** Interval */
+            interval: string | null;
+            /** Past Due Since */
+            past_due_since: string | null;
+            /** Plan */
+            plan: string | null;
+            /** Status */
+            status: string | null;
+        };
         /** SuppressionCreate */
         SuppressionCreate: {
             /** Domain */
@@ -5026,6 +5136,11 @@ export interface components {
         };
         /** UrlRead */
         UrlRead: {
+            /** Url */
+            url: string;
+        };
+        /** UrlResponse */
+        UrlResponse: {
             /** Url */
             url: string;
         };
@@ -7041,9 +7156,69 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
+                    "application/json": components["schemas"]["UrlResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_invoices_billing_invoices_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invoice"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_portal_billing_portal_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Workspace-Id"?: number | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UrlResponse"];
                 };
             };
             /** @description Validation Error */
